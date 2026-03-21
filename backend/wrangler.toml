@@ -1,0 +1,14 @@
+name = "autumn-fire-bc81"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# 环境变量（部署时会用到）
+[vars]
+# 这些变量可以在 Cloudflare Dashboard 中设置
+# DEEPSEEK_API_KEY = "your-api-key-here"
+# MOONSHOT_API_KEY = "your-moonshot-api-key-here"
+
+# KV 命名空间绑定
+[[kv_namespaces]]
+binding = "EXAM_STATS"
+id = "06a5a03d25e34f99b3e707188f735abf"

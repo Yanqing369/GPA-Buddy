@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">题库管理 - GPA4.0</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 140px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 50;
+            border: 1px solid #e2e8f0;
+        }
+
+        .lang-dropdown-content.show {
+            display: block;
+        }
+
+        .lang-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #475569;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lang-option:hover {
+            background-color: #f1f5f9;
+            color: #6366f1;
+        }
+
+        .lang-option.active {
+            background-color: #eef2ff;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .lang-option.active::after {
+            content: '✓';
+            margin-left: 8px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .favorites-badge {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
+                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        E
+                    </div>
+                    <span class="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600" data-i18n="appName">
+                        刷题考试助手
+                    </span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="lang-dropdown">
+                        <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                            </svg>
+                            <span id="currentLangDisplay">简体中文</span>
+                        </button>
+                        <div id="langDropdown" class="lang-dropdown-content">
+                            <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
+                            <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
+                            <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
+                            <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
+                        </div>
+                    </div>
+                    <a href="index.html" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600 flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        <span data-i18n="back">返回</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 slide-in">
+        <div class="mb-6 flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-slate-900" data-i18n="manageHeader">题库管理</h2>
+            <div class="flex space-x-3">
+                <button onclick="importBank()" class="px-4 py-2 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors flex items-center text-slate-700 font-medium shadow-sm">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"/>
+                    </svg>
+                    <span data-i18n="import">导入JSON</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="bankList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-12 text-slate-400 bg-white rounded-2xl border border-slate-200 border-dashed">
+                <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+                <p data-i18n="noBanks">暂无题库，请先生成或导入</p>
+                <div class="mt-6 flex justify-center space-x-4">
+                    <a href="DocGenerate.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                        从资料生成
+                    </a>
+                    <a href="organize.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                        整理现成题库
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 重置进度确认模态框 -->
+    <div id="resetModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all">
+            <h3 class="text-lg font-bold text-slate-900 mb-2" id="resetModalTitle" data-i18n="restartConfirmTitle">重新开始练习？</h3>
+            <p class="text-slate-600 mb-6" id="resetModalText" data-i18n="restartConfirmText">之前的练习进度将被清除，确定要重新开始吗？</p>
+            <div class="flex space-x-3">
+                <button onclick="closeResetModal()" class="flex-1 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-700 font-medium">
+                    取消
+                </button>
+                <button onclick="confirmReset()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium">
+                    确认重置
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
+            <svg id="toastIcon" class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="toastMessage" data-i18n="toastSuccess">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        const DB_NAME = 'ExamBuddyDB_Clean_v2';
+
+        const db = new Dexie(DB_NAME);
+        db.version(5).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, safeName, bankId, data, createdAt' // 新增：原始文件缓存
+        });
+
+        let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
+        let resetBankId = null;
+
+        const i18n = {
+            zh: {
+                appName: '刷题考试助手',
+                back: '返回',
+                manageHeader: '题库管理',
+                import: '导入JSON',
+                noBanks: '暂无题库，请先生成或导入',
+                deleteConfirm: '确定要删除这个题库吗？此操作不可撤销。',
+                saveSuccess: '保存成功',
+                invalidJson: 'JSON格式错误，请检查文件格式',
+                favorites: '精选',
+                practiceFavorites: '练习精选',
+                completed: '已完成',
+                inProgress: '进行中',
+                notStarted: '未开始',
+                resume: '继续练习',
+                restart: '重新开始',
+                accuracy: '正确率',
+                progress: '进度',
+                lastPractice: '上次练习',
+                questions: '题',
+                resetConfirm: '之前的练习进度将被清除，确定要重新开始吗？',
+                resetTitle: '重新开始练习？',
+                pageTitle: '题库管理 - GPA4.0',
+                toastSuccess: '操作成功',
+                restartConfirmTitle: '重新开始练习？',
+                restartConfirmText: '之前的练习进度将被清除，确定要重新开始吗？'
+            },
+            'zh-TW': {
+                appName: '刷題考試助手',
+                back: '返回',
+                manageHeader: '題庫管理',
+                import: '載入JSON',
+                noBanks: '暫無題庫，請先產生或匯入',
+                deleteConfirm: '確定要刪除這個題庫嗎？此操作不可撤銷。',
+                saveSuccess: '儲存成功',
+                invalidJson: 'JSON格式錯誤，請檢查檔案格式',
+                favorites: '精選',
+                practiceFavorites: '練習精選',
+                completed: '已完成',
+                inProgress: '進行中',
+                notStarted: '未開始',
+                resume: '繼續練習',
+                restart: '重新開始',
+                accuracy: '正確率',
+                progress: '進度',
+                lastPractice: '上次練習',
+                questions: '題',
+                resetConfirm: '之前的練習進度將被清除，確定要重新開始嗎？',
+                resetTitle: '重新開始練習？',
+                pageTitle: '題庫管理 - GPA4.0',
+                toastSuccess: '操作成功',
+                restartConfirmTitle: '重新開始練習？',
+                restartConfirmText: '之前的練習進度將被清除，確定要重新開始嗎？'
+            },
+            en: {
+                appName: 'Exam Study Buddy',
+                back: 'Back',
+                manageHeader: 'Bank Management',
+                import: 'Import JSON',
+                noBanks: 'No question banks yet, generate or import first',
+                deleteConfirm: 'Are you sure you want to delete this bank? This cannot be undone.',
+                saveSuccess: 'Saved successfully',
+                invalidJson: 'Invalid JSON format, please check file format',
+                favorites: 'Favorites',
+                practiceFavorites: 'Practice Favorites',
+                completed: 'Completed',
+                inProgress: 'In Progress',
+                notStarted: 'Not Started',
+                resume: 'Resume',
+                restart: 'Restart',
+                accuracy: 'Accuracy',
+                progress: 'Progress',
+                lastPractice: 'Last Practice',
+                questions: 'questions',
+                resetConfirm: 'Previous progress will be cleared. Are you sure you want to restart?',
+                resetTitle: 'Restart Practice?',
+                pageTitle: 'Bank Management - GPA4.0',
+                toastSuccess: 'Operation successful',
+                restartConfirmTitle: 'Restart Practice?',
+                restartConfirmText: 'Previous progress will be cleared. Are you sure you want to restart?'
+            },
+            ko: {
+                appName: '문제은행 도우미',
+                back: '돌아가기',
+                manageHeader: '문제은행 관리',
+                import: 'JSON 가져오기',
+                noBanks: '문제은행이 없습니다. 먼저 생성하거나 가져오세요',
+                deleteConfirm: '이 문제은행을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.',
+                saveSuccess: '저장 성공',
+                invalidJson: 'JSON 형식 오류, 파일 형식을 확인하세요',
+                favorites: '즐겨찾기',
+                practiceFavorites: '즐겨찾기 연습',
+                completed: '완료됨',
+                inProgress: '진행중',
+                notStarted: '시작안함',
+                resume: '이어서 하기',
+                restart: '다시 시작',
+                accuracy: '정확도',
+                progress: '진행률',
+                lastPractice: '마지막 연습',
+                questions: '문제',
+                resetConfirm: '이전 진행 상황이 삭제됩니다. 다시 시작하시겠습니까?',
+                resetTitle: '연습을 다시 시작하시겠습니까?',
+                pageTitle: '문제은행 관리 - GPA4.0',
+                toastSuccess: '작업 성공',
+                restartConfirmTitle: '연습을 다시 시작하시겠습니까?',
+                restartConfirmText: '이전 진행 상황이 삭제됩니다. 다시 시작하시겠습니까?'
+            }
+        };
+
+        function t(key) {
+            return i18n[currentLang][key] || key;
+        }
+
+        function detectBrowserLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage || 'en';
+            const lang = browserLang.toLowerCase();
+            if (lang.startsWith('zh') && (lang.includes('cn') || lang.includes('sg') || lang.includes('hans') || lang === 'zh')) return 'zh';
+            if (lang.startsWith('zh') && (lang.includes('tw') || lang.includes('hk') || lang.includes('mo') || lang.includes('hant'))) return 'zh-TW';
+            if (lang.startsWith('ko')) return 'ko';
+            if (lang.startsWith('en')) return 'en';
+            return 'en';
+        }
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang] && i18n[currentLang][key]) {
+                    el.textContent = i18n[currentLang][key];
+                }
+            });
+            document.getElementById('currentLangDisplay').textContent = 
+                currentLang === 'zh' ? '简体中文' : 
+                currentLang === 'zh-TW' ? '繁體中文' : 
+                currentLang === 'ko' ? '한국어' : 'English';
+        }
+
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', currentLang);
+            updateLanguage();
+            document.getElementById('langDropdown').classList.remove('show');
+            loadBankList();
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) {
+                const dropdown = document.getElementById('langDropdown');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }
+
+        async function loadBankList() {
+            const banks = await db.questionBanks.toArray();
+            const container = document.getElementById('bankList');
+            
+            if (banks.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-slate-400 bg-white rounded-2xl border border-slate-200 border-dashed">
+                        <svg class="w-16 h-16 mx-auto mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <p>${t('noBanks')}</p>
+                        <div class="mt-6 flex justify-center space-x-4">
+                            <a href="DocGenerate.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                                ${currentLang === 'zh' ? '从资料生成' : currentLang === 'zh-TW' ? '從數據產生' : currentLang === 'ko' ? '자료에서 생성' : 'Generate'}
+                            </a>
+                            <a href="organize.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                                ${currentLang === 'zh' ? '整理现成题库' : currentLang === 'zh-TW' ? '整理現有題庫' : currentLang === 'ko' ? '기존 문제은행 정리' : 'Organize'}
+                            </a>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = await Promise.all(banks.map(async bank => {
+                // 获取进度
+                let progress = await db.practiceProgress.get({bankId: bank.id});
+                const favCount = bank.favorites ? bank.favorites.length : 0;
+                const totalQuestions = bank.questions ? bank.questions.length : 0;
+                
+                let progressHtml = '';
+                let statusClass = 'bg-slate-100 text-slate-600';
+                let statusText = t('notStarted');
+                let actionButtons = '';
+                
+                if (progress && progress.answers && progress.answers.length > 0) {
+                    const answeredCount = progress.answers.filter(a => a !== null).length;
+                    const correctCount = progress.answers.filter((a, i) => a && bank.questions[i] && a.selected === bank.questions[i].correctAnswer).length;
+                    const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+                    const isCompleted = progress.isCompleted || answeredCount >= totalQuestions;
+                    
+                    if (isCompleted) {
+                        statusClass = 'bg-emerald-100 text-emerald-700';
+                        statusText = t('completed');
+                    } else {
+                        statusClass = 'bg-amber-100 text-amber-700';
+                        statusText = t('inProgress');
+                    }
+                    
+                    progressHtml = `
+                        <div class="mt-3 space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-500">${t('progress')}: <span class="font-medium text-slate-700">${answeredCount}/${totalQuestions}</span></span>
+                                <span class="${isCompleted ? 'text-emerald-600' : 'text-amber-600'} font-medium">${statusText}</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                <div class="h-2 rounded-full transition-all ${isCompleted ? 'bg-emerald-500' : 'bg-amber-500'}" 
+                                     style="width: ${(answeredCount / totalQuestions) * 100}%"></div>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-500">${t('accuracy')}: <span class="font-medium ${accuracy >= 80 ? 'text-emerald-600' : accuracy >= 60 ? 'text-amber-600' : 'text-red-600'}">${accuracy}%</span></span>
+                                ${progress.lastPracticeAt ? `<span class="text-xs text-slate-400">${t('lastPractice')}: ${new Date(progress.lastPracticeAt).toLocaleDateString()}</span>` : ''}
+                            </div>
+                        </div>
+                    `;
+                    
+                    if (isCompleted) {
+                        actionButtons = `
+                            <a href="practice.html?id=${bank.id}&resume=1" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium text-center inline-block">
+                                ${t('resume')}
+                            </a>
+                            <button onclick="showResetModal(${bank.id})" class="flex-1 bg-slate-100 text-slate-700 py-2 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium border border-slate-300">
+                                ${t('restart')}
+                            </button>
+                        `;
+                    } else {
+                        actionButtons = `
+                            <a href="practice.html?id=${bank.id}&resume=1" class="flex-1 bg-amber-500 text-white py-2 rounded-lg hover:bg-amber-600 transition-colors text-sm font-medium text-center inline-block">
+                                ${t('resume')}
+                            </a>
+                            <button onclick="showResetModal(${bank.id})" class="px-3 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-600" title="Restart">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                            </button>
+                        `;
+                    }
+                } else {
+                    actionButtons = `
+                        <a href="practice.html?id=${bank.id}" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium text-center inline-block">
+                            ${currentLang === 'en' ? 'Practice' : currentLang === 'ko' ? '문제 풀기' : '开始刷题'}
+                        </a>
+                    `;
+                }
+                
+                return `
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex-1">
+                            <h3 class="font-bold text-slate-900 text-lg mb-1">${bank.name}</h3>
+                            <div class="flex items-center space-x-2">
+                                <p class="text-sm text-slate-500">${totalQuestions} ${t('questions')}</p>
+                                ${favCount > 0 ? `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                                    ${favCount}
+                                </span>` : ''}
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-400 ml-2">
+                            ${new Date(bank.createdAt).toLocaleDateString()}
+                        </div>
+                    </div>
+                    
+                    ${progressHtml}
+                    
+                    <div class="flex space-x-2 mt-4">
+                        ${actionButtons}
+                        ${favCount > 0 ? `
+                        <a href="practice.html?id=${bank.id}&favorites=1" class="px-3 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors text-sm inline-flex items-center justify-center" title="${t('practiceFavorites')}">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        </a>
+                        ` : ''}
+                        <button onclick="exportBank(${bank.id})" class="px-3 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-slate-600" title="Export">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0l-4 4m4-4v12"/>
+                            </svg>
+                        </button>
+                        <button onclick="deleteBank(${bank.id})" class="px-3 py-2 border border-red-200 text-red-600 rounded-lg hover:bg-red-50" title="Delete">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `})).then(html => html.join(''));
+        }
+
+        function showResetModal(bankId) {
+            resetBankId = bankId;
+            document.getElementById('resetModalTitle').textContent = t('resetTitle');
+            document.getElementById('resetModalText').textContent = t('resetConfirm');
+            document.getElementById('resetModal').classList.remove('hidden');
+            document.getElementById('resetModal').classList.add('flex');
+        }
+
+        function closeResetModal() {
+            document.getElementById('resetModal').classList.add('hidden');
+            document.getElementById('resetModal').classList.remove('flex');
+            resetBankId = null;
+        }
+
+        async function confirmReset() {
+            if (!resetBankId) return;
+            
+            // 删除进度记录
+            await db.practiceProgress.where('bankId').equals(resetBankId).delete();
+            
+            closeResetModal();
+            showToast('Progress reset', 'success');
+            loadBankList();
+            
+            // 跳转到练习页面从头开始
+            window.location.href = `practice.html?id=${resetBankId}`;
+        }
+
+        async function exportBank(id) {
+            const bank = await db.questionBanks.get(id);
+            if (!bank) return;
+            
+            const blob = new Blob([JSON.stringify(bank, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${bank.name}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        async function deleteBank(id) {
+            if (!confirm(t('deleteConfirm'))) return;
+            await db.questionBanks.delete(id);
+            // 同时删除进度
+            await db.practiceProgress.where('bankId').equals(id).delete();
+            loadBankList();
+            showToast('Deleted', 'success');
+        }
+
+        function importBank() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const text = await file.text();
+                    const data = JSON.parse(text);
+                    
+                    if (!data.name || !Array.isArray(data.questions)) {
+                        throw new Error('Invalid format');
+                    }
+                    
+                    const importSuffix = currentLang === 'zh' ? ' (导入)' : 
+                                        currentLang === 'zh-TW' ? ' (載入)' : 
+                                        currentLang === 'ko' ? ' (가져옴)' :
+                                        ' (Imported)';
+                    
+                    const newBank = {
+                        name: data.name + importSuffix,
+                        questions: data.questions,
+                        favorites: data.favorites || [],
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    await db.questionBanks.add(newBank);
+                    showToast(t('saveSuccess'), 'success');
+                    loadBankList();
+                } catch (err) {
+                    showToast(t('invalidJson'), 'error');
+                }
+            };
+            input.click();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            msg.textContent = message;
+            
+            if (type === 'error') {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+                toast.querySelector('div').className = 'bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+                toast.querySelector('div').className = 'bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLanguage();
+            loadBankList();
+        });
+    </script>
+</body>
+</html>

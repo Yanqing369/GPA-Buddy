@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">整理现有题库 - GPA4.0</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse-ring {
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        
+        .drop-zone {
+            border: 2px dashed #cbd5e1;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.dragover {
+            border-color: #9333ea;
+            background-color: #faf5ff;
+            transform: scale(1.02);
+        }
+
+        .btn-pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.7);
+                transform: scale(1);
+            }
+            50% { 
+                box-shadow: 0 0 20px 10px rgba(147, 51, 234, 0.3);
+                transform: scale(1.02);
+            }
+        }
+
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .lang-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 140px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            z-index: 50;
+            border: 1px solid #e2e8f0;
+        }
+
+        .lang-dropdown-content.show {
+            display: block;
+        }
+
+        .lang-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #475569;
+            transition: all 0.2s;
+        }
+
+        .lang-option:hover {
+            background-color: #f1f5f9;
+            color: #9333ea;
+        }
+
+        .lang-option.active {
+            background-color: #faf5ff;
+            color: #9333ea;
+            font-weight: 500;
+        }
+
+        .lang-option.active::after {
+            content: ' ✓';
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        
+        .warning-banner {
+            background: linear-gradient(90deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid #ef4444;
+            color: #dc2626;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 600;
+            text-align: center;
+            animation: pulse-warning 2s infinite;
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .stage-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            gap: 8px;
+        }
+        
+        .stage-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #cbd5e1;
+            transition: all 0.3s;
+        }
+        
+        .stage-dot.active {
+            background-color: #9333ea;
+            transform: scale(1.2);
+        }
+        
+        .stage-dot.completed {
+            background-color: #10b981;
+        }
+        
+        .stage-line {
+            width: 40px;
+            height: 2px;
+            background-color: #cbd5e1;
+            transition: all 0.3s;
+        }
+        
+        .stage-line.completed {
+            background-color: #10b981;
+        }
+        
+        .stage-text {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        
+        .count-display {
+            background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 8px;
+            animation: fade-in 0.5s ease-out;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .processing-hint {
+            color: #9333ea;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
+                    <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                        E
+                    </div>
+                    <span class="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600" data-i18n="appName">
+                        刷题考试助手
+                    </span>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div class="lang-dropdown">
+                        <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
+                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                            </svg>
+                            <span id="currentLangDisplay">简体中文</span>
+                        </button>
+                        <div id="langDropdown" class="lang-dropdown-content">
+                            <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
+                            <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
+                            <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
+                            <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
+                        </div>
+                    </div>
+                    <a href="index.html" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600 flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        <span data-i18n="back">返回</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6 flex items-center justify-between">
+            <h2 class="text-2xl font-bold text-slate-900" data-i18n="organizeHeader">整理现成题库</h2>
+        </div>
+
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start">
+            <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="text-sm text-blue-800">
+                <p class="font-medium mb-1" data-i18n="organizeTipTitle">整理说明</p>
+                <p data-i18n="organizeTipDesc">上传包含题目的文件（无论格式多么混乱），AI会自动识别题目、选项、答案和解析，并转换为标准格式。所有题目的来源字段将统一标记为"用户上传题库"。</p>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <div id="orgDropZone" class="drop-zone rounded-2xl p-8 text-center bg-white border-2 border-dashed border-slate-300 hover:border-purple-400 transition-all cursor-pointer">
+                    <input type="file" id="orgFileInput" class="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt">
+                    <div class="mb-4">
+                        <svg class="w-16 h-16 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-medium text-slate-700 mb-2" data-i18n="uploadQuestionBank">上传需要整理的题库文件</p>
+                    <p class="text-sm text-slate-500" data-i18n="supportFormats">支持 PDF、Word、PPT、Excel、TXT</p>
+                    <div id="orgFileList" class="mt-4 space-y-2 text-left hidden"></div>
+                </div>
+
+                <button onclick="startOrganization()" id="orgBtn" class="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <span data-i18n="startOrganize">开始整理</span>
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[400px] flex flex-col">
+                <h3 class="font-semibold text-slate-900 mb-4" data-i18n="originalContent">原始内容预览</h3>
+                <div id="orgTextPreview" class="flex-1 bg-slate-50 rounded-lg p-4 overflow-y-auto text-sm text-slate-600 font-mono whitespace-pre-wrap border border-slate-200">
+                    <span class="text-slate-400 italic" data-i18n="waitingUpload">等待上传文件...</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 进度弹窗 -->
+    <div id="orgProgress" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 pulse-ring">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                    </svg>
+                </div>
+                
+                <!-- 阶段指示器 -->
+                <div class="stage-indicator">
+                    <div>
+                        <div class="stage-dot" id="stage1Dot"></div>
+                        <div class="stage-text" data-i18n="stage1">识别</div>
+                    </div>
+                    <div class="stage-line" id="stageLine"></div>
+                    <div>
+                        <div class="stage-dot" id="stage2Dot"></div>
+                        <div class="stage-text" data-i18n="stage2">整理</div>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-bold text-slate-900 mb-2" id="progressTitle" data-i18n="identifyingBank">正在识别题库信息...</h3>
+                <p class="text-slate-500 text-sm" id="progressSubtitle" data-i18n="aiCounting">AI正在分析题目数量</p>
+                
+                <!-- 显示识别到的题目数量 -->
+                <div id="questionCountDisplay" class="hidden">
+                    <div class="count-display">
+                        <span data-i18n="detectedQuestions">识别到</span> <span id="detectedCount">0</span> <span data-i18n="questions">道题目</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="warning-banner" data-i18n="warningRefresh">
+                ⚠️ 整理过程中请勿关闭或刷新网页，否则会导致整理失败
+            </div>
+            
+            <!-- 处理提示 -->
+            <div class="processing-hint" id="processingHint"></div>
+            
+            <div class="progress-info">
+                <span data-i18n="progress">进度</span>
+                <span id="questionProgressText" data-i18n="questionProgressText">准备中...</span>
+            </div>
+            
+            <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
+                <div id="orgProgressBar" class="bg-purple-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            
+            <div id="orgStatusText" class="text-center text-sm text-slate-500 font-mono" data-i18n="preparing">
+                准备中...
+            </div>
+        </div>
+    </div>
+
+    <!-- 结果模态框 -->
+    <div id="resultModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div class="p-6 border-b border-slate-200">
+                <h3 class="text-xl font-bold text-slate-900" data-i18n="previewOrganizeResult">预览整理结果</h3>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto p-6">
+                <div id="resultPreview" class="space-y-4"></div>
+            </div>
+
+            <div class="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end space-x-3">
+                <button onclick="discardResult()" class="px-4 py-2 text-slate-400 hover:text-slate-600 transition-colors text-sm" data-i18n="discardBank">
+                    放弃此题库
+                </button>
+                <button onclick="saveAndPractice()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-opacity flex items-center btn-pulse-glow font-semibold">
+                    <span data-i18n="saveAndPractice">保存并练习</span>
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
+            <svg id="toastIcon" class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="toastMessage" data-i18n="toastSuccess">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://moyuxiaowu.org";
+        const DB_NAME = 'ExamBuddyDB_Clean_v2';
+        
+        const db = new Dexie(DB_NAME);
+        db.version(4).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            settings: 'key'
+        });
+
+        let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
+        let currentFiles = [];
+        let currentFileType = null;
+        let extractedText = '';
+        let generatedQuestions = [];
+        let preventRefresh = false;
+
+        const i18n = {
+            zh: {
+                appName: '刷题考试助手',
+                back: '返回',
+                organizeHeader: '整理现成题库',
+                organizeTipTitle: '整理说明',
+                organizeTipDesc: '上传包含题目的文件（无论格式多么混乱），AI会自动识别题目、选项、答案和解析，并转换为标准格式。所有题目的来源字段将统一标记为"用户上传题库"。',
+                uploadQuestionBank: '上传需要整理的题库文件',
+                supportFormats: '支持 PDF、Word、PPT、Excel、TXT',
+                startOrganize: '开始整理',
+                originalContent: '原始内容预览',
+                waitingUpload: '等待上传文件...',
+                identifyingBank: '正在识别题库信息...',
+                organizingBank: '正在整理题库...',
+                aiCounting: 'AI正在分析题目数量',
+                aiOrganizing: 'AI正在整理题目格式',
+                warningRefresh: '⚠️ 整理过程中请勿关闭或刷新网页，否则会导致整理失败',
+                progress: '进度',
+                estimatedTime: '预计需要等待 {0} 秒',
+                detectedQuestions: '识别到',
+                questions: '道题目',
+                previewOrganizeResult: '预览整理结果',
+                saveAndPractice: '保存并练习',
+                discardBank: '放弃此题库',
+                discardConfirm: '确定要放弃这个题库吗？',
+                saveSuccess: '保存成功',
+                fillRequired: '请填写所有必填项',
+                extractionError: '未能从文件中提取到文本，请检查文件内容',
+                saveSuccess: '保存成功',
+                parseError: '文件解析失败',
+                networkError: '网络错误，请检查后端服务是否启动',
+                stage1: '识别',
+                stage2: '整理',
+                preparing: '准备中...',
+                processingHint: '大约需要2分钟，请勿刷新或关闭网页...',
+                completed: '完成！',
+                pageTitle: '整理现有题库 - GPA4.0',
+                toastSuccess: '操作成功',
+                questionProgressText: '准备中...'
+            },
+            'zh-TW': {
+                appName: '刷題考試助手',
+                back: '返回',
+                organizeHeader: '整理現有題庫',
+                organizeTipTitle: '整理說明',
+                organizeTipDesc: '上傳包含題目的檔案（無論格式多麼混亂），AI會自動識別題目、選項、答案和解析，並轉換為標準格式。所有題目的來源欄位將統一標記為「使用者上傳題庫」。',
+                uploadQuestionBank: '上傳需要整理的題庫檔案',
+                supportFormats: '支援 PDF、Word、PPT、Excel、TXT',
+                startOrganize: '開始整理',
+                originalContent: '原始內容預覽',
+                waitingUpload: '等待上傳檔案...',
+                identifyingBank: '正在識別題庫資訊...',
+                organizingBank: '正在整理題庫...',
+                aiCounting: 'AI正在分析題目數量',
+                aiOrganizing: 'AI正在整理題目格式',
+                warningRefresh: '⚠️ 整理過程中請勿關閉或重新整理網頁，否則會導致整理失敗',
+                progress: '進度',
+                estimatedTime: '預計需要等待 {0} 秒',
+                detectedQuestions: '識別到',
+                questions: '道題目',
+                previewOrganizeResult: '預覽整理結果',
+                saveAndPractice: '儲存並練習',
+                discardBank: '放棄此題庫',
+                discardConfirm: '確定要放棄這個題庫嗎？',
+                saveSuccess: '儲存成功',
+                fillRequired: '請填寫所有必填項',
+                extractionError: '未能從檔案中提取到文本，請檢查檔案內容',
+                parseError: '檔案解析失敗',
+                networkError: '網絡錯誤，請檢查後端服務是否啟動',
+                stage1: '識別',
+                stage2: '整理',
+                preparing: '準備中...',
+                processingHint: '大約需要2分鐘，請勿重新整理或關閉網頁...',
+                completed: '完成！',
+                pageTitle: '整理現有題庫 - GPA4.0',
+                toastSuccess: '操作成功',
+                questionProgressText: '準備中...'
+            },
+            en: {
+                appName: 'Exam Study Buddy',
+                back: 'Back',
+                organizeHeader: 'Organize Question Bank',
+                organizeTipTitle: 'Instructions',
+                organizeTipDesc: 'Upload files containing questions (regardless of format messiness), AI will auto-recognize questions, options, answers and explanations, converting to standard format. All questions will be marked with source "User Uploaded Bank".',
+                uploadQuestionBank: 'Upload question bank files to organize',
+                supportFormats: 'Supports PDF, Word, PPT, Excel, TXT',
+                startOrganize: 'Start Organization',
+                originalContent: 'Original Content Preview',
+                waitingUpload: 'Waiting for file upload...',
+                identifyingBank: 'Identifying question bank...',
+                organizingBank: 'Organizing questions...',
+                aiCounting: 'AI is analyzing question count',
+                aiOrganizing: 'AI is organizing question format',
+                warningRefresh: '⚠️ Do not close or refresh during organization',
+                progress: 'Progress',
+                estimatedTime: 'Estimated: {0} seconds',
+                detectedQuestions: 'Detected',
+                questions: 'questions',
+                previewOrganizeResult: 'Preview Organized Results',
+                saveAndPractice: 'Save & Practice',
+                discardBank: 'Discard This Bank',
+                discardConfirm: 'Are you sure you want to discard this question bank?',
+                fillRequired: 'Please fill in all required fields',
+                extractionError: 'No text extracted from file, please check file content',
+                saveSuccess: 'Saved successfully',
+                parseError: 'File parsing failed',
+                networkError: 'Network error, please check if backend is running',
+                stage1: 'Identify',
+                stage2: 'Organize',
+                preparing: 'Preparing...',
+                processingHint: 'About 2 minutes needed, please do not refresh or close the page...',
+                completed: 'Completed!',
+                pageTitle: 'Organize Question Bank - GPA4.0',
+                toastSuccess: 'Operation successful',
+                questionProgressText: 'Preparing...'
+            },
+            ko: {
+                appName: '문제은행 도우미',
+                back: '돌아가기',
+                organizeHeader: '기존 문제은행 정리',
+                organizeTipTitle: '정리 안내',
+                organizeTipDesc: '문제가 포함된 파일을 업로드하세요(형식이 어수선하더라도). AI가 자동으로 문제, 선택지, 정답, 해설을 인식하여 표준 형식으로 변환합니다. 모든 문제의 출처 필드는 "사용자 업로드 문제은행"으로 통일 표시됩니다.',
+                uploadQuestionBank: '정리가 필요한 문제은행 파일 업로드',
+                supportFormats: 'PDF, Word, PPT, Excel, TXT 지원',
+                startOrganize: '정리 시작',
+                originalContent: '원본 내용 미리보기',
+                waitingUpload: '파일 업로드 대기 중...',
+                identifyingBank: '문제은행 정보 인식 중...',
+                organizingBank: '문제은행 정리 중...',
+                aiCounting: 'AI가 문제 수를 분석하는 중',
+                aiOrganizing: 'AI가 문제 형식을 정리하는 중',
+                warningRefresh: '⚠️ 정리 중에 페이지를 닫거나 새로고침하지 마세요',
+                progress: '진행률',
+                estimatedTime: '예상 대기 시간: {0}초',
+                detectedQuestions: '인식된',
+                questions: '개 문제',
+                previewOrganizeResult: '정리 결과 미리보기',
+                saveAndPractice: '저장하고 풀기',
+                discardBank: '이 문제은행 버리기',
+                discardConfirm: '이 문제은행을 버리시겠습니까?',
+                fillRequired: '모든 필수 항목을 입력하세요',
+                extractionError: '파일에서 텍스트를 추출하지 못했습니다. 파일 내용을 확인하세요',
+                parseError: '파일 분석 실패',
+                networkError: '네트워크 오류, 백엔드 서비스가 실행 중인지 확인하세요',
+                pageTitle: '기존 문제은행 정리 - GPA4.0',
+                toastSuccess: '작업 성공',
+                questionProgressText: '준비 중...'
+                stage1: '인식',
+                stage2: '정리',
+                preparing: '준비 중...',
+                processingHint: '약 2분 소요됩니다. 새로고침하거나 페이지를 닫지 마세요...',
+                completed: '완료!'
+            }
+        };
+
+        function t(key, ...args) {
+            let text = i18n[currentLang][key] || key;
+            if (args.length > 0) {
+                args.forEach((arg, index) => {
+                    text = text.replace(`{${index}}`, arg);
+                });
+            }
+            return text;
+        }
+
+        function detectBrowserLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage || 'en';
+            const lang = browserLang.toLowerCase();
+            if (lang.startsWith('zh') && (lang.includes('cn') || lang.includes('sg') || lang.includes('hans') || lang === 'zh')) return 'zh';
+            if (lang.startsWith('zh') && (lang.includes('tw') || lang.includes('hk') || lang.includes('mo') || lang.includes('hant'))) return 'zh-TW';
+            if (lang.startsWith('ko')) return 'ko';
+            if (lang.startsWith('en')) return 'en';
+            return 'en';
+        }
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang] && i18n[currentLang][key]) {
+                    el.textContent = i18n[currentLang][key];
+                }
+            });
+            document.getElementById('currentLangDisplay').textContent = 
+                currentLang === 'zh' ? '简体中文' : 
+                currentLang === 'zh-TW' ? '繁體中文' : 
+                currentLang === 'ko' ? '한국어' : 'English';
+        }
+
+        function toggleLangDropdown() {
+            const dropdown = document.getElementById('langDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', currentLang);
+            updateLanguage();
+            document.getElementById('langDropdown').classList.remove('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) {
+                const dropdown = document.getElementById('langDropdown');
+                if (dropdown.classList.contains('show')) {
+                    dropdown.classList.remove('show');
+                }
+            }
+        }
+
+        function enableRefreshProtection() {
+            preventRefresh = true;
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        }
+
+        function disableRefreshProtection() {
+            preventRefresh = false;
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
+
+        function handleBeforeUnload(e) {
+            if (preventRefresh) {
+                e.preventDefault();
+                e.returnValue = '';
+                return '';
+            }
+        }
+
+        function setupDropZone() {
+            const dropZone = document.getElementById('orgDropZone');
+            const input = document.getElementById('orgFileInput');
+            
+            dropZone.addEventListener('click', () => input.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+            
+            input.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        // 检查文件类型分类
+        function getFileCategory(ext) {
+            if (['pdf', 'ppt', 'pptx'].includes(ext)) return 'page-based';
+            if (['xlsx', 'xls'].includes(ext)) return 'row-based';
+            if (['doc', 'docx', 'txt'].includes(ext)) return 'text-based';
+            return 'unknown';
+        }
+
+        async function handleFiles(files) {
+            // 只取第一个文件
+            currentFiles = Array.from(files).slice(0, 1);
+            if (currentFiles.length > 0) {
+                currentFileType = currentFiles[0].name.split('.').pop().toLowerCase();
+            }
+            
+            const fileList = document.getElementById('orgFileList');
+            
+            fileList.innerHTML = '';
+            fileList.classList.remove('hidden');
+            
+            currentFiles.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200';
+                div.innerHTML = `
+                    <div class="flex items-center overflow-hidden">
+                        <svg class="w-5 h-5 text-slate-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span class="text-sm text-slate-700 truncate">${file.name}</span>
+                        <span class="text-xs text-slate-400 ml-2 flex-shrink-0">${(file.size/1024).toFixed(1)}KB</span>
+                    </div>
+                    <button onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 ml-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                `;
+                fileList.appendChild(div);
+            });
+
+            try {
+                await extractText();
+                if (extractedText && extractedText.trim().length > 0) {
+                    document.getElementById('orgBtn').disabled = false;
+                } else {
+                    showToast(t('extractionError'), 'error');
+                }
+            } catch (err) {
+                showToast(t('parseError') + ': ' + err.message, 'error');
+            }
+        }
+
+        async function removeFile(index) {
+            currentFiles.splice(index, 1);
+            if (currentFiles.length === 0) {
+                document.getElementById('orgFileList').classList.add('hidden');
+                document.getElementById('orgTextPreview').innerHTML = `<span class="text-slate-400 italic">${t('waitingUpload')}</span>`;
+                extractedText = '';
+                currentFileType = null;
+                document.getElementById('orgBtn').disabled = true;
+            } else {
+                await handleFiles(currentFiles);
+            }
+        }
+
+        async function extractText() {
+            const preview = document.getElementById('orgTextPreview');
+            preview.innerHTML = '<div class="flex items-center justify-center h-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div></div>';
+            
+            let fullText = '';
+            
+            for (const file of currentFiles) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                try {
+                    if (ext === 'pdf') {
+                        fullText += await extractPDF(file) + '\n\n';
+                    } else if (ext === 'docx' || ext === 'doc') {
+                        fullText += await extractWord(file) + '\n\n';
+                    } else if (ext === 'xlsx' || ext === 'xls') {
+                        fullText += await extractExcel(file) + '\n\n';
+                    } else if (ext === 'pptx' || ext === 'ppt') {
+                        fullText += await extractPPT(file) + '\n\n';
+                    } else if (ext === 'txt') {
+                        const content = await file.text();
+                        fullText += `-------------【${file.name}】-----------\n${content}\n\n`;
+                    }
+                } catch (err) {
+                    console.error('Extraction error:', err);
+                    fullText += `[Error extracting ${file.name}]\n\n`;
+                }
+            }
+            
+            extractedText = fullText.trim();
+            preview.textContent = extractedText.substring(0, 5000) + (extractedText.length > 5000 ? '\n\n... (truncated)' : '');
+        }
+
+        async function extractPDF(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const pageText = content.items.map(item => item.str).join(' ');
+                text += `-------------【${file.name}_page${i}】-----------\n${pageText}\n\n`;
+            }
+            return text;
+        }
+
+        async function extractWord(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const result = await mammoth.extractRawText({ arrayBuffer });
+            const paragraphs = result.value.split(/\n\s*\n/);
+            let text = `-------------【${file.name}】-----------\n`;
+            
+            paragraphs.forEach((para, idx) => {
+                if (idx > 0 && idx % 5 === 0) {
+                    text += `-------------【${file.name}_section${Math.floor(idx/5)+1}】-----------\n`;
+                }
+                text += para + '\n\n';
+            });
+            return text;
+        }
+
+        async function extractExcel(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            let text = '';
+            let globalRowIndex = 0;
+            
+            workbook.SheetNames.forEach((sheetName) => {
+                const sheet = workbook.Sheets[sheetName];
+                const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                text += `-------------【${file.name}_${sheetName}_start】-----------\n`;
+                
+                data.forEach((row) => {
+                    globalRowIndex++;
+                    text += `-------------【${file.name}_${sheetName}_row${globalRowIndex}】-----------\n`;
+                    text += row.join('\t') + '\n';
+                });
+                
+                text += '\n';
+            });
+            return text;
+        }
+
+        async function extractPPT(file) {
+            const arrayBuffer = await file.arrayBuffer();
+            const zip = await JSZip.loadAsync(arrayBuffer);
+            let text = '';
+            const slideFiles = Object.keys(zip.files).filter(name => 
+                name.startsWith('ppt/slides/slide') && name.endsWith('.xml')
+            ).sort();
+            for (let i = 0; i < slideFiles.length; i++) {
+                const content = await zip.files[slideFiles[i]].async('text');
+                const matches = content.match(/<a:t>([^<]*)<\/a:t>/g);
+                text += `-------------【${file.name}_slide${i+1}】-----------\n`;
+                if (matches) {
+                    text += matches.map(m => m.replace(/<\/?a:t>/g, '')).join(' ') + '\n';
+                }
+                text += '\n';
+            }
+            return text || `[PPT text extraction limited]`;
+        }
+
+        async function callLLM(messages) {
+            const response = await fetch(`${API_BASE}/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: messages })
+            });
+            if (!response.ok) throw new Error(`Backend request failed: ${response.status}`);
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+            return data.choices?.[0]?.message?.content || '';
+        }
+
+        // 分割函数 - 复用 generate.html 的逻辑
+        function splitByPages(text, numGroups) {
+            const pageRegex = /-------------【.*?_(?:page|slide)(\d+)】-----------/g;
+            const matches = [...text.matchAll(pageRegex)];
+            
+            if (matches.length === 0) {
+                return overlapSplit(text, numGroups);
+            }
+            
+            const totalPages = matches.length;
+            const basePagesPerGroup = Math.floor(totalPages / numGroups);
+            const extraPages = totalPages % numGroups;
+            
+            const groups = [];
+            let currentMatchIndex = 0;
+            
+            for (let i = 0; i < numGroups; i++) {
+                const pagesInThisGroup = basePagesPerGroup + (i === numGroups - 1 ? extraPages : 0);
+                
+                if (pagesInThisGroup === 0 || currentMatchIndex >= matches.length) {
+                    continue;
+                }
+                
+                const startMatch = matches[currentMatchIndex];
+                const startIndex = startMatch.index;
+                
+                let endIndex;
+                if (i === numGroups - 1) {
+                    endIndex = text.length;
+                } else {
+                    const endMatchIndex = currentMatchIndex + pagesInThisGroup;
+                    if (endMatchIndex < matches.length) {
+                        endIndex = matches[endMatchIndex].index;
+                    } else {
+                        endIndex = text.length;
+                    }
+                }
+                
+                groups.push(text.substring(startIndex, endIndex));
+                currentMatchIndex += pagesInThisGroup;
+            }
+            
+            while (groups.length < numGroups) {
+                groups.push('');
+            }
+            
+            return groups;
+        }
+
+        function splitByRows(text, numGroups) {
+            const rowRegex = /-------------【.*?_row(\d+)】-----------/g;
+            const matches = [...text.matchAll(rowRegex)];
+            
+            if (matches.length === 0) {
+                return overlapSplit(text, numGroups);
+            }
+            
+            const totalRows = matches.length;
+            const baseRowsPerGroup = Math.floor(totalRows / numGroups);
+            const extraRows = totalRows % numGroups;
+            
+            const groups = [];
+            let currentMatchIndex = 0;
+            
+            for (let i = 0; i < numGroups; i++) {
+                const rowsInThisGroup = baseRowsPerGroup + (i === numGroups - 1 ? extraRows : 0);
+                
+                if (rowsInThisGroup === 0 || currentMatchIndex >= matches.length) {
+                    continue;
+                }
+                
+                const startMatch = matches[currentMatchIndex];
+                const startIndex = startMatch.index;
+                
+                let endIndex;
+                if (i === numGroups - 1) {
+                    endIndex = text.length;
+                } else {
+                    const endMatchIndex = currentMatchIndex + rowsInThisGroup;
+                    if (endMatchIndex < matches.length) {
+                        endIndex = matches[endMatchIndex].index;
+                    } else {
+                        endIndex = text.length;
+                    }
+                }
+                
+                groups.push(text.substring(startIndex, endIndex));
+                currentMatchIndex += rowsInThisGroup;
+            }
+            
+            while (groups.length < numGroups) {
+                groups.push('');
+            }
+            
+            return groups;
+        }
+
+        function overlapSplit(text, numChunks, overlapChars = 500) {
+            const chunks = [];
+            if (numChunks > 1) {
+                const baseChunkSize = Math.ceil(text.length / numChunks);
+                for (let i = 0; i < numChunks; i++) {
+                    const start = Math.max(0, i * baseChunkSize - overlapChars);
+                    const end = Math.min(text.length, (i + 1) * baseChunkSize + overlapChars);
+                    const adjustedStart = findParagraphStart(text, start);
+                    const adjustedEnd = findParagraphEnd(text, end);
+                    chunks.push(text.substring(adjustedStart, adjustedEnd));
+                }
+            } else {
+                chunks.push(text);
+            }
+            return chunks;
+        }
+
+        function findParagraphStart(text, pos) {
+            const prevNewline = text.lastIndexOf('\n\n', pos);
+            return prevNewline === -1 ? 0 : prevNewline + 2;
+        }
+
+        function findParagraphEnd(text, pos) {
+            const nextNewline = text.indexOf('\n\n', pos);
+            return nextNewline === -1 ? text.length : nextNewline;
+        }
+
+        // 获取题目数量的 Prompt - 发送全部文本，不再截断
+        function getCountPrompt(text) {
+            return `请分析以下文本中的题目数量。只返回一个数字，表示你识别到的客观题（单选+多选+判断）的总数量。不要返回任何其他文字或解释。
+
+文本内容：
+${text}
+
+只返回数字，例如：25`;
+        }
+
+        // 分批整理的 Prompt - 发送全部文本，不再截断
+        function getOrganizePrompt(text, startId, chunkIndex, totalChunks) {
+            return `You are an expert at extracting and organizing questions from messy text. Extract multiple-choice questions from the following text (Part ${chunkIndex + 1} of ${totalChunks}).
+
+CRITICAL REQUIREMENTS:
+1. Return ONLY a JSON array. No markdown, no explanations.
+2. Response must start with [ and end with ]
+3. For each question found:
+   - Extract or infer the question text
+   - Extract options A, B, C, D (create if missing)
+   - Identify the correct answer
+   - Keep existing explanation or generate brief one
+   - Set source field to "用户上传题库"
+4. CRITICAL: The "id" field MUST start from ${startId} and increment by 1 for each question
+
+JSON format:
+[
+  {
+    "id": ${startId},
+    "question": "extracted question",
+    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "correctAnswer": "A",
+    "explanation": "explanation or auto-generated",
+    "source": "用户上传题库"
+  }
+]
+
+Text to organize (Part ${chunkIndex + 1} of ${totalChunks}):
+${text}
+
+Extract as many valid questions as possible from this section. Assign ids starting from ${startId} and incrementing by 1. Ensure valid JSON format.`;
+        }
+
+        function extractJSON(text) {
+            let jsonStr = text.trim();
+            jsonStr = jsonStr.replace(/```json\s*/gi, '');
+            jsonStr = jsonStr.replace(/```\s*/g, '');
+            
+            const startIdx = jsonStr.indexOf('[');
+            const endIdx = jsonStr.lastIndexOf(']');
+            
+            if (startIdx === -1 || endIdx === -1 || startIdx >= endIdx) {
+                // 尝试寻找单个对象
+                const objStart = jsonStr.indexOf('{');
+                const objEnd = jsonStr.lastIndexOf('}');
+                if (objStart !== -1 && objEnd !== -1 && objStart < objEnd) {
+                    jsonStr = '[' + jsonStr.substring(objStart, objEnd + 1) + ']';
+                } else {
+                    throw new Error('No JSON array found in response');
+                }
+            } else {
+                jsonStr = jsonStr.substring(startIdx, endIdx + 1);
+            }
+            
+            try {
+                return JSON.parse(jsonStr);
+            } catch (e) {
+                let repaired = jsonStr;
+                repaired = repaired.replace(/,\s*]/g, ']');
+                repaired = repaired.replace(/,\s*}/g, '}');
+                repaired = repaired.replace(/'/g, '"');
+                repaired = repaired.replace(/\n/g, ' ');
+                try {
+                    return JSON.parse(repaired);
+                } catch (e2) {
+                    throw new Error('Invalid JSON format after repair attempts');
+                }
+            }
+        }
+
+        // 补充题目到20道
+        function padQuestionsToTwenty(questions) {
+            if (questions.length === 0) return questions;
+            while (questions.length < 20) {
+                // 复制最后一题，但更新id
+                const lastQuestion = {...questions[questions.length - 1]};
+                lastQuestion.id = questions.length + 1;
+                questions.push(lastQuestion);
+            }
+            return questions;
+        }
+
+        async function startOrganization() {
+            if (!extractedText) {
+                showToast(t('fillRequired'), 'error');
+                return;
+            }
+            
+            enableRefreshProtection();
+            
+            document.getElementById('orgProgress').classList.remove('hidden');
+            document.getElementById('orgProgressBar').style.width = '5%';
+            document.getElementById('orgStatusText').textContent = t('preparing');
+            
+            // 隐藏之前的数量显示和处理提示
+            document.getElementById('questionCountDisplay').classList.add('hidden');
+            document.getElementById('processingHint').textContent = '';
+            
+            // 设置阶段1（识别阶段）
+            updateStage(1);
+            
+            try {
+                // 第一阶段：识别题目数量
+                document.getElementById('progressTitle').textContent = t('identifyingBank');
+                document.getElementById('progressSubtitle').textContent = t('aiCounting');
+                
+                const countPrompt = getCountPrompt(extractedText);
+                const countResponse = await callLLM([{role: "user", content: countPrompt}]);
+                
+                // 解析数量
+                let questionCount = parseInt(countResponse.trim().match(/\d+/)?.[0] || '0');
+                if (!questionCount || questionCount <= 0) {
+                    // 如果无法识别数量，默认使用40（2组）
+                    questionCount = 40;
+                }
+                
+                // 显示识别到的题目数量
+                document.getElementById('detectedCount').textContent = questionCount;
+                document.getElementById('questionCountDisplay').classList.remove('hidden');
+                
+                // 计算组数：如果不是20的整数倍，分为(x//20)+1组
+                const numGroups = Math.ceil(questionCount / 20);
+                const questionsPerGroup = 20;
+                
+                // 更新进度到20%（进入第二阶段）
+                document.getElementById('orgProgressBar').style.width = '20%';
+                updateStage(2);
+                
+                document.getElementById('progressTitle').textContent = t('organizingBank');
+                document.getElementById('progressSubtitle').textContent = t('aiOrganizing');
+                
+                // 显示处理提示（大约需要2分钟）
+                document.getElementById('processingHint').textContent = t('processingHint');
+                document.getElementById('questionProgressText').textContent = 
+                    t('estimatedTime', 120); // 显示"预计需要等待 120 秒"
+                
+                // 分割文本
+                let chunks = [];
+                const category = getFileCategory(currentFileType);
+                
+                if (category === 'page-based') {
+                    chunks = splitByPages(extractedText, numGroups);
+                } else if (category === 'row-based') {
+                    chunks = splitByRows(extractedText, numGroups);
+                } else {
+                    chunks = overlapSplit(extractedText, numGroups, 500);
+                }
+                
+                // 确保有足够的chunks
+                while (chunks.length < numGroups) {
+                    chunks.push('');
+                }
+                
+                // 并行处理所有分组（无并发限制）
+                const promises = chunks.map((chunk, i) => {
+                    if (!chunk || chunk.trim().length === 0) {
+                        console.warn(`Chunk ${i+1} is empty, skipping...`);
+                        return Promise.resolve([]);
+                    }
+                    
+                    const startId = i * questionsPerGroup + 1;
+                    const prompt = getOrganizePrompt(chunk, startId, i, numGroups);
+                    
+                    return callLLM([{role: "user", content: prompt}])
+                        .then(fullResponse => {
+                            const questions = extractJSON(fullResponse);
+                            
+                            if (Array.isArray(questions)) {
+                                // 重新编号
+                                questions.forEach((q, idx) => {
+                                    q.id = startId + idx;
+                                    q.source = '用户上传题库';
+                                });
+                                
+                                // 最后一组如果不足20题，补齐
+                                if (i === numGroups - 1 && questions.length < 20 && questions.length > 0) {
+                                    const padded = padQuestionsToTwenty([...questions]);
+                                    // 重新调整编号，确保连续
+                                    padded.forEach((q, idx) => {
+                                        q.id = startId + idx;
+                                    });
+                                    return padded;
+                                }
+                            }
+                            
+                            return questions || [];
+                        })
+                        .catch(err => {
+                            console.error(`Chunk ${i+1} failed:`, err);
+                            return []; // 返回空数组，不中断整体流程
+                        });
+                });
+                
+                // 等待所有并行请求完成
+                const allQuestionsArrays = await Promise.all(promises);
+                const allQuestions = allQuestionsArrays.flat();
+                
+                generatedQuestions = allQuestions;
+                
+                if (generatedQuestions.length === 0) {
+                    throw new Error('No questions found in material');
+                }
+                
+                // 完成
+                document.getElementById('orgProgressBar').style.width = '100%';
+                document.getElementById('processingHint').textContent = '';
+                document.getElementById('questionProgressText').textContent = t('completed');
+                document.getElementById('orgStatusText').textContent = t('completed');
+                
+                setTimeout(() => {
+                    document.getElementById('orgProgress').classList.add('hidden');
+                    disableRefreshProtection();
+                    showResultModal(generatedQuestions);
+                }, 500);
+                
+            } catch (err) {
+                console.error('Organization error:', err);
+                document.getElementById('orgProgress').classList.add('hidden');
+                disableRefreshProtection();
+                showToast(t('parseError') + ': ' + err.message, 'error');
+            }
+        }
+
+        function updateStage(stage) {
+            const dot1 = document.getElementById('stage1Dot');
+            const dot2 = document.getElementById('stage2Dot');
+            const line = document.getElementById('stageLine');
+            
+            if (stage === 1) {
+                dot1.classList.add('active');
+                dot1.classList.remove('completed');
+                dot2.classList.remove('active', 'completed');
+                line.classList.remove('completed');
+            } else if (stage === 2) {
+                dot1.classList.remove('active');
+                dot1.classList.add('completed');
+                dot2.classList.add('active');
+                line.classList.add('completed');
+            }
+        }
+
+        function showResultModal(questions) {
+            const container = document.getElementById('resultPreview');
+            container.innerHTML = '';
+            
+            questions.slice(0, 3).forEach((q, idx) => {
+                const div = document.createElement('div');
+                div.className = 'border border-slate-200 rounded-lg p-4 bg-slate-50';
+                div.innerHTML = `
+                    <div class="font-medium text-slate-900 mb-2">Q${q.id}: ${q.question}</div>
+                    <div class="space-y-1 text-sm text-slate-600 mb-2">
+                        ${Object.entries(q.options).map(([k, v]) => `<div>${k}. ${v}</div>`).join('')}
+                    </div>
+                    <div class="text-sm font-medium text-emerald-600">Answer: ${q.correctAnswer}</div>
+                `;
+                container.appendChild(div);
+            });
+            
+            if (questions.length > 3) {
+                const more = document.createElement('div');
+                more.className = 'text-center text-slate-500 text-sm';
+                more.textContent = `... and ${questions.length - 3} more questions`;
+                container.appendChild(more);
+            }
+            
+            document.getElementById('resultModal').classList.remove('hidden');
+        }
+
+        function discardResult() {
+            if (confirm(t('discardConfirm'))) {
+                generatedQuestions = [];
+                document.getElementById('resultModal').classList.add('hidden');
+                showToast('Discarded', 'success');
+            }
+        }
+
+        async function saveAndPractice() {
+            const name = prompt(currentLang === 'zh' ? '请输入题库名称:' : 
+                               currentLang === 'zh-TW' ? '請輸入題庫名稱:' : 
+                               currentLang === 'ko' ? '문제은행 이름을 입력하세요:' :
+                               'Enter question bank name:', 
+                currentFiles[0]?.name.replace(/\.[^/.]+$/, '') || 'Organized Bank');
+            
+            if (!name) return;
+            
+            const bank = {
+                name: name,
+                questions: generatedQuestions,
+                favorites: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            const id = await db.questionBanks.add(bank);
+            document.getElementById('resultModal').classList.add('hidden');
+            showToast(t('saveSuccess'), 'success');
+            
+            window.location.href = `practice.html?id=${id}`;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            msg.textContent = message;
+            
+            if (type === 'error') {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+                toast.querySelector('div').className = 'bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+                toast.querySelector('div').className = 'bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLanguage();
+            setupDropZone();
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        });
+    </script>
+</body>
+</html>
