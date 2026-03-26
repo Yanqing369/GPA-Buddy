@@ -111,6 +111,27 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
+    <!-- 顶部捐款横幅 -->
+    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
+        <div class="max-w-7xl mx-auto flex items-center justify-center">
+            <div class="flex items-center space-x-4">
+                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
+                <a href="donate.html" target="_blank" class="ml-2 px-4 py-1.5 bg-white text-indigo-600 text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+                    <span data-i18n="supportUs">支持我们</span>
+                </a>
+            </div>
+        </div>
+        <!-- 关闭按钮 -->
+        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
     <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
@@ -244,7 +265,9 @@
                 pageTitle: '题库管理 - GPA4.0',
                 toastSuccess: '操作成功',
                 restartConfirmTitle: '重新开始练习？',
-                restartConfirmText: '之前的练习进度将被清除，确定要重新开始吗？'
+                restartConfirmText: '之前的练习进度将被清除，确定要重新开始吗？',
+                donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
+                supportUs: '支持我们'
             },
             'zh-TW': {
                 appName: '刷題考試助手',
@@ -271,7 +294,9 @@
                 pageTitle: '題庫管理 - GPA4.0',
                 toastSuccess: '操作成功',
                 restartConfirmTitle: '重新開始練習？',
-                restartConfirmText: '之前的練習進度將被清除，確定要重新開始嗎？'
+                restartConfirmText: '之前的練習進度將被清除，確定要重新開始嗎？',
+                donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
+                supportUs: '支持我們'
             },
             en: {
                 appName: 'Exam Study Buddy',
@@ -298,7 +323,9 @@
                 pageTitle: 'Bank Management - GPA4.0',
                 toastSuccess: 'Operation successful',
                 restartConfirmTitle: 'Restart Practice?',
-                restartConfirmText: 'Previous progress will be cleared. Are you sure you want to restart?'
+                restartConfirmText: 'Previous progress will be cleared. Are you sure you want to restart?',
+                donateBannerText: 'Each generation costs 0.5 HKD. If this site helps you, please consider donating to support us.',
+                supportUs: 'Support Us'
             },
             ko: {
                 appName: '문제은행 도우미',
@@ -325,7 +352,9 @@
                 pageTitle: '문제은행 관리 - GPA4.0',
                 toastSuccess: '작업 성공',
                 restartConfirmTitle: '연습을 다시 시작하시겠습니까?',
-                restartConfirmText: '이전 진행 상황이 삭제됩니다. 다시 시작하시겠습니까?'
+                restartConfirmText: '이전 진행 상황이 삭제됩니다. 다시 시작하시겠습니까?',
+                donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+                supportUs: '후원하기'
             }
         };
 
@@ -628,10 +657,27 @@
             }, 3000);
         }
 
+        function closeDonateBanner() {
+            const banner = document.getElementById('donateBanner');
+            if (banner) {
+                banner.style.display = 'none';
+                localStorage.setItem('donateBannerClosed', 'true');
+            }
+        }
+
+        function checkDonateBanner() {
+            const banner = document.getElementById('donateBanner');
+            if (banner && localStorage.getItem('donateBannerClosed') === 'true') {
+                banner.style.display = 'none';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             updateLanguage();
             loadBankList();
+
         });
     </script>
+
 </body>
 </html>

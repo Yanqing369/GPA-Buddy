@@ -112,8 +112,25 @@
         <button onclick="location.reload()" class="ml-4 px-3 py-1 bg-white text-red-600 rounded text-sm font-bold" data-i18n="refreshPage">刷新页面</button>
     </div>
 
-    <div id="globalStats" class="stats-banner">
-        <span data-i18n="statsText">本站已生成</span> <span id="totalCount" class="font-bold text-yellow-300">...</span> <span data-i18n="statsSuffix">次题库</span>
+    <!-- 顶部捐款横幅 -->
+    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
+        <div class="max-w-7xl mx-auto flex items-center justify-center">
+            <div class="flex items-center space-x-4">
+                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
+                <a href="donate.html" target="_blank" class="ml-2 px-4 py-1.5 bg-white text-indigo-600 text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+                    <span data-i18n="supportUs">支持我们</span>
+                </a>
+            </div>
+        </div>
+        <!-- 关闭按钮 -->
+        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
     </div>
 
     <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
@@ -165,10 +182,18 @@
                 <p class="text-lg text-slate-600 max-w-2xl mx-auto" data-i18n="welcomeDesc">
                     上传学习资料，AI自动生成题库；支持多种格式，本地存储隐私安全
                 </p>
+                <div class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-sm text-indigo-700">
+                    <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    <span data-i18n="statsText">本站已生成</span>
+                    <span id="totalCount" class="mx-1 font-bold text-indigo-600">...</span>
+                    <span data-i18n="statsSuffix">次题库</span>
+                </div>
             </div>
 
             <div class="grid md:grid-cols-3 gap-6 mb-12">
-                <div onclick="showGenerateOptions()" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
+                <a href="DocGenerate.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
                     <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -176,7 +201,7 @@
                     </div>
                     <h3 class="text-xl font-semibold mb-2" data-i18n="generateTitle">从资料生成</h3>
                     <p class="text-slate-500 text-sm" data-i18n="generateDesc">上传PDF、Word、PPT等文件，AI自动提取内容生成标准题库</p>
-                </div>
+                </a>
 
                 <a href="organize.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
                     <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -283,9 +308,11 @@
 
         const i18n = {
             zh: {
+                donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
+                supportUs: '支持我们',
                 appName: '刷题考试助手',
                 welcomeTitle: '智能刷题助手',
-                welcomeDesc: '上传学习资料，AI自动生成题库；支持多种格式，本地存储隐私安全',
+                welcomeDesc: '不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题',
                 generateTitle: '从资料生成',
                 generateDesc: '上传PDF、Word、PPT等文件，AI自动提取内容生成标准题库',
                 organizeTitle: '整理现成题库',
@@ -310,16 +337,14 @@
                 saveError: '保存失败',
                 pageTitle: 'GPA4.0 - 智能刷题助手',
                 toastSuccess: '操作成功',
-                selectGenerateMode: '选择生成方式',
-                textExtractMode: '快速生成模式（推荐）',
-                textExtractDesc: '提取文档中和图片里的文本，快速生成高质量题库。适用于大多数文档。',
-                docUnderstandMode: '图文理解模式（实验）',
-                docUnderstandDesc: '深度理解文档内容，生成更精准题目。耗时较长，目前仅支持PDF。'
+
             },
             'zh-TW': {
+                donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
+                supportUs: '支持我們',
                 appName: '刷題考試助手',
                 welcomeTitle: '智慧刷題助手',
-                welcomeDesc: '上傳學習數據，AI自動產生題庫；支援多種格式，本地儲存隱私安全',
+                welcomeDesc: '不想漫無目的地翻資料？上傳課件、筆記，AI 自動為你生成練習題',
                 generateTitle: '從數據生成',
                 generateDesc: '上傳PDF、Word、PPT等檔案，AI自動提取內容產生標準題庫',
                 organizeTitle: '整理現有題庫',
@@ -351,9 +376,11 @@
                 docUnderstandDesc: '深度理解文檔內容，生成更精準題目。耗時較長，目前僅支援PDF。'
             },
             en: {
+                donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
+                supportUs: 'Support Us',
                 appName: 'Exam Study Buddy',
                 welcomeTitle: 'Smart Exam Assistant',
-                welcomeDesc: 'Upload study materials, AI auto-generates question banks; multiple formats supported, local storage for privacy',
+welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials and let AI generate practice questions for you',
                 generateTitle: 'Generate from Material',
                 generateDesc: 'Upload PDF, Word, PPT files, AI extracts content to generate standard question banks',
                 organizeTitle: 'Organize Existing Bank',
@@ -378,16 +405,14 @@
                 saveError: 'Save failed',
                 pageTitle: 'GPA4.0 - Smart Exam Assistant',
                 toastSuccess: 'Operation successful',
-                selectGenerateMode: 'Select Generation Mode',
-                textExtractMode: 'Fast Generation Mode (Recommended)',
-                textExtractDesc: 'Extract text from documents and images to quickly generate high-quality question banks. Suitable for most documents.',
-                docUnderstandMode: 'Visual-Text Understanding Mode (Experimental)',
-                docUnderstandDesc: 'Deeply understand document content to generate more accurate questions. Takes longer, currently only supports PDF.'
+
             },
             ko: {
+                donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+                supportUs: '후원하기',
                 appName: '문제은행 도우미',
                 welcomeTitle: '스마트 문제은행 도우미',
-                welcomeDesc: '학습 자료를 업로드하면 AI가 자동으로 문제은행을 생성합니다. 다양한 형식을 지원하며 로컬 저장소로 프라이버시를 보호합니다.',
+                welcomeDesc: '학습 자료를 업로드하면 AI가 자동으로 문제은행을 생성합니다. 다양한 형식을 지원하며 로켈 저장소로 프라이버시를 보호합니다.',
                 generateTitle: '자료에서 생성',
                 generateDesc: 'PDF, Word, PPT 파일을 업로드하면 AI가 내용을 추출하여 표준 문제은행을 생성합니다',
                 organizeTitle: '기존 문제은행 정리',
@@ -412,11 +437,7 @@
                 saveError: '저장 실패',
                 pageTitle: 'GPA4.0 - 스마트 문제은행 도우미',
                 toastSuccess: '작업 성공',
-                selectGenerateMode: '생성 방식 선택',
-                textExtractMode: '빠른 생성 모드 (추천)',
-                textExtractDesc: '문서와 이미지에서 텍스트를 추출하여 고품질 문제은행을 빠르게 생성합니다. 대부분의 문서에 적합합니다.',
-                docUnderstandMode: '시각-텍스트 이해 모드 (실험)',
-                docUnderstandDesc: '문서 내용을 깊이 있게 이해하여 더 정확한 문제를 생성합니다. 시간이 더 소요되며, 현재 PDF만 지원합니다.'
+
             }
         };
 
@@ -578,91 +599,30 @@
             }, 3000);
         }
 
-        function showGenerateOptions() {
-            document.getElementById('generateOptionsModal').classList.remove('hidden');
+        // 关闭捐款横幅
+        function closeDonateBanner() {
+            const banner = document.getElementById('donateBanner');
+            if (banner) {
+                banner.style.display = 'none';
+                localStorage.setItem('donateBannerClosed', 'true');
+            }
         }
 
-        function hideGenerateOptions() {
-            document.getElementById('generateOptionsModal').classList.add('hidden');
-        }
-
-        function goToTextGenerate() {
-            window.location.href = 'Textgenerate.html';
-        }
-
-        function goToDocGenerate() {
-            window.location.href = 'DocGenerate.html';
+        // 检查是否需要显示捐款横幅
+        function checkDonateBanner() {
+            const banner = document.getElementById('donateBanner');
+            if (banner && localStorage.getItem('donateBannerClosed') === 'true') {
+                banner.style.display = 'none';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             updateLanguage();
             loadRecent();
             loadGlobalStats();
+
         });
     </script>
 
-    <!-- 生成方式选择弹窗 -->
-    <div id="generateOptionsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl">
-            <div class="p-6 border-b border-slate-200">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-bold text-slate-900" data-i18n="selectGenerateMode">选择生成方式</h3>
-                    <button onclick="hideGenerateOptions()" class="text-slate-400 hover:text-slate-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            
-            <div class="p-6 space-y-4">
-                <div onclick="goToTextGenerate()" class="cursor-pointer bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-5 hover:shadow-lg transition-all group">
-                    <div class="flex items-start">
-                        <div class="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="text-lg font-semibold text-slate-900 mb-1" data-i18n="textExtractMode">快速生成模式（推荐）</h4>
-                            <p class="text-sm text-slate-600" data-i18n="textExtractDesc">提取文档中和图片里的文本，快速生成高质量题库。适用于大多数文档。</p>
-                            <div class="mt-2 flex flex-wrap gap-2">
-                                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">PDF</span>
-                                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">Word</span>
-                                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">Excel</span>
-                                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">PPT</span>
-                                <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded">TXT</span>
-                            </div>
-                        </div>
-                        <svg class="w-6 h-6 text-slate-300 group-hover:text-indigo-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </div>
-                </div>
-
-                <div onclick="goToDocGenerate()" class="cursor-pointer bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-5 hover:shadow-lg transition-all group">
-                    <div class="flex items-start">
-                        <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                            </svg>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="text-lg font-semibold text-slate-900 mb-1" data-i18n="docUnderstandMode">图文理解模式（实验）</h4>
-                            <p class="text-sm text-slate-600" data-i18n="docUnderstandDesc">深度理解文档内容，生成更精准题目。耗时较长，目前仅支持PDF。</p>
-                            <div class="mt-2 flex flex-wrap gap-2">
-                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">PDF</span>
-                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">页码溯源</span>
-                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">AI 深度理解</span>
-                            </div>
-                        </div>
-                        <svg class="w-6 h-6 text-slate-300 group-hover:text-purple-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </body>
 </html>

@@ -31,7 +31,7 @@
         }
         
         @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
         
@@ -75,123 +75,96 @@
             background: linear-gradient(90deg, #fee2e2 0%, #fecaca 100%);
             border: 2px solid #ef4444;
             color: #dc2626;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            text-align: center;
-            animation: pulse-warning 2s infinite;
         }
 
-        @keyframes pulse-warning {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-        }
-
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .time-estimate {
-            color: #6366f1;
-            font-weight: 600;
-        }
-
-        .lang-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
-        .lang-dropdown-content {
-            display: none;
-            position: absolute;
-            right: 0;
-            background-color: white;
-            min-width: 140px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            z-index: 50;
-            border: 1px solid #e2e8f0;
-        }
-
-        .lang-dropdown-content.show {
-            display: block;
-        }
-
-        .lang-option {
-            padding: 10px 16px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #475569;
-            transition: all 0.2s;
+        .step-item {
             display: flex;
             align-items: center;
-            justify-content: space-between;
-        }
-
-        .lang-option:hover {
-            background-color: #f1f5f9;
-            color: #6366f1;
-        }
-
-        .lang-option.active {
-            background-color: #eef2ff;
-            color: #6366f1;
-            font-weight: 500;
-        }
-
-        .lang-option.active::after {
-            content: '✓';
-            margin-left: 8px;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-
-        .pdf-preview-container {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #e2e8f0;
+            padding: 8px 12px;
             border-radius: 8px;
-            padding: 16px;
-            background: #f8fafc;
+            transition: all 0.3s ease;
         }
 
-        .pdf-page-preview {
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 4px;
-            overflow: hidden;
+        .step-item.active {
+            background: #eef2ff;
+            color: #6366f1;
         }
 
-        .pdf-page-preview canvas {
-            width: 100%;
-            display: block;
+        .step-item.completed {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+
+        .step-number {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 8px;
+            border: 2px solid currentColor;
+        }
+
+        .step-item.active .step-number {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .step-item.completed .step-number {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
         }
     </style>
-<base target="_blank">
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen">
 
-    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+    <!-- 顶部捐款横幅 -->
+    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
+        <div class="max-w-7xl mx-auto flex items-center justify-center">
+            <div class="flex items-center space-x-4">
+                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-sm font-medium" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
+                <a href="donate.html" target="_blank" class="ml-2 px-4 py-1.5 bg-white text-indigo-600 text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+                    <span data-i18n="supportUs">支持我们</span>
+                </a>
+            </div>
+        </div>
+        <!-- 关闭按钮 -->
+        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    </div>
+
+    <nav class="glass-effect sticky top-0 z-40 border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="flex items-center space-x-3">
+                    <button onclick="window.location.href='index.html'" class="p-2 rounded-lg hover:bg-slate-100 transition-colors">
+                        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                    </button>
                     <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
                         E
                     </div>
@@ -201,167 +174,196 @@
                 </div>
                 
                 <div class="flex items-center space-x-4">
-                    <div class="lang-dropdown">
+                    <div class="lang-dropdown relative">
                         <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
                             <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                             </svg>
                             <span id="currentLangDisplay">简体中文</span>
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
                         </button>
-                        <div id="langDropdown" class="lang-dropdown-content">
-                            <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
-                            <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
-                            <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
-                            <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
+                        <div id="langDropdown" class="lang-dropdown-content hidden absolute right-0 mt-2 bg-white rounded-lg shadow-lg border border-slate-200 py-2 min-w-[140px] z-50">
+                            <div class="lang-option px-4 py-2 hover:bg-slate-50 cursor-pointer" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
+                            <div class="lang-option px-4 py-2 hover:bg-slate-50 cursor-pointer" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
+                            <div class="lang-option px-4 py-2 hover:bg-slate-50 cursor-pointer" onclick="changeLanguage('en')" data-lang="en">English</div>
+                            <div class="lang-option px-4 py-2 hover:bg-slate-50 cursor-pointer" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
                         </div>
                     </div>
-                    <a href="index.html" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600 flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        <span data-i18n="back">返回</span>
-                    </a>
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-6 flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-slate-900" data-i18n="generateHeader">从资料生成题库</h2>
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-slate-900 mb-2" data-i18n="generateHeader">从资料生成题库</h1>
+            <p class="text-slate-600" data-i18n="dropText">拖拽PDF文件到此处，或点击上传</p>
         </div>
 
         <div class="grid lg:grid-cols-2 gap-8">
+            <!-- 左侧：上传和配置 -->
             <div class="space-y-6">
-                <!-- 修改 accept 属性，仅支持 PDF -->
-                <div id="dropZone" class="drop-zone rounded-2xl p-8 text-center bg-white border-2 border-dashed border-slate-300 hover:border-indigo-400 transition-all cursor-pointer">
-                    <input type="file" id="fileInput" class="hidden" accept=".pdf">
-                    <div class="mb-4">
-                        <svg class="w-16 h-16 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- 文件上传区 -->
+                <div id="dropZone" class="drop-zone bg-white rounded-2xl p-8 text-center cursor-pointer">
+                    <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
-                    <p class="text-lg font-medium text-slate-700 mb-2" data-i18n="dropText">拖拽PDF文件到此处，或点击上传</p>
-                    <p class="text-sm text-slate-500" data-i18n="supportFormats">支持 PDF 格式（将自动添加页码标记）</p>
-                    <div id="fileList" class="mt-4 space-y-2 text-left hidden"></div>
+                    <p class="text-lg font-medium text-slate-700 mb-2" data-i18n="dropText">拖拽PDF文件到此处</p>
+                    <p class="text-sm text-slate-500" data-i18n="supportFormats">支持 PDF 格式</p>
+                    <input type="file" id="fileInput" accept=".pdf" class="hidden">
                 </div>
 
-                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-                    <h3 class="font-semibold text-slate-900" data-i18n="configTitle">生成配置</h3>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="questionCount">题目数量</label>
-                        <select id="questionCount" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all">
-                            <option value="20">20</option>
-                            <option value="40">40</option>
-                            <option value="60">60</option>
-                            <option value="80">80</option>
-                            <option value="100" selected>100</option>
-                            <option value="120">120</option>
-                            <option value="140">140</option>
-                            <option value="160">160</option>
-                            <option value="180">180</option>
-                            <option value="200">200</option>
-                        </select>
-                    </div>
+                <div id="fileList" class="hidden space-y-2"></div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="language">生成语言</label>
-                        <div class="flex space-x-4">
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="genLang" value="zh" checked class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                                <span class="ml-2 text-slate-700" data-i18n="langZH">中文</span>
-                            </label>
-                            <label class="flex items-center cursor-pointer">
-                                <input type="radio" name="genLang" value="en" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                                <span class="ml-2 text-slate-700" data-i18n="langEN">English</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <button onclick="startGeneration()" id="genBtn" class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <span data-i18n="startGenerate">开始生成</span>
-                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                <!-- 生成配置 -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                         </svg>
-                    </button>
+                        <span data-i18n="configTitle">生成配置</span>
+                    </h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="questionCount">题目数量</label>
+                            <select id="questionCount" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="20">20</option>
+                                <option value="40">40</option>
+                                <option value="60">60</option>
+                                <option value="80">80</option>
+                                <option value="100">100</option>
+                                <option value="120">120</option>
+                                <option value="140">140</option>
+                                <option value="160">160</option>
+                                <option value="180">180</option>
+                                <option value="200">200</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="language">生成语言</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="genLang" value="zh" checked class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                                    <span class="ml-2 text-slate-700" data-i18n="langZH">中文</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="genLang" value="en" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
+                                    <span class="ml-2 text-slate-700" data-i18n="langEN">English</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button onclick="startGeneration()" id="genBtn" disabled class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                            <span data-i18n="startGenerate">开始生成</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
-                <h3 class="font-semibold text-slate-900 mb-4 flex items-center justify-between">
-                    <span data-i18n="pdfPreview">PDF预览（已添加页码标记）</span>
-                    <span id="pageStats" class="text-xs text-slate-500 font-normal"></span>
-                </h3>
-                <div id="pdfPreview" class="flex-1 pdf-preview-container overflow-y-auto">
-                    <span class="text-slate-400 italic flex items-center justify-center h-full" data-i18n="waitingUpload">等待上传文件...</span>
+            <!-- 右侧：PDF预览 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                        </svg>
+                        <span data-i18n="pdfPreview">PDF预览</span>
+                    </h3>
+                    <span id="pageStats" class="text-sm text-slate-500"></span>
+                </div>
+                <div id="pdfPreview" class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50" style="min-height: 400px;">
+                    <div class="flex items-center justify-center h-full text-slate-400 py-20" data-i18n="waitingUpload">
+                        等待上传文件...
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- 进度弹窗 -->
-    <div id="genProgress" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 gradient-bg rounded-full flex items-center justify-center mx-auto mb-4 pulse-ring">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+    <!-- 进度弹窗 - 整合版 -->
+    <div id="genProgress" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl">
+            <!-- 头部 -->
+            <div class="p-6 border-b border-slate-200">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center mr-3 pulse-ring">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900" data-i18n="generating">正在生成题库...</h3>
+                            <p class="text-xs text-slate-500 loading-dots" data-i18n="aiProcessing">AI正在分析文档内容</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span id="questionProgressText" class="text-sm font-medium text-indigo-600">0 / 100</span>
+                    </div>
+                </div>
+                
+                <!-- 进度条 -->
+                <div class="w-full bg-slate-200 rounded-full h-2">
+                    <div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                
+                <!-- 警告横幅 -->
+                <div class="warning-banner rounded-lg px-4 py-2 mt-4 text-xs font-medium" data-i18n="warningRefresh">
+                    ⚠️ 生成过程中请勿关闭或刷新网页，否则会导致生成失败
+                </div>
+            </div>
+            
+            <!-- 中间：实时题目显示区域 -->
+            <div class="p-4 bg-slate-50">
+                <div id="streamingQuestions" class="space-y-2 overflow-y-auto" style="height: 320px; max-height: 320px;">
+                    <div class="text-center text-slate-400 text-sm py-8" data-i18n="waitingFirstQuestion">
+                        等待第一道题...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 底部：步骤指示器 -->
+            <div class="p-4 border-t border-slate-200 bg-white">
+                <div class="flex items-center justify-center space-x-4">
+                    <div id="step1" class="step-item text-slate-400">
+                        <span class="step-number">1</span>
+                        <span class="text-sm font-medium" data-i18n="stepUploading">上传文件</span>
+                    </div>
+                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
-                </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2" data-i18n="generating">正在生成题库...</h3>
-                <p class="text-slate-500 text-sm loading-dots" data-i18n="aiProcessing">AI正在处理PDF文件</p>
-            </div>
-            
-            <div class="warning-banner" data-i18n="warningRefresh">
-                ⚠️ 生成过程中请勿关闭或刷新网页，否则会导致生成失败
-            </div>
-            
-            <div class="text-center mb-4">
-                <span class="time-estimate" id="timeEstimate" data-i18n="estimatedTime">预计需要等待 120 秒</span>
-            </div>
-            
-            <div class="progress-info">
-                <span data-i18n="progress">进度</span>
-                <span id="questionProgressText" data-i18n="generatedCount">已生成 0 题，共 100 题</span>
-            </div>
-            
-            <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
-                <div id="progressBar" class="gradient-bg h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-            </div>
-
-            <!-- 进度步骤显示 -->
-            <div id="progressSteps" class="mt-4 space-y-2 text-sm">
-                <div id="step1" class="flex items-center text-slate-400">
-                    <span class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center mr-2 text-xs">1</span>
-                    <span data-i18n="stepUpload">上传文件到服务器</span>
-                </div>
-                <div id="step2" class="flex items-center text-slate-400">
-                    <span class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center mr-2 text-xs">2</span>
-                    <span data-i18n="stepTransfer">服务器传输给AI</span>
-                </div>
-                <div id="step3" class="flex items-center text-slate-400">
-                    <span class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center mr-2 text-xs">3</span>
-                    <span data-i18n="stepProcessing">AI处理文件中</span>
-                </div>
-                <div id="step4" class="flex items-center text-slate-400">
-                    <span class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center mr-2 text-xs">4</span>
-                    <span data-i18n="stepGenerating">AI生成题目中</span>
+                    <div id="step2" class="step-item text-slate-400">
+                        <span class="step-number">2</span>
+                        <span class="text-sm font-medium" data-i18n="stepGeneratingQuestions">AI生成题目</span>
+                    </div>
                 </div>
             </div>
-
-            <div id="statusText" class="text-center text-sm text-slate-500 mt-4 font-mono hidden" data-i18n="preparing">
-                准备中...
-            </div>
-            
             <!-- 捐款提示 -->
-            <div class="mt-6 pt-4 border-t border-slate-200">
-                <p class="text-xs text-slate-500 text-center mb-3" data-i18n="donateHint">
-                    生成一次题库成本约为1元，如果你觉得好用，可以捐款支持本网站
-                </p>
-                <a href="https://donate.example.com" target="_blank" class="flex items-center justify-center w-full py-2 bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-lg hover:from-amber-500 hover:to-orange-600 transition-all text-sm font-medium shadow-md hover:shadow-lg transform hover:-translate-y-0.5" data-i18n="donateButton">
-                    ❤️ 支持开发者
-                </a>
+            <div class="p-4 border-t border-slate-200 bg-gradient-to-r from-amber-50 to-orange-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center text-sm text-amber-800">
+                        <svg class="w-5 h-5 mr-2 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span data-i18n="generateCostText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，欢迎捐款支持</span>
+                    </div>
+                    <a href="donate.html" target="_blank" class="ml-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        <span data-i18n="donate">捐款</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -375,6 +377,7 @@
             
             <div class="flex-1 overflow-y-auto p-6">
                 <div id="resultPreview" class="space-y-4"></div>
+                <div id="totalQuestionsHint" class="hidden text-center text-sm text-slate-500 mt-6 py-3 bg-slate-100 rounded-lg"></div>
             </div>
 
             <div class="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end space-x-3">
@@ -391,12 +394,13 @@
         </div>
     </div>
 
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
         <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
             <svg id="toastIcon" class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            <span id="toastMessage" data-i18n="toastSuccess">操作成功</span>
+            <span id="toastMessage">操作成功</span>
         </div>
     </div>
 
