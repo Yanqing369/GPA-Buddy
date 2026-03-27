@@ -115,19 +115,19 @@
     <!-- 顶部捐款横幅 -->
     <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
         <div class="max-w-7xl mx-auto flex items-center justify-center">
-            <div class="flex items-center space-x-4">
-                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
+                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0 hidden sm:block" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
                 </svg>
-                <span class="text-sm font-medium" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="ml-2 px-4 py-1.5 bg-white text-indigo-600 text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+                <span class="text-xs sm:text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
+                <a href="donate.html" target="_blank" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-white text-indigo-600 text-xs sm:text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
             </div>
         </div>
         <!-- 关闭按钮 -->
-        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
+            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
@@ -140,7 +140,7 @@
                     <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
                         E
                     </div>
-                    <span class="font-bold text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600" data-i18n="appName">
+                    <span class="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 hidden sm:block" data-i18n="appName">
                         刷题考试助手
                     </span>
                 </div>
@@ -180,11 +180,11 @@
             <div class="text-center mb-12">
                 <h1 class="text-4xl font-bold text-slate-900 mb-4" data-i18n="welcomeTitle">智能刷题助手</h1>
                 <p class="text-lg text-slate-600 max-w-2xl mx-auto" data-i18n="welcomeDesc">
-                    上传学习资料，AI自动生成题库；支持多种格式，本地存储隐私安全
+                    不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题
                 </p>
                 <div class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-sm text-indigo-700">
                     <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                     </svg>
                     <span data-i18n="statsText">本站已生成</span>
                     <span id="totalCount" class="mx-1 font-bold text-indigo-600">...</span>
@@ -196,21 +196,23 @@
                 <a href="DocGenerate.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
                     <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3-3-3 3"/>
                         </svg>
                     </div>
                     <h3 class="text-xl font-semibold mb-2" data-i18n="generateTitle">从资料生成</h3>
-                    <p class="text-slate-500 text-sm" data-i18n="generateDesc">上传PDF、Word、PPT等文件，AI自动提取内容生成标准题库</p>
+                    <p class="text-slate-500 text-sm" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</p>
                 </a>
 
                 <a href="organize.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
                     <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 18l2-2 2 2M19 16v4"/>
                         </svg>
                     </div>
                     <h3 class="text-xl font-semibold mb-2" data-i18n="organizeTitle">整理现成题库</h3>
-                    <p class="text-slate-500 text-sm" data-i18n="organizeDesc">将杂乱的题目格式转换为标准JSON，自动补充解析</p>
+                    <p class="text-slate-500 text-sm" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</p>
                 </a>
 
                 <a href="manage.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
@@ -220,7 +222,7 @@
                         </svg>
                     </div>
                     <h3 class="text-xl font-semibold mb-2" data-i18n="manageTitle">题库管理</h3>
-                    <p class="text-slate-500 text-sm" data-i18n="manageDesc">查看所有题库，开始刷题、导出或导入JSON文件</p>
+                    <p class="text-slate-500 text-sm" data-i18n="manageDesc">查看、练习、导出或导入题库</p>
                 </a>
             </div>
 
@@ -258,10 +260,10 @@
                         </svg>
                         <span data-i18n="storage">存储管理</span>
                     </h4>
-                    <p class="text-sm text-slate-600 mb-3" data-i18n="localStorage">所有数据存储在浏览器本地 (IndexedDB)</p>
+                    <p class="text-sm text-slate-600 mb-3" data-i18n="localStorage">所有资料都保存在你的电脑上，不用担心泄露</p>
                     <p class="text-xs text-slate-400 mb-3" id="storageStats">已使用: 计算中...</p>
                     <button onclick="clearAllData()" class="w-full px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium">
-                        <span data-i18n="clearAll">清空所有数据</span>
+                        <span data-i18n="clearAll">清空所有题库</span>
                     </button>
                 </div>
 
@@ -270,10 +272,10 @@
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
-                        <span data-i18n="dbResetTitle">数据库重置（解决错误）</span>
+                        <span data-i18n="dbResetTitle">修复数据问题</span>
                     </h4>
                     <p class="text-sm text-amber-700 mb-3" data-i18n="dbResetDesc">
-                        如果遇到数据库错误，可以使用此功能重置数据库。这将删除所有数据并创建新的数据库。
+                        如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。
                     </p>
                     <button onclick="resetDatabase()" class="w-full bg-amber-600 text-white font-semibold py-2 rounded-lg hover:bg-amber-700 transition-opacity text-sm">
                         <span data-i18n="resetDbBtn">重置数据库</span>
@@ -313,26 +315,26 @@
                 appName: '刷题考试助手',
                 welcomeTitle: '智能刷题助手',
                 welcomeDesc: '不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题',
-                generateTitle: '从资料生成',
-                generateDesc: '上传PDF、Word、PPT等文件，AI自动提取内容生成标准题库',
-                organizeTitle: '整理现成题库',
-                organizeDesc: '将杂乱的题目格式转换为标准JSON，自动补充解析',
-                manageTitle: '题库管理',
-                manageDesc: '查看所有题库，开始刷题、导出或导入JSON文件',
+                generateTitle: '上传资料出题',
+                generateDesc: '上传 PDF、Word、PPT 等文件，AI 帮你自动出题',
+                organizeTitle: '整理已有题目',
+                organizeDesc: '把各种格式的题目快速整理成规范题库，自动添加答案解析',
+                manageTitle: '我的题库',
+                manageDesc: '查看、练习、导出或导入题库',
                 recentTitle: '最近创建',
                 noRecent: '暂无最近记录',
                 settings: '设置',
                 storage: '存储管理',
-                localStorage: '所有数据存储在浏览器本地 (IndexedDB)',
-                clearAll: '清空所有数据',
-                dbResetTitle: '数据库重置（解决错误）',
-                dbResetDesc: '如果遇到数据库错误，可以使用此功能重置数据库。这将删除所有数据并创建新的数据库。',
-                resetDbBtn: '重置数据库',
-                dbResetSuccess: '数据库已重置，请刷新页面以使用新数据库',
-                refreshPage: '刷新页面',
+                localStorage: '所有资料都保存在你的电脑上，不用担心泄露',
+                clearAll: '清空所有题库',
+                dbResetTitle: '修复数据问题',
+                dbResetDesc: '如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。',
+                resetDbBtn: '修复数据问题',
+                dbResetSuccess: '数据已修复，请刷新页面后重新使用',
+                refreshPage: '立即刷新',
                 statsText: '本站已生成',
                 statsSuffix: '次题库',
-                clearConfirm: '确定要清空所有数据吗？此操作不可撤销。',
+                clearConfirm: '确定要清空所有题库吗？此操作不可撤销。',
                 saveSuccess: '保存成功',
                 saveError: '保存失败',
                 pageTitle: 'GPA4.0 - 智能刷题助手',
@@ -345,29 +347,29 @@
                 appName: '刷題考試助手',
                 welcomeTitle: '智慧刷題助手',
                 welcomeDesc: '不想漫無目的地翻資料？上傳課件、筆記，AI 自動為你生成練習題',
-                generateTitle: '從數據生成',
-                generateDesc: '上傳PDF、Word、PPT等檔案，AI自動提取內容產生標準題庫',
-                organizeTitle: '整理現有題庫',
-                organizeDesc: '將雜亂的題目格式轉換為標準JSON，自動補充解析',
-                manageTitle: '題庫管理',
-                manageDesc: '查看所有題庫，開始刷題、匯出或匯入JSON檔案',
+                generateTitle: '上傳資料出題',
+                generateDesc: '上傳 PDF、Word、PPT 等檔案，AI 幫你自動出題',
+                organizeTitle: '整理已有題目',
+                organizeDesc: '把各種格式的題目快速整理成規範題庫，自動添加答案解析',
+                manageTitle: '我的題庫',
+                manageDesc: '查看、練習、匯出或匯入題庫',
                 recentTitle: '最近建立',
                 noRecent: '暫無最近記錄',
                 settings: '設定',
                 storage: '儲存管理',
-                localStorage: '所有數據儲存在瀏覽器本地 (IndexedDB)',
-                clearAll: '清空所有數據',
-                dbResetTitle: '資料庫重置（解決錯誤）',
-                dbResetDesc: '如果遇到資料庫錯誤，可以使用此功能重置資料庫。這將刪除所有數據並建立新的資料庫。',
-                resetDbBtn: '重置資料庫',
-                dbResetSuccess: '資料庫已重置，請重新整理頁面以使用新資料庫',
-                refreshPage: '重新整理頁面',
+                localStorage: '所有資料都保存在你的電腦上，不用擔心洩漏',
+                clearAll: '清空所有題庫',
+                dbResetTitle: '修復資料問題',
+                dbResetDesc: '如果遇到使用問題（如頁面卡頓、資料載入失敗），可以點擊修復。這會清空所有題庫並重新初始化。',
+                resetDbBtn: '修復資料問題',
+                dbResetSuccess: '資料已修復，請重新整理頁面後重新使用',
+                refreshPage: '立即整理',
                 statsText: '本站已產生',
                 statsSuffix: '次題庫',
-                clearConfirm: '確定要清空所有數據嗎？此操作不可撤銷。',
+                clearConfirm: '確定要清空所有題庫嗎？此操作不可撤銷。',
                 saveSuccess: '儲存成功',
                 saveError: '儲存失敗',
-                pageTitle: 'GPA4.0 - 智能刷題助手',
+                pageTitle: 'GPA4.0 - 智慧刷題助手',
                 toastSuccess: '操作成功',
                 selectGenerateMode: '選擇生成方式',
                 textExtractMode: '快速生成模式（推薦）',
