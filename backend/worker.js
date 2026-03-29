@@ -168,6 +168,35 @@ async function streamVertex(fileUri, prompt, env, token) {
   });
 }
 
+// 从纯文本生成题目（不使用 file_data）
+async function streamVertexFromText(text, prompt, env, token) {
+  const modelId = env.GCP_MODEL_ID || 'gemini-2.5-flash-lite';
+  const endpoint = `https://${env.GCP_LOCATION}-aiplatform.googleapis.com/v1/projects/${env.GCP_PROJECT_ID}/locations/${env.GCP_LOCATION}/publishers/google/models/${modelId}:streamGenerateContent`;
+
+  // 将文本和 prompt 合并
+  const fullPrompt = `${prompt}\n\n[Study Material Content]:\n${text}`;
+
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          { text: fullPrompt },
+        ],
+      },
+    ],
+  };
+
+  return fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+}
+
 /* ==================== DeepSeek (for organize.html) ==================== */
 
 // 调用 DeepSeek API（保留原有功能）
@@ -423,6 +452,99 @@ export default {
           } finally {
             await writer.close();
             // 🔥 重要：不再自动删除 GCS 文件，改为前端完成后显式调用 /cleanup
+          }
+        })());
+
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            ...corsHeaders,
+          },
+        });
+        
+      } catch (err) {
+        return new Response(JSON.stringify({
+          error: err.message
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    /* ===== GENERATE FROM TEXT ===== */
+    if (url.pathname === '/generate/text' && request.method === 'POST') {
+      try {
+        const { text, prompt, batchIndex, totalBatches } = await request.json();
+        
+        if (!text || !prompt) {
+          return createResponse(JSON.stringify({ error: 'text and prompt are required' }), 400);
+        }
+
+        const token = await getAccessToken(env);
+        
+        // 调用 Vertex AI，将文本作为 prompt 的一部分
+        const vertexRes = await streamVertexFromText(text, prompt, env, token);
+
+        if (!vertexRes.ok) {
+          const errText = await vertexRes.text();
+          return new Response(
+            JSON.stringify({ error: errText }),
+            { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        const encoder = new TextEncoder();
+
+        const sendSSE = async (obj) => {
+          await writer.write(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+        };
+
+        ctx.waitUntil((async () => {
+          const reader = vertexRes.body.getReader();
+          const decoder = new TextDecoder();
+          let rawBuffer = '';
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value, { stream: true });
+              rawBuffer += chunk;
+
+              // 提取 text 字段
+              const textRegex = /"text"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+              let match;
+              while ((match = textRegex.exec(rawBuffer)) !== null) {
+                try {
+                  const text = JSON.parse(`"${match[1]}"`);
+                  if (text) {
+                    await sendSSE({ type: 'chunk', data: text });
+                  }
+                } catch (e) {
+                  // 忽略解析错误
+                }
+              }
+              
+              // 清空已处理部分
+              let lastIndex = 0;
+              const allMatches = [...rawBuffer.matchAll(/"text"\s*:\s*"(?:[^"\\]|\\.)*"/g)];
+              if (allMatches.length > 0) {
+                const last = allMatches[allMatches.length - 1];
+                lastIndex = last.index + last[0].length;
+              }
+              rawBuffer = rawBuffer.slice(lastIndex);
+            }
+
+            await sendSSE({ type: 'done' });
+          } catch (err) {
+            await sendSSE({ type: 'error', message: err.message });
+          } finally {
+            await writer.close();
           }
         })());
 

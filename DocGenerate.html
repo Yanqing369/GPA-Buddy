@@ -8,6 +8,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     
     <style>
@@ -213,8 +216,9 @@
                         </svg>
                     </div>
                     <p class="text-lg font-medium text-slate-700 mb-2" data-i18n="dropText">拖拽PDF文件到此处</p>
-                    <p class="text-sm text-slate-500" data-i18n="supportFormats">支持 PDF 格式</p>
-                    <input type="file" id="fileInput" accept=".pdf" class="hidden">
+                    <p class="text-sm text-slate-500" data-i18n="supportFormats">支持 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式</p>
+                    <p class="text-xs text-amber-600 mt-2" data-i18n="textExtractionNotice">📄 PPT/DOCX/XLSX 文件将自动提取文本生成题目</p>
+                    <input type="file" id="fileInput" accept=".pdf,.docx,.pptx,.xlsx,.xls,.txt" class="hidden">
                 </div>
 
                 <div id="fileList" class="hidden space-y-2"></div>
@@ -269,7 +273,7 @@
                 </div>
             </div>
 
-            <!-- 右侧：PDF预览 -->
+            <!-- 右侧：文件预览 -->
             <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold flex items-center">
@@ -277,7 +281,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                         </svg>
-                        <span data-i18n="pdfPreview">PDF预览</span>
+                        <span data-i18n="filePreview">文件预览</span>
                     </h3>
                     <span id="pageStats" class="text-sm text-slate-500"></span>
                 </div>
@@ -405,5 +409,76 @@
     </div>
 
     <script src="DocGenerate.js"></script>
+    <script>
+        // 动态加载对应的 JS 文件
+        (function() {
+            let textJsLoaded = false;
+            
+            // 监听来自 DocGenerate.js 的切换事件
+            document.addEventListener('switchToTextHandler', function(e) {
+                if (textJsLoaded) return;
+                
+                const file = e.detail.file;
+                const ext = e.detail.ext;
+                
+                // 标记已加载
+                textJsLoaded = true;
+                
+                // 移除 DocGenerate.js 相关的全局函数和变量
+                window.handleFiles = null;
+                window.removeFile = null;
+                window.startGeneration = null;
+                
+                // 加载 docgenerate_text.js
+                const newScript = document.createElement('script');
+                newScript.src = 'docgenerate_text.js';
+                newScript.onload = function() {
+                    // 脚本加载完成后，手动调用 handleFilesText 处理文件
+                    if (typeof window.handleFilesText === 'function') {
+                        // 创建一个新的 FileList-like 对象
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        window.handleFilesText(dataTransfer.files);
+                    }
+                    // 更新按钮事件绑定 - docgenerate_text.js 导出的是 startGeneration
+                    const genBtn = document.getElementById('genBtn');
+                    if (genBtn) {
+                        genBtn.onclick = function() {
+                            if (typeof window.startGeneration === 'function') {
+                                window.startGeneration();
+                            }
+                        };
+                    }
+                };
+                document.body.appendChild(newScript);
+            });
+            
+            const fileInput = document.getElementById('fileInput');
+            
+            // 监听文件选择 - 用于 PDF/非PDF 切换
+            fileInput.addEventListener('change', function(e) {
+                if (e.target.files.length > 0) {
+                    const file = e.target.files[0];
+                    const ext = file.name.split('.').pop().toLowerCase();
+                    
+                    // 如果已经加载了 docgenerate_text.js 但用户选择了 PDF，刷新页面加载 PDF 模式
+                    if (ext === 'pdf' && textJsLoaded) {
+                        // 保存文件到 sessionStorage，刷新后自动加载
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            sessionStorage.setItem('pendingFile', JSON.stringify({
+                                name: file.name,
+                                type: file.type,
+                                data: e.target.result,
+                                timestamp: Date.now()
+                            }));
+                            location.reload();
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+            });
+        })();
+    </script>
 </body>
 </html>
