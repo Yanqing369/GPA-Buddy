@@ -32,11 +32,11 @@
         
         /* iOS 风格玻璃拟态 - 液态玻璃 (Liquid Glass) */
         .glass-nav {
-            background: linear-gradient(135deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.75) 50%, rgba(250,249,246,0.9) 100%);
+            background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,251,235,0.85) 50%, rgba(254,252,232,0.88) 100%);
             backdrop-filter: blur(24px) saturate(200%);
             -webkit-backdrop-filter: blur(24px) saturate(200%);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.03), inset 0 -1px 0 rgba(255, 255, 255, 0.4);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), inset 0 -1px 0 rgba(255, 255, 255, 0.5);
         }
         
         .glass-card {
@@ -1304,11 +1304,21 @@
             if (e.target === this) hideSettings();
         });
 
+        // 防止浏览器恢复滚动位置，强制从顶部开始
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        
         document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
             updateLanguage();
             loadRecent();
             loadGlobalStats();
+        });
+        
+        // 额外保险：页面完全加载后再滚动到顶部
+        window.addEventListener('load', () => {
+            window.scrollTo(0, 0);
         });
     </script>
 </body>
