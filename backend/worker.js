@@ -931,6 +931,21 @@ export default {
         const { fileUris, prompt } = await request.json();
         const fileUri = fileUris[0];
 
+        // 检查配额（如果已登录）
+        const user = await getUserFromRequest(request, env);
+        if (user) {
+          const quotaCheck = await checkAndConsumeQuota(user.id, env);
+          if (!quotaCheck.allowed) {
+            return createResponse(JSON.stringify({ 
+              error: quotaCheck.reason,
+              code: 'QUOTA_EXCEEDED'
+            }), 403);
+          }
+        } else {
+          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
+        }
+
         const token = await getAccessToken(env);
         const vertexRes = await streamVertex(fileUri, prompt, env, token);
 
@@ -1017,6 +1032,21 @@ export default {
         
         if (!text || !prompt) {
           return createResponse(JSON.stringify({ error: 'text and prompt are required' }), 400);
+        }
+
+        // 检查配额（如果已登录）
+        const user = await getUserFromRequest(request, env);
+        if (user) {
+          const quotaCheck = await checkAndConsumeQuota(user.id, env);
+          if (!quotaCheck.allowed) {
+            return createResponse(JSON.stringify({ 
+              error: quotaCheck.reason,
+              code: 'QUOTA_EXCEEDED'
+            }), 403);
+          }
+        } else {
+          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
         }
 
         const token = await getAccessToken(env);
