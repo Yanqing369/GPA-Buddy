@@ -25,14 +25,14 @@
         
         body {
             font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background: linear-gradient(180deg, #f0fdf4 0%, #ecfdf5 50%, #f0fdf4 100%);
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
         
-        /* iOS 风格玻璃拟态 */
+        /* iOS 风格玻璃拟�?*/
         .glass-nav {
-            background: rgba(255, 255, 255, 0.65);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(254, 243, 199, 0.3) 50%, rgba(255, 255, 255, 0.9) 100%);
             backdrop-filter: blur(20px) saturate(180%);
             -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid rgba(0, 0, 0, 0.04);
@@ -46,17 +46,17 @@
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
         }
         
-        /* 超椭圆形状 */
+        /* 超椭圆形�?*/
         .squircle {
             border-radius: 24px;
         }
         
-        /* 柔和色背景 */
+        /* 柔和色背�?*/
         .bg-mint { background-color: rgba(134, 239, 172, 0.15); }
         .bg-lavender { background-color: rgba(233, 213, 255, 0.2); }
         .bg-sky-soft { background-color: rgba(191, 219, 254, 0.2); }
         
-        /* 弹性动画 */
+        /* 弹性动�?*/
         .spring-hover {
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -70,7 +70,7 @@
             transform: scale(0.96);
         }
         
-        /* 图标弹性 */
+        /* 图标弹�?*/
         .icon-bounce {
             transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
@@ -79,7 +79,7 @@
             transform: scale(1.15) rotate(-5deg);
         }
         
-        /* ===== 流体渐变球体动画（从资料生成） ===== */
+        /* ===== 流体渐变球体动画（从资料生成�?===== */
         .liquid-sphere {
             position: relative;
             width: 56px;
@@ -257,7 +257,7 @@
             box-shadow: 0 1px 2px rgba(168, 85, 247, 0.2);
         }
 
-        /* 线条1 - 长 */
+        /* 线条1 - �?*/
         .magic-line-1 {
             width: 32px;
             top: 18px;
@@ -265,7 +265,7 @@
             animation: align-1 3s ease-in-out infinite;
         }
 
-        /* 线条2 - 中 */
+        /* 线条2 - �?*/
         .magic-line-2 {
             width: 24px;
             top: 28px;
@@ -273,7 +273,7 @@
             animation: align-2 3s ease-in-out infinite;
         }
 
-        /* 线条3 - 短 */
+        /* 线条3 - �?*/
         .magic-line-3 {
             width: 28px;
             top: 38px;
@@ -332,7 +332,7 @@
             animation-duration: 1s;
         }
 
-        /* ===== 生长树动画（题库管理） ===== */
+        /* ===== 生长树动画（题库管理�?===== */
         .growing-tree {
             position: relative;
             width: 56px;
@@ -380,7 +380,7 @@
             80% { height: 20px; opacity: 1; }
         }
 
-        /* 树冠 - 左 */
+        /* 树冠 - �?*/
         .growing-tree .foliage-left {
             position: absolute;
             bottom: 22px;
@@ -395,7 +395,7 @@
             z-index: 3;
         }
 
-        /* 树冠 - 右 */
+        /* 树冠 - �?*/
         .growing-tree .foliage-right {
             position: absolute;
             bottom: 24px;
@@ -410,7 +410,7 @@
             z-index: 2;
         }
 
-        /* 树冠 - 顶 */
+        /* 树冠 - �?*/
         .growing-tree .foliage-top {
             position: absolute;
             bottom: 30px;
@@ -450,7 +450,7 @@
             100% { transform: translateX(-50%) scale(1) rotate(0deg); }
         }
 
-        /* 悬停加速生长 */
+        /* 悬停加速生�?*/
         .group:hover .growing-tree .trunk,
         .group:hover .growing-tree .foliage-left,
         .group:hover .growing-tree .foliage-right,
@@ -458,7 +458,7 @@
             animation-duration: 1.5s;
         }
 
-        /* 飘落的叶子 */
+        /* 飘落的叶�?*/
         .growing-tree .leaf {
             position: absolute;
             width: 4px;
@@ -493,7 +493,7 @@
             }
         }
 
-        /* 语言下拉选择器 */
+        /* 语言下拉选择�?*/
         .lang-dropdown {
             position: relative;
             display: inline-block;
@@ -539,17 +539,17 @@
         }
 
         .lang-option.active::after {
-            content: '✓';
+            content: '�?;
             margin-left: 8px;
         }
         
-        /* 捐款横幅 - 森林绿+米白+暖黄 */
+        /* 捐款横幅 - 森林�?米白+暖黄 */
         .donate-banner {
             background: linear-gradient(135deg, #ecfdf5 0%, #fffbeb 50%, #ecfdf5 100%);
             border-bottom: 1px solid rgba(16, 185, 129, 0.1);
         }
         
-        /* 滚动条美化 */
+        /* 滚动条美�?*/
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -577,9 +577,9 @@
 </head>
 <body class="min-h-screen selection:bg-green-200 selection:text-green-900">
 
-    <!-- 数据库重置提示 -->
+    <!-- 数据库重置提�?-->
     <div id="dbResetBanner" class="hidden bg-red-500 text-white text-center py-2 px-4 text-sm font-medium">
-        <span data-i18n="dbResetSuccess">数据库已重置，请刷新页面以使用新数据库</span>
+        <span data-i18n="dbResetSuccess">数据库已重置，请刷新页面以使用新数据�?/span>
         <button onclick="location.reload()" class="ml-3 px-3 py-1 bg-white text-red-600 rounded-full text-xs font-bold" data-i18n="refreshPage">刷新页面</button>
     </div>
 
@@ -588,7 +588,7 @@
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
-                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">如果你觉得此网站有用，可以捐款支持我们</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 �?/ 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">如果你觉得此网站有用，可以捐款支持我�?/span>
                 <a href="donate.html" target="_blank" class="px-4 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-full hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
@@ -601,7 +601,7 @@
         </button>
     </div>
 
-    <!-- 导航栏 -->
+    <!-- 导航�?-->
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
@@ -617,16 +617,16 @@
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                         </svg>
-                        <span id="currentLangDisplay">简体中文</span>
+                        <span id="currentLangDisplay">简体中�?/span>
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
                     <div id="langDropdown" class="lang-dropdown-content">
-                        <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
+                        <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中�?/div>
                         <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
                         <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
-                        <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
+                        <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국�?/div>
                     </div>
                 </div>
                 
@@ -640,23 +640,23 @@
         </div>
     </nav>
 
-    <!-- 主内容 -->
+    <!-- 主内�?-->
     <main class="max-w-5xl mx-auto px-6 py-12">
         
         <!-- Hero 区域 -->
         <section class="mb-16 text-center">
             <h1 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight" data-i18n="welcomeTitle">智能刷题助手</h1>
             <p class="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed mb-8" data-i18n="welcomeDesc">
-                不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题
+                不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习�?
             </p>
             
             <div class="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-600 bg-white/60 backdrop-blur rounded-full border border-black/5">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                 </svg>
-                <span data-i18n="statsText">本站已生成</span>
+                <span data-i18n="statsText">本站已生�?/span>
                 <span id="totalCount" class="font-bold text-emerald-600 tabular-nums">...</span>
-                <span data-i18n="statsSuffix">次题库</span>
+                <span data-i18n="statsSuffix">次题�?/span>
             </div>
         </section>
 
@@ -675,7 +675,7 @@
                     </div>
                 </div>
                 
-                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="generateTitle">从资料生成</h3>
+                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="generateTitle">从资料生�?/h3>
                 <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</p>
             </a>
 
@@ -693,10 +693,10 @@
                 </div>
                 
                 <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="organizeTitle">整理现成题库</h3>
-                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</p>
+                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解�?/p>
             </a>
 
-            <!-- 管理卡片 - 生长树动画 -->
+            <!-- 管理卡片 - 生长树动�?-->
             <a href="manage.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-green-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                 
@@ -717,17 +717,17 @@
             </a>
         </section>
 
-        <!-- 最近创建 -->
+        <!-- 最近创�?-->
         <section class="glass-card squircle p-6 md:p-8">
             <h3 class="text-lg font-semibold mb-6 flex items-center text-slate-900">
                 <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                <span data-i18n="recentTitle">最近创建</span>
+                <span data-i18n="recentTitle">最近创�?/span>
             </h3>
             
             <div id="recentList" class="space-y-3">
-                <div class="text-slate-400 text-center py-8" data-i18n="noRecent">暂无最近记录</div>
+                <div class="text-slate-400 text-center py-8" data-i18n="noRecent">暂无最近记�?/div>
             </div>
         </section>
     </main>
@@ -750,10 +750,10 @@
                         </svg>
                         <span data-i18n="storage">存储管理</span>
                     </h4>
-                    <p class="text-xs text-slate-500 mb-4 leading-relaxed" data-i18n="localStorage">所有资料都保存在你的电脑上，不用担心泄露</p>
-                    <p class="text-xs text-slate-400 mb-3" id="storageStats">已使用: 计算中...</p>
+                    <p class="text-xs text-slate-500 mb-4 leading-relaxed" data-i18n="localStorage">所有资料都保存在你的电脑上，不用担心泄�?/p>
+                    <p class="text-xs text-slate-400 mb-3" id="storageStats">已使�? 计算�?..</p>
                     <button onclick="clearAllData()" class="w-full py-3 rounded-xl border border-red-100 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors spring-active" data-i18n="clearAll">
-                        清空所有题库
+                        清空所有题�?
                     </button>
                 </div>
 
@@ -764,9 +764,9 @@
                         </svg>
                         <span data-i18n="dbResetTitle">修复数据问题</span>
                     </h4>
-                    <p class="text-xs text-amber-700/80 mb-4 leading-relaxed" data-i18n="dbResetDesc">如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。</p>
+                    <p class="text-xs text-amber-700/80 mb-4 leading-relaxed" data-i18n="dbResetDesc">如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化�?/p>
                     <button onclick="resetDatabase()" class="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-colors shadow-sm shadow-amber-200 spring-active" data-i18n="resetDbBtn">
-                        重置数据库
+                        重置数据�?
                     </button>
                 </div>
             </div>
@@ -799,64 +799,64 @@
 
         const i18n = {
             zh: {
-                donateBannerText: '生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们',
-                donateBannerTextMobile: '如果你觉得此网站有用，可以捐款支持我们',
+                donateBannerText: '生成一次题库的成本约为 0.5 �?/ 0.5 港币，如果本网站对你有帮助，可以捐款支持我们',
+                donateBannerTextMobile: '如果你觉得此网站有用，可以捐款支持我�?,
                 supportUs: '支持我们',
-                appName: '刷题考试助手',
-                welcomeTitle: '智能刷题助手',
-                welcomeDesc: '不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题',
-                generateTitle: '从资料生成',
-                generateDesc: '上传 PDF、Word、PPT 等文件，AI 帮你自动出题',
-                organizeTitle: '整理现成题库',
-                organizeDesc: '把各种格式的题目快速整理成规范题库，自动添加答案解析',
-                manageTitle: '题库管理',
-                manageDesc: '查看、练习、导出或导入题库',
-                recentTitle: '最近创建',
-                noRecent: '暂无最近记录',
+                appName: '你的期末搭子',
+                welcomeTitle: '智能复习助手',
+                welcomeDesc: '上传课件和笔记，自动生成练习题，复习不再盲目',
+                generateTitle: '立即出题',
+                generateDesc: '上传 PDF、Word、PPT，AI 自动提取知识点，生成选择题',
+                organizeTitle: '整理已有题库',
+                organizeDesc: '往年试卷，试题文档，整理成可以练的电子版',
+                manageTitle: '刷题练习',
+                manageDesc: '在线练习、知识点溯源，还能查看原课件位置',
+                recentTitle: '最近创�?,
+                noRecent: '暂无最近记�?,
                 settings: '设置',
                 storage: '存储管理',
-                localStorage: '所有资料都保存在你的电脑上，不用担心泄露',
-                clearAll: '清空所有题库',
+                localStorage: '所有资料都保存在你的电脑上，不用担心泄�?,
+                clearAll: '清空所有题�?,
                 dbResetTitle: '修复数据问题',
-                dbResetDesc: '如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。',
-                resetDbBtn: '重置数据库',
-                dbResetSuccess: '数据库已重置，请刷新页面以使用新数据库',
+                dbResetDesc: '如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化�?,
+                resetDbBtn: '重置数据�?,
+                dbResetSuccess: '数据库已重置，请刷新页面以使用新数据�?,
                 refreshPage: '刷新页面',
-                statsText: '本站已生成',
-                statsSuffix: '次题库',
-                clearConfirm: '确定要清空所有题库吗？此操作不可撤销。',
+                statsText: '本站已生�?,
+                statsSuffix: '次题�?,
+                clearConfirm: '确定要清空所有题库吗？此操作不可撤销�?,
                 saveSuccess: '保存成功',
                 saveError: '保存失败',
                 pageTitle: 'GPA4.0 - 智能刷题助手',
                 toastSuccess: '操作成功',
             },
             'zh-TW': {
-                donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
-                donateBannerTextMobile: '如果你覺得此網站有用，可以捐款支持我們',
-                supportUs: '支持我們',
-                appName: '刷題考試助手',
-                welcomeTitle: '智慧刷題助手',
-                welcomeDesc: '不想漫無目的地翻資料？上傳課件、筆記，AI 自動為你生成練習題',
-                generateTitle: '從資料生成',
-                generateDesc: '上傳 PDF、Word、PPT 等檔案，AI 幫你自動出題',
-                organizeTitle: '整理現成題庫',
-                organizeDesc: '把各種格式的題目快速整理成規範題庫，自動添加答案解析',
-                manageTitle: '題庫管理',
-                manageDesc: '查看、練習、匯出或匯入題庫',
-                recentTitle: '最近建立',
-                noRecent: '暫無最近記錄',
+                donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我�?,
+                donateBannerTextMobile: '如果你覺得此網站有用，可以捐款支持我�?,
+                supportUs: '支持我�?,
+                appName: 'GPA Buddy',
+                welcomeTitle: '智能復習助手',
+                welcomeDesc: '上傳課件和筆記，自動生成練習題，複習不再盲目',
+                generateTitle: '立即出題',
+                generateDesc: '上傳 PDF、Word、PPT，AI 自動提取知識點，生成選擇題',
+                organizeTitle: '整理已有題庫',
+                organizeDesc: '往年試卷，試題文件，整理成可以練的電子版',
+                manageTitle: '刷題練習',
+                manageDesc: '在線練習、知識點溯源，還能查看原課件位置',
+                recentTitle: '最近建�?,
+                noRecent: '暫無最近記�?,
                 settings: '設定',
                 storage: '儲存管理',
-                localStorage: '所有資料都保存在你的電腦上，不用擔心洩漏',
-                clearAll: '清空所有題庫',
+                localStorage: '所有資料都保存在你的電腦上，不用擔心洩�?,
+                clearAll: '清空所有題�?,
                 dbResetTitle: '修復資料問題',
-                dbResetDesc: '如果遇到使用問題（如頁面卡頓、資料載入失敗），可以點擊修復。這會清空所有題庫並重新初始化。',
-                resetDbBtn: '重置資料庫',
+                dbResetDesc: '如果遇到使用問題（如頁面卡頓、資料載入失敗），可以點擊修復。這會清空所有題庫並重新初始化�?,
+                resetDbBtn: '重置資料�?,
                 dbResetSuccess: '資料已修復，請重新整理頁面後重新使用',
                 refreshPage: '立即整理',
-                statsText: '本站已產生',
-                statsSuffix: '次題庫',
-                clearConfirm: '確定要清空所有題庫嗎？此操作不可撤銷。',
+                statsText: '本站已產�?,
+                statsSuffix: '次題�?,
+                clearConfirm: '確定要清空所有題庫嗎？此操作不可撤銷�?,
                 saveSuccess: '儲存成功',
                 saveError: '儲存失敗',
                 pageTitle: 'GPA4.0 - 智慧刷題助手',
@@ -866,15 +866,15 @@
                 donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
                 donateBannerTextMobile: 'If you find this site helpful, please consider donating.',
                 supportUs: 'Support Us',
-                appName: 'Exam Study Buddy',
-                welcomeTitle: 'Smart Exam Assistant',
-                welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials and let AI generate practice questions for you',
-                generateTitle: 'Generate from Material',
-                generateDesc: 'Upload PDF, Word, PPT files, AI extracts content to generate standard question banks',
-                organizeTitle: 'Organize Existing Bank',
-                organizeDesc: 'Convert messy question formats to standard JSON, auto-generate explanations',
-                manageTitle: 'Bank Management',
-                manageDesc: 'View all banks, practice, export or import JSON files',
+                appName: 'GPA Buddy',
+                welcomeTitle: 'Smart Study Assistant',
+                welcomeDesc: 'Upload your notes and materials. AI generates practice questions so you can study smarter.',
+                generateTitle: 'Generate Questions',
+                generateDesc: 'Upload PDF, Word, or PPT. AI extracts key concepts and creates multiple-choice questions.',
+                organizeTitle: 'Organize Questions',
+                organizeDesc: 'Turn past papers and messy docs into clean, practice-ready question sets.',
+                manageTitle: 'Practice & Review',
+                manageDesc: 'Practice online, trace back to source materials, and review efficiently.',
                 recentTitle: 'Recent',
                 noRecent: 'No recent records',
                 settings: 'Settings',
@@ -895,35 +895,35 @@
                 toastSuccess: 'Operation successful',
             },
             ko: {
-                donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
-                donateBannerTextMobile: '이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+                donateBannerText: '생성 1�?비용은 �?0.5 HKD입니�? �?사이트가 도움�?된다�?기부�?후원�?주세�?',
+                donateBannerTextMobile: '�?사이트가 도움�?된다�?기부�?후원�?주세�?',
                 supportUs: '후원하기',
-                appName: '문제은행 도우미',
-                welcomeTitle: '스마트 문제은행 도우미',
-                welcomeDesc: '학습 자료를 업로드하면 AI가 자동으로 문제은행을 생성합니다. 다양한 형식을 지원하며 로켈 저장소로 프라이버시를 보호합니다.',
-                generateTitle: '자료에서 생성',
-                generateDesc: 'PDF, Word, PPT 파일을 업로드하면 AI가 내용을 추출하여 표준 문제은행을 생성합니다',
-                organizeTitle: '기존 문제은행 정리',
-                organizeDesc: '어수선한 문제 형식을 표준 JSON으로 변환하고 해설을 자동으로 추가합니다',
-                manageTitle: '문제은행 관리',
-                manageDesc: '모든 문제은행을 보고, 문제를 풀거나 JSON 파일을 보내거나 가져옵니다',
+                appName: 'GPA Buddy',
+                welcomeTitle: '스마�?학습 도우�?,
+                welcomeDesc: '강의자료와 노트�?업로드하�?연습문제가 자동으로 생성됩니�? 효율적인 복습�?도와드립니다.',
+                generateTitle: '바로 출제',
+                generateDesc: 'PDF, Word, PPT�?업로드하�?AI가 핵심 내용�?추출�?서답�?문제�?만듭니다.',
+                organizeTitle: '기존 문제 정리',
+                organizeDesc: '어수선한 문제 형식�?표준 JSON으로 변환하�?해설�?자동으로 추가합니�?,
+                manageTitle: '문제 풀�?,
+                manageDesc: '모든 문제은행을 보고, 문제�?풀거나 JSON 파일�?보내거나 가져옵니다',
                 recentTitle: '최근 생성',
                 noRecent: '최근 기록 없음',
                 settings: '설정',
-                storage: '저장소 관리',
-                localStorage: '모든 데이터는 브라우저 로컬에 저장됩니다 (IndexedDB)',
-                clearAll: '모든 데이터 비우기',
-                dbResetTitle: '데이터베이스 초기화 (오류 해결)',
-                dbResetDesc: '데이터베이스 오류가 발생한 경우 이 기능을 사용하여 데이터베이스를 초기화하세요. 모든 데이터가 삭제되고 새 데이터베이스가 생성됩니다.',
-                resetDbBtn: '데이터베이스 초기화',
-                dbResetSuccess: '데이터베이스가 초기화되었습니다. 새 데이터베이스를 사용하려면 페이지를 새로고침하세요',
+                storage: '저장소 관�?,
+                localStorage: '모든 데이터는 브라우저 로컬�?저장됩니다 (IndexedDB)',
+                clearAll: '모든 데이�?비우�?,
+                dbResetTitle: '데이터베이스 초기�?(오류 해결)',
+                dbResetDesc: '데이터베이스 오류가 발생�?경우 �?기능�?사용하여 데이터베이스�?초기화하세요. 모든 데이터가 삭제되고 �?데이터베이스가 생성됩니�?',
+                resetDbBtn: '데이터베이스 초기�?,
+                dbResetSuccess: '데이터베이스가 초기화되었습니다. �?데이터베이스�?사용하려�?페이지�?새로고침하세�?,
                 refreshPage: '페이지 새로고침',
-                statsText: '생성됨',
-                statsSuffix: '개 문제은행',
-                clearConfirm: '모든 데이터를 비우시겠습니까? 이 작업은 취소할 수 없습니다.',
-                saveSuccess: '저장 성공',
-                saveError: '저장 실패',
-                pageTitle: 'GPA4.0 - 스마트 문제은행 도우미',
+                statsText: '생성�?,
+                statsSuffix: '�?문제은�?,
+                clearConfirm: '모든 데이터를 비우시겠습니�? �?작업은 취소�?�?없습니다.',
+                saveSuccess: '저�?성공',
+                saveError: '저�?실패',
+                pageTitle: 'GPA4.0 - 스마�?문제은�?도우�?,
                 toastSuccess: '작업 성공',
             }
         };
@@ -943,10 +943,10 @@
         }
 
         const langDisplayNames = {
-            'zh': '简体中文',
+            'zh': '简体中�?,
             'zh-TW': '繁體中文',
             'en': 'English',
-            'ko': '한국어'
+            'ko': '한국�?
         };
 
         function updateLanguage() {
@@ -1048,7 +1048,7 @@
                         </div>
                         <div>
                             <div class="font-semibold text-slate-900 text-sm">${bank.name}</div>
-                            <div class="text-xs text-slate-500">${bank.questions?.length || 0} ${currentLang === 'en' || currentLang === 'ko' ? 'questions' : '题'} · ${new Date(bank.createdAt).toLocaleDateString()}</div>
+                            <div class="text-xs text-slate-500">${bank.questions?.length || 0} ${currentLang === 'en' || currentLang === 'ko' ? 'questions' : '�?} · ${new Date(bank.createdAt).toLocaleDateString()}</div>
                         </div>
                     </div>
                     <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
