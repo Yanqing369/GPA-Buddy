@@ -1092,13 +1092,8 @@
 
         function closeDonateBanner() {
             const banner = document.getElementById('donateBanner');
-            if (banner) banner.style.display = 'none';
-            localStorage.setItem('donateBannerClosed', 'true');
-        }
-
-        function checkDonateBanner() {
-            if (localStorage.getItem('donateBannerClosed') === 'true') {
-                document.getElementById('donateBanner').style.display = 'none';
+            if (banner) {
+                banner.style.display = 'none';
             }
         }
 
@@ -1110,7 +1105,6 @@
             updateLanguage();
             loadRecent();
             loadGlobalStats();
-            checkDonateBanner();
         });
     </script>
 </body>
