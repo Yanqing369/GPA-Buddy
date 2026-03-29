@@ -799,6 +799,52 @@
                     </div>
                 </div>
                 
+                <!-- 用户登录/头像 -->
+                <div id="userSection" class="flex items-center gap-2">
+                    <!-- 未登录状态 -->
+                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center gap-2 hover:bg-emerald-50">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        <span data-i18n="login">登录</span>
+                    </button>
+                    
+                    <!-- 已登录状态 -->
+                    <div id="userMenu" class="hidden relative">
+                        <button onclick="toggleUserDropdown()" class="flex items-center gap-2 px-3 py-2 rounded-xl liquid-btn">
+                            <img id="userAvatar" src="" alt="Avatar" class="w-8 h-8 rounded-full bg-gray-200">
+                            <span id="userName" class="text-sm font-medium text-slate-700 max-w-[80px] truncate"></span>
+                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div id="userDropdown" class="hidden absolute right-0 top-full mt-2 w-56 rounded-xl glass-card p-2 z-50">
+                            <div class="px-3 py-2 border-b border-gray-100">
+                                <p id="userEmail" class="text-xs text-slate-500 truncate"></p>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span id="accountType" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">Free</span>
+                                    <span id="userBalance" class="text-xs text-slate-600">余额: 0点</span>
+                                </div>
+                            </div>
+                            <a href="manage.html" class="block w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
+                                <span data-i18n="myBanks">我的题库</span>
+                            </a>
+                            <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                </svg>
+                                <span data-i18n="logout">退出登录</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
                 <button onclick="showSettings()" class="w-10 h-10 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-700">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -980,6 +1026,130 @@
 
     <script>
         const API_BASE = "https://moyuxiaowu.org";
+        
+        /* ==================== AUTH SYSTEM ==================== */
+        let currentUser = null;
+        let authToken = localStorage.getItem('auth_token');
+        
+        // 检查URL参数（登录回调）
+        function checkAuthCallback() {
+            console.log('Checking auth callback...');
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const login = urlParams.get('login');
+            
+            console.log('URL params:', { token: token ? 'present' : 'missing', login });
+            console.log('Stored authToken:', authToken ? 'present' : 'missing');
+            
+            if (token && login === 'success') {
+                console.log('Login success from URL, storing token');
+                authToken = token;
+                localStorage.setItem('auth_token', token);
+                // 清除URL参数
+                window.history.replaceState({}, document.title, window.location.pathname);
+                loadUserInfo();
+            } else if (authToken) {
+                console.log('Found stored token, loading user info');
+                loadUserInfo();
+            } else {
+                console.log('No token found, showing login UI');
+                updateUserUI();
+            }
+        }
+        
+        // 加载用户信息
+        async function loadUserInfo() {
+            if (!authToken) {
+                console.log('No auth token found');
+                return;
+            }
+            
+            try {
+                console.log('Loading user info...');
+                console.log('API_BASE:', API_BASE);
+                console.log('Token:', authToken.substring(0, 30) + '...');
+                
+                const res = await fetch(`${API_BASE}/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${authToken}` }
+                });
+                
+                console.log('Response status:', res.status);
+                
+                if (res.ok) {
+                    currentUser = await res.json();
+                    console.log('User loaded:', currentUser);
+                    updateUserUI();
+                    showToast(`欢迎回来，${currentUser.name || currentUser.email}!`, 'success');
+                } else {
+                    const errorText = await res.text();
+                    console.error('Failed to load user info:', res.status, errorText);
+                    // Token无效，清除
+                    authToken = null;
+                    localStorage.removeItem('auth_token');
+                    updateUserUI();
+                    showToast('登录已过期，请重新登录', 'error');
+                }
+            } catch (err) {
+                console.error('Failed to load user info:', err);
+                updateUserUI();
+                showToast('网络错误，请检查连接', 'error');
+            }
+        }
+        
+        // 更新用户UI
+        function updateUserUI() {
+            const loginBtn = document.getElementById('loginBtn');
+            const userMenu = document.getElementById('userMenu');
+            
+            if (currentUser) {
+                // 已登录
+                loginBtn.classList.add('hidden');
+                userMenu.classList.remove('hidden');
+                
+                document.getElementById('userAvatar').src = currentUser.avatar || '';
+                document.getElementById('userName').textContent = currentUser.name || currentUser.email;
+                document.getElementById('userEmail').textContent = currentUser.email;
+                document.getElementById('accountType').textContent = currentUser.accountType === 'free' ? 'Free' : currentUser.accountType;
+                document.getElementById('userBalance').textContent = `余额: ${currentUser.balance?.freeQuotaLeft || 0}次/日`;
+            } else {
+                // 未登录
+                loginBtn.classList.remove('hidden');
+                userMenu.classList.add('hidden');
+            }
+        }
+        
+        // 切换用户下拉菜单
+        function toggleUserDropdown() {
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+        
+        // 登录按钮点击
+        function handleLogin() {
+            // 跳转到Google登录
+            window.location.href = `${API_BASE}/auth/google`;
+        }
+        
+        // 退出登录
+        async function handleLogout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('auth_token');
+            updateUserUI();
+            toggleUserDropdown();
+            showToast('已退出登录', 'info');
+        }
+        
+        // 带认证的fetch包装
+        async function authFetch(url, options = {}) {
+            if (authToken) {
+                options.headers = options.headers || {};
+                options.headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            return fetch(url, options);
+        }
+        
+        /* ==================== DB & OTHER ==================== */
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
         
         const db = new Dexie(DB_NAME);
@@ -1010,6 +1180,9 @@
                 noRecent: '暂无最近记录',
                 settings: '设置',
                 storage: '存储管理',
+                login: '登录',
+                logout: '退出登录',
+                myBanks: '我的题库',
                 localStorage: '所有资料都保存在你的电脑上，不用担心泄露',
                 clearAll: '清空所有题库',
                 dbResetTitle: '修复数据问题',
@@ -1043,6 +1216,9 @@
                 noRecent: '暫無最近記錄',
                 settings: '設定',
                 storage: '儲存管理',
+                login: '登入',
+                logout: '登出',
+                myBanks: '我的題庫',
                 localStorage: '所有資料均儲存在你的電腦內，不用擔心外洩',
                 clearAll: '清空所有試題庫',
                 dbResetTitle: '修復資料問題',
@@ -1076,6 +1252,9 @@
                 noRecent: 'No recent records',
                 settings: 'Settings',
                 storage: 'Storage Management',
+                login: 'Login',
+                logout: 'Logout',
+                myBanks: 'My Question Banks',
                 localStorage: 'All data stored locally in browser (IndexedDB)',
                 clearAll: 'Clear All Data',
                 dbResetTitle: 'Database Reset (Fix Errors)',
@@ -1109,6 +1288,9 @@
                 noRecent: '최근 기록 없음',
                 settings: '설정',
                 storage: '저장소 관리',
+                login: '로그인',
+                logout: '로그아웃',
+                myBanks: '내 문제은행',
                 localStorage: '모든 데이터는 브라우저에 로컬로 저장됩니다 (IndexedDB)',
                 clearAll: '모든 데이터 지우기',
                 dbResetTitle: '데이터베이스 초기화 (오류 수정)',
@@ -1311,6 +1493,7 @@
         
         document.addEventListener('DOMContentLoaded', () => {
             window.scrollTo(0, 0);
+            checkAuthCallback(); // 检查登录状态
             updateLanguage();
             loadRecent();
             loadGlobalStats();

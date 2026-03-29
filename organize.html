@@ -43,12 +43,54 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         
-        /* iOS 风格玻璃拟态 */
+        /* iOS 风格玻璃拟态 - 液态玻璃 (Liquid Glass) */
         .glass-nav {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,251,235,0.85) 50%, rgba(254,252,232,0.88) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .liquid-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .liquid-btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(252,251,248,0.95) 100%);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            transform: translateY(-2px);
+        }
+
+        .liquid-btn-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.95) 100%);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), 0 1px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(167, 243, 208, 0.5), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-btn-emerald:hover {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.95) 0%, rgba(16, 185, 129, 1) 100%);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.4), 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(167, 243, 208, 0.6), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .liquid-social-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            backdrop-filter: blur(12px) saturate(180%);
+            -webkit-backdrop-filter: blur(12px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .liquid-social-btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(252,251,248,0.98) 100%);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
+            transform: translateY(-3px) scale(1.05);
         }
         
         .glass-card {
@@ -78,10 +120,13 @@
             transform: scale(0.96);
         }
         
-        /* 捐款横幅 - 森林绿+米白+暖黄 */
+        /* 捐款横幅 - 液态玻璃风格 */
         .donate-banner {
-            background: linear-gradient(135deg, #ecfdf5 0%, #fffbeb 50%, #ecfdf5 100%);
-            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+            background: linear-gradient(135deg, rgba(236, 253, 245, 0.8) 0%, rgba(255, 251, 235, 0.9) 50%, rgba(236, 253, 245, 0.8) 100%);
+            backdrop-filter: blur(12px) saturate(150%);
+            -webkit-backdrop-filter: blur(12px) saturate(150%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
         }
         
         .slide-in {
@@ -129,49 +174,46 @@
             }
         }
 
-        .lang-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-
+        /* 语言下拉 */
+        .lang-dropdown { position: relative; display: inline-block; }
         .lang-dropdown-content {
             display: none;
             position: absolute;
             right: 0;
-            background-color: white;
-            min-width: 140px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
+            min-width: 160px;
             z-index: 50;
-            border: 1px solid #e2e8f0;
-            margin-top: 4px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            overflow: hidden;
         }
-
-        .lang-dropdown-content.show {
-            display: block;
-        }
-
+        .lang-dropdown-content.show { display: block; }
         .lang-option {
-            padding: 10px 16px;
+            padding: 12px 18px;
             cursor: pointer;
             font-size: 14px;
             color: #475569;
-            transition: all 0.2s;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 4px 6px;
+            border-radius: 12px;
         }
-
         .lang-option:hover {
-            background-color: #f1f5f9;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
             color: #6366f1;
+            transform: translateX(2px);
         }
-
         .lang-option.active {
-            background-color: #eef2ff;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
             color: #6366f1;
-            font-weight: 500;
-        }
-
-        .lang-option.active::after {
-            content: ' ✓';
+            font-weight: 600;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
         }
 
         ::-webkit-scrollbar {
@@ -271,32 +313,33 @@
     <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-                <span class="text-xl">🌱</span>
-                <span class="text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
-                <a href="donate.html" class="px-4 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-full hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex-shrink-0 spring-active">
+                <span class="hidden sm:inline text-xl">🌱</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">如果你觉得此网站有用，可以捐款支持我们</span>
+                <a href="donate.html" target="_blank" class="px-4 py-1.5 liquid-btn-emerald text-white text-xs font-bold rounded-full flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
             </div>
         </div>
-        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-emerald-600/60 hover:text-emerald-800 transition-colors p-1 spring-active z-10">
+        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 liquid-btn spring-active z-10 rounded-full p-1.5 text-slate-500 hover:text-slate-700">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
+    <!-- 导航栏 -->
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 bg-mint rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(134, 239, 172, 0.3) 0%, rgba(134, 239, 172, 0.15) 100%);">
                     🌿
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="hidden sm:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
-                
+            
             <div class="flex items-center gap-4">
-                <div class="lang-dropdown hidden sm:block">
-                    <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
+                <div class="lang-dropdown">
+                    <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                         </svg>
@@ -312,12 +355,6 @@
                         <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
                     </div>
                 </div>
-                
-                <a href="index.html" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors spring-active text-slate-600">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                    </svg>
-                </a>
             </div>
         </div>
     </nav>
@@ -469,6 +506,14 @@
         });
 
         let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
+
+        const langDisplayNames = {
+            'zh': '简体中文',
+            'zh-TW': '繁體中文',
+            'en': 'English',
+            'ko': '한국어'
+        };
+
         let currentFiles = [];
         let currentFileType = null;
         let extractedText = '';
@@ -514,7 +559,8 @@
                 pageTitle: '整理现有题库 - GPA4.0',
                 toastSuccess: '操作成功',
                 questionProgressText: '准备中...',
-                donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
+                donateBannerText: '生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们',
+                donateBannerTextMobile: '如果你觉得此网站有用，可以捐款支持我们',
                 supportUs: '支持我们'
             },
             'zh-TW': {
@@ -554,7 +600,8 @@
                 pageTitle: '整理現有題庫 - GPA4.0',
                 toastSuccess: '操作成功',
                 questionProgressText: '準備中...',
-                donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
+                donateBannerText: '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們',
+                donateBannerTextMobile: '如你覺得這個網站有用，歡迎捐款支持我們',
                 supportUs: '支持我們'
             },
             en: {
@@ -594,7 +641,8 @@
                 pageTitle: 'Organize Question Bank - GPA4.0',
                 toastSuccess: 'Operation successful',
                 questionProgressText: 'Preparing...',
-                donateBannerText: 'Each generation costs 0.5 HKD. If this site helps you, please consider donating to support us.',
+                donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
+                donateBannerTextMobile: 'If you find this site helpful, please consider donating.',
                 supportUs: 'Support Us'
             },
             ko: {
@@ -629,6 +677,7 @@
                 toastSuccess: '작업 성공',
                 questionProgressText: '준비 중...',
                 donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+                donateBannerTextMobile: '이 사이트가 도움이 된다면 기부로 후원해 주세요.',
                 supportUs: '후원하기',
                 stage1: '인식',
                 stage2: '정리',
@@ -661,14 +710,18 @@
         function updateLanguage() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (i18n[currentLang] && i18n[currentLang][key]) {
+                if (i18n[currentLang]?.[key]) {
                     el.textContent = i18n[currentLang][key];
                 }
             });
-            document.getElementById('currentLangDisplay').textContent = 
-                currentLang === 'zh' ? '简体中文' : 
-                currentLang === 'zh-TW' ? '繁體中文' : 
-                currentLang === 'ko' ? '한국어' : 'English';
+            document.querySelectorAll('.lang-option').forEach(btn => {
+                if (btn.getAttribute('data-lang') === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
         }
 
         function toggleLangDropdown() {
@@ -1372,14 +1425,6 @@ Extract as many valid questions as possible from this section. Assign ids starti
         function closeDonateBanner() {
             const banner = document.getElementById('donateBanner');
             if (banner) {
-                banner.style.display = 'none';
-                localStorage.setItem('donateBannerClosed', 'true');
-            }
-        }
-
-        function checkDonateBanner() {
-            const banner = document.getElementById('donateBanner');
-            if (banner && localStorage.getItem('donateBannerClosed') === 'true') {
                 banner.style.display = 'none';
             }
         }
