@@ -493,26 +493,54 @@
             }
         }
 
-        /* 语言选择器改造为 Segmented Control */
-        .segmented-control {
-            background: rgba(0, 0, 0, 0.04);
-            border-radius: 12px;
-            padding: 4px;
+        /* 语言下拉选择器 */
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
         }
-        
-        .segment-btn {
+
+        .lang-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: white;
+            min-width: 140px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
-            padding: 6px 12px;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            transition: all 0.2s;
+            z-index: 50;
+            border: 1px solid #e2e8f0;
+            margin-top: 4px;
         }
-        
-        .segment-btn.active {
-            background: white;
-            color: var(--text-primary);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+
+        .lang-dropdown-content.show {
+            display: block;
+        }
+
+        .lang-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #475569;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lang-option:hover {
+            background-color: #f1f5f9;
+            color: #6366f1;
+        }
+
+        .lang-option.active {
+            background-color: #eef2ff;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .lang-option.active::after {
+            content: '✓';
+            margin-left: 8px;
         }
         
         /* 捐款横幅 - 森林绿+米白+暖黄 */
