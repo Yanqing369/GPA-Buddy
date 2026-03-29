@@ -237,13 +237,15 @@
                 </div>
             </div>
 
-            <!-- Confirm Button -->
-            <button onclick="showThanks()" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-                <span data-i18n="confirm">I have completed payment</span>
-            </button>
+            <!-- QR Hint Text -->
+            <p class="text-center text-slate-600 text-sm" data-i18n="qrHint">
+                请扫描二维码完成捐款，金额不限
+            </p>
+            
+            <!-- Back Button -->
+            <a href="index.html" class="w-full block text-center bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium py-3 rounded-xl transition-colors">
+                <span data-i18n="backToHome">返回首页</span>
+            </a>
         </div>
     </div>
 
@@ -275,7 +277,8 @@
                 encouragement: "您的支持是对开发者最大的鼓励",
                 fpsid: "FPS 识别码",
                 copy: "复制",
-                confirm: "我已完成支付",
+                qrHint: "请扫描二维码完成捐款，金额不限",
+                backToHome: "返回首页",
                 thanks: "感谢您的支持！",
                 thanksMsg: "您的打赏是对我最大的鼓励 🙏",
                 close: "关闭",
@@ -286,12 +289,13 @@
                 subtitle: "選擇支付方式，掃碼打賞",
                 alipay: "支付寶",
                 wechat: "微信支付",
-                alipayhk: "支付寶香港",
+                alipayhk: "AlipayHK",
                 fps: "轉數快",
                 encouragement: "您的支持是對開發者最大的鼓勵",
                 fpsid: "FPS 識別碼",
                 copy: "複製",
-                confirm: "我已完成支付",
+                qrHint: "請掃描二維碼完成捐款，金額不限",
+                backToHome: "返回首頁",
                 thanks: "感謝您的支持！",
                 thanksMsg: "您的打賞是對我最大的鼓勵 🙏",
                 close: "關閉",
@@ -307,7 +311,8 @@
                 encouragement: "Your support is the greatest encouragement to developers",
                 fpsid: "FPS ID",
                 copy: "Copy",
-                confirm: "I have completed payment",
+                qrHint: "Please scan QR code to donate, any amount is welcome",
+                backToHome: "Back to Home",
                 thanks: "Thank You!",
                 thanksMsg: "Your support means the world to me 🙏",
                 close: "Close",
