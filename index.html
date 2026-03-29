@@ -9,285 +9,735 @@
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+        
+        :root {
+            --paper-bg: #FAF9F6;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --forest: #86efac;
+            --forest-dark: #22c55e;
+            --purple-soft: #e9d5ff;
+            --blue-soft: #bfdbfe;
+            --orange-soft: #fed7aa;
+            --text-primary: #1c1c1e;
+            --text-secondary: #6b7280;
+        }
         
         body {
-            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: var(--paper-bg);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
         }
         
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        /* iOS 风格玻璃拟态 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
         }
         
-        .slide-in {
-            animation: slideIn 0.3s ease-out;
+        /* 超椭圆形状 */
+        .squircle {
+            border-radius: 24px;
         }
         
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* 柔和色背景 */
+        .bg-mint { background-color: rgba(134, 239, 172, 0.15); }
+        .bg-lavender { background-color: rgba(233, 213, 255, 0.2); }
+        .bg-sky-soft { background-color: rgba(191, 219, 254, 0.2); }
+        
+        /* 弹性动画 */
+        .spring-hover {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         
-        .lang-dropdown {
+        .spring-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+        }
+        
+        .spring-active:active {
+            transform: scale(0.96);
+        }
+        
+        /* 图标弹性 */
+        .icon-bounce {
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .group:hover .icon-bounce {
+            transform: scale(1.15) rotate(-5deg);
+        }
+        
+        /* ===== 流体渐变球体动画（从资料生成） ===== */
+        .liquid-sphere {
             position: relative;
-            display: inline-block;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 
+                inset -10px -10px 20px rgba(0,0,0,0.2),
+                inset 10px 10px 20px rgba(255,255,255,0.4),
+                0 4px 12px rgba(102, 126, 234, 0.3);
+            isolation: isolate;
+            transform: translateZ(0);
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            mask-image: radial-gradient(white, black);
         }
-
-        .lang-dropdown-content {
-            display: none;
+        
+        .liquid-sphere::before {
+            content: '';
             position: absolute;
-            right: 0;
-            background-color: white;
-            min-width: 140px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            top: 10%;
+            left: 20%;
+            width: 30%;
+            height: 20%;
+            background: radial-gradient(ellipse at center, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%;
+            z-index: 10;
+            filter: blur(2px);
+            pointer-events: none;
+        }
+        
+        .liquid-sphere::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            box-shadow: inset 0 0 8px rgba(255,255,255,0.3);
+            z-index: 11;
+            pointer-events: none;
+        }
+        
+        .liquid-sphere .blob-1 {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 150%;
+            height: 150%;
+            background: radial-gradient(circle at center, 
+                rgba(59, 130, 246, 0.8) 0%, 
+                rgba(37, 99, 235, 0.4) 40%, 
+                transparent 70%);
+            border-radius: 50%;
+            filter: blur(8px);
+            animation: flow-1 15s ease-in-out infinite;
+            mix-blend-mode: screen;
+        }
+        
+        .liquid-sphere .blob-2 {
+            position: absolute;
+            top: 20%;
+            left: -30%;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle at center, 
+                rgba(34, 197, 94, 0.6) 0%, 
+                rgba(16, 185, 129, 0.3) 50%, 
+                transparent 70%);
+            border-radius: 50%;
+            filter: blur(10px);
+            animation: flow-2 18s ease-in-out infinite;
+            mix-blend-mode: screen;
+        }
+        
+        .liquid-sphere .blob-3 {
+            position: absolute;
+            top: -20%;
+            right: -40%;
+            width: 130%;
+            height: 130%;
+            background: radial-gradient(circle at center, 
+                rgba(147, 197, 253, 0.7) 0%, 
+                rgba(96, 165, 250, 0.3) 45%, 
+                transparent 70%);
+            border-radius: 50%;
+            filter: blur(12px);
+            animation: flow-3 20s ease-in-out infinite;
+            mix-blend-mode: overlay;
+        }
+        
+        .liquid-sphere .blob-4 {
+            position: absolute;
+            bottom: -30%;
+            left: 20%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, 
+                rgba(52, 211, 153, 0.6) 0%, 
+                rgba(20, 184, 166, 0.4) 50%, 
+                transparent 70%);
+            border-radius: 50%;
+            filter: blur(8px);
+            animation: flow-4 17s ease-in-out infinite;
+            mix-blend-mode: screen;
+        }
+        
+        @keyframes flow-1 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            33% { transform: translate(20%, 20%) scale(1.1) rotate(120deg); }
+            66% { transform: translate(-10%, 30%) scale(0.9) rotate(240deg); }
+        }
+        
+        @keyframes flow-2 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            33% { transform: translate(-20%, 10%) scale(0.8) rotate(-120deg); }
+            66% { transform: translate(30%, -20%) scale(1.2) rotate(-240deg); }
+        }
+        
+        @keyframes flow-3 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(-30%, -30%) scale(1.15) rotate(180deg); }
+        }
+        
+        @keyframes flow-4 {
+            0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(20%, -30%) scale(1.1) rotate(-180deg); }
+        }
+        
+        .group:hover .liquid-sphere .blob-1,
+        .group:hover .liquid-sphere .blob-2,
+        .group:hover .liquid-sphere .blob-3,
+        .group:hover .liquid-sphere .blob-4 {
+            animation-duration: 3s;
+        }
+
+        /* ===== 魔法对齐动画（整理现成题库） ===== */
+        .magic-align {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+            overflow: hidden;
+            box-shadow: 
+                inset 0 1px 2px rgba(255,255,255,0.8),
+                0 2px 8px rgba(168, 85, 247, 0.15);
+        }
+
+        /* 闪光效果 */
+        .magic-align .sparkle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            box-shadow: 0 0 10px 2px rgba(255,255,255,0.8);
+            animation: sparkle 3s ease-in-out infinite;
+            z-index: 10;
+        }
+
+        @keyframes sparkle {
+            0%, 70%, 100% { opacity: 0; transform: scale(0); }
+            80% { opacity: 1; transform: scale(1); }
+            90% { opacity: 0; transform: scale(0); }
+        }
+
+        /* 线条基础样式 */
+        .magic-line {
+            position: absolute;
+            height: 4px;
+            background: linear-gradient(90deg, #a855f7 0%, #c084fc 100%);
+            border-radius: 2px;
+            box-shadow: 0 1px 2px rgba(168, 85, 247, 0.2);
+        }
+
+        /* 线条1 - 长 */
+        .magic-line-1 {
+            width: 32px;
+            top: 18px;
+            left: 12px;
+            animation: align-1 3s ease-in-out infinite;
+        }
+
+        /* 线条2 - 中 */
+        .magic-line-2 {
+            width: 24px;
+            top: 28px;
+            left: 20px;
+            animation: align-2 3s ease-in-out infinite;
+        }
+
+        /* 线条3 - 短 */
+        .magic-line-3 {
+            width: 28px;
+            top: 38px;
+            left: 14px;
+            animation: align-3 3s ease-in-out infinite;
+        }
+
+        /* 对齐动画 */
+        @keyframes align-1 {
+            0%, 100% {
+                transform: translateX(0) rotate(-2deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateX(-4px) rotate(0deg);
+                opacity: 1;
+                box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+            }
+        }
+
+        @keyframes align-2 {
+            0%, 100% {
+                transform: translateX(8px) rotate(3deg);
+                width: 20px;
+                opacity: 0.5;
+            }
+            50% {
+                transform: translateX(-6px) rotate(0deg);
+                width: 32px;
+                opacity: 1;
+                box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+            }
+        }
+
+        @keyframes align-3 {
+            0%, 100% {
+                transform: translateX(-6px) rotate(-1deg);
+                width: 16px;
+                opacity: 0.4;
+            }
+            50% {
+                transform: translateX(-2px) rotate(0deg);
+                width: 28px;
+                opacity: 1;
+                box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+            }
+        }
+
+        .group:hover .magic-align .magic-line-1,
+        .group:hover .magic-align .magic-line-2,
+        .group:hover .magic-align .magic-line-3 {
+            animation-duration: 1s;
+        }
+
+        .group:hover .magic-align .sparkle {
+            animation-duration: 1s;
+        }
+
+        /* ===== 生长树动画（题库管理） ===== */
+        .growing-tree {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            overflow: hidden;
+            box-shadow: 
+                inset 0 1px 2px rgba(255,255,255,0.8),
+                0 2px 8px rgba(34, 197, 94, 0.15);
+        }
+
+        /* 土壤/种子 */
+        .growing-tree .soil {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 4px;
+            background: #d6d3d1;
+            border-radius: 2px;
+            z-index: 1;
+        }
+
+        /* 树干 */
+        .growing-tree .trunk {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 3px;
+            height: 0;
+            background: linear-gradient(to top, #92400e 0%, #b45309 100%);
+            border-radius: 2px;
+            transform-origin: bottom center;
+            animation: grow-trunk 6s ease-in-out infinite;
+            z-index: 2;
+        }
+
+        @keyframes grow-trunk {
+            0%, 100% { height: 0; opacity: 0; }
+            20% { height: 0; opacity: 0; }
+            40% { height: 16px; opacity: 1; }
+            80% { height: 20px; opacity: 1; }
+        }
+
+        /* 树冠 - 左 */
+        .growing-tree .foliage-left {
+            position: absolute;
+            bottom: 22px;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: #22c55e;
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            animation: grow-foliage 6s ease-in-out infinite;
+            z-index: 3;
+        }
+
+        /* 树冠 - 右 */
+        .growing-tree .foliage-right {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: #16a34a;
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            animation: grow-foliage 6s ease-in-out infinite 0.3s;
+            z-index: 2;
+        }
+
+        /* 树冠 - 顶 */
+        .growing-tree .foliage-top {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            width: 14px;
+            height: 14px;
+            background: #4ade80;
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            animation: grow-foliage 4s ease-in-out infinite 0.6s;
+            z-index: 4;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
+        }
+
+        @keyframes grow-foliage {
+            0%, 40% { transform: translateX(-50%) scale(0); }
+            60% { transform: translateX(-50%) scale(1.1); }
+            80%, 100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* 呼吸摇摆效果 */
+        .growing-tree .foliage-left,
+        .growing-tree .foliage-right,
+        .growing-tree .foliage-top {
+            animation-name: grow-and-breathe;
+        }
+
+        @keyframes grow-and-breathe {
+            0% { transform: translateX(-50%) scale(0); }
+            30% { transform: translateX(-50%) scale(0); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            60% { transform: translateX(-50%) scale(1) rotate(-2deg); }
+            70% { transform: translateX(-50%) scale(1) rotate(2deg); }
+            80% { transform: translateX(-50%) scale(1) rotate(-1deg); }
+            90% { transform: translateX(-50%) scale(1) rotate(1deg); }
+            100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+        }
+
+        /* 悬停加速生长 */
+        .group:hover .growing-tree .trunk,
+        .group:hover .growing-tree .foliage-left,
+        .group:hover .growing-tree .foliage-right,
+        .group:hover .growing-tree .foliage-top {
+            animation-duration: 1.5s;
+        }
+
+        /* 飘落的叶子 */
+        .growing-tree .leaf {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #4ade80;
+            border-radius: 0 50% 0 50%;
+            opacity: 0;
+            animation: falling-leaf 6s ease-in-out infinite;
+        }
+
+        .growing-tree .leaf-1 {
+            top: 20px;
+            left: 20px;
+            animation-delay: 2s;
+        }
+
+        .growing-tree .leaf-2 {
+            top: 24px;
+            right: 18px;
+            animation-delay: 2.5s;
+        }
+
+        @keyframes falling-leaf {
+            0%, 60% { 
+                opacity: 0; 
+                transform: translate(0, 0) rotate(0deg); 
+            }
+            70% { opacity: 1; }
+            100% { 
+                opacity: 0; 
+                transform: translate(5px, 20px) rotate(360deg); 
+            }
+        }
+
+        /* 语言选择器改造为 Segmented Control */
+        .segmented-control {
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 12px;
+            padding: 4px;
+        }
+        
+        .segment-btn {
             border-radius: 8px;
-            z-index: 50;
-            border: 1px solid #e2e8f0;
-        }
-
-        .lang-dropdown-content.show {
-            display: block;
-        }
-
-        .lang-option {
-            padding: 10px 16px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #475569;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .lang-option:hover {
-            background-color: #f1f5f9;
-            color: #6366f1;
-        }
-
-        .lang-option.active {
-            background-color: #eef2ff;
-            color: #6366f1;
+            padding: 6px 12px;
+            font-size: 13px;
             font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.2s;
         }
-
-        .lang-option.active::after {
-            content: '✓';
-            margin-left: 8px;
+        
+        .segment-btn.active {
+            background: white;
+            color: var(--text-primary);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-
+        
+        /* 捐款横幅 - 森林绿+米白+暖黄 */
+        .donate-banner {
+            background: linear-gradient(135deg, #ecfdf5 0%, #fffbeb 50%, #ecfdf5 100%);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+        }
+        
+        /* 滚动条美化 */
         ::-webkit-scrollbar {
             width: 8px;
-            height: 8px;
         }
         
         ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: transparent;
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: rgba(0,0,0,0.08);
             border-radius: 4px;
         }
-
-        .stats-banner {
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            text-align: center;
-            padding: 8px;
-            font-size: 14px;
-            font-weight: 500;
+        
+        /* 模态框动画 */
+        .modal-enter {
+            animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes modalSlide {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
+<base target="_blank">
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
 
-    <div id="dbResetBanner" class="hidden bg-red-600 text-white text-center py-2 px-4">
+    <!-- 数据库重置提示 -->
+    <div id="dbResetBanner" class="hidden bg-red-500 text-white text-center py-2 px-4 text-sm font-medium">
         <span data-i18n="dbResetSuccess">数据库已重置，请刷新页面以使用新数据库</span>
-        <button onclick="location.reload()" class="ml-4 px-3 py-1 bg-white text-red-600 rounded text-sm font-bold" data-i18n="refreshPage">刷新页面</button>
+        <button onclick="location.reload()" class="ml-3 px-3 py-1 bg-white text-red-600 rounded-full text-xs font-bold" data-i18n="refreshPage">刷新页面</button>
     </div>
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
-        <div class="max-w-7xl mx-auto flex items-center justify-center">
-            <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
-                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0 hidden sm:block" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                </svg>
-                <span class="text-xs sm:text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-white text-indigo-600 text-xs sm:text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+        <div class="max-w-5xl mx-auto flex items-center justify-center">
+            <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+                <span class="text-xl">🌱</span>
+                <span class="text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
+                <a href="donate.html" target="_blank" class="px-4 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-full hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
             </div>
         </div>
-        <!-- 关闭按钮 -->
-        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-emerald-600/60 hover:text-emerald-800 transition-colors p-1 spring-active">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
-    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
-                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                        E
-                    </div>
-                    <span class="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 hidden sm:block" data-i18n="appName">
-                        刷题考试助手
-                    </span>
+    <!-- 导航栏 -->
+    <nav class="glass-nav sticky top-0 z-50 h-16">
+        <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
+                <div class="w-10 h-10 bg-mint rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                    🌿
+                </div>
+                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="segmented-control hidden sm:flex">
+                    <button onclick="changeLanguage('zh')" class="segment-btn" data-lang="zh">简</button>
+                    <button onclick="changeLanguage('zh-TW')" class="segment-btn" data-lang="zh-TW">繁</button>
+                    <button onclick="changeLanguage('en')" class="segment-btn" data-lang="en">En</button>
+                    <button onclick="changeLanguage('ko')" class="segment-btn" data-lang="ko">한</button>
                 </div>
                 
-                <div class="flex items-center space-x-4">
-                    <div class="lang-dropdown">
-                        <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
-                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
-                            </svg>
-                            <span id="currentLangDisplay">简体中文</span>
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
-                        </button>
-                        <div id="langDropdown" class="lang-dropdown-content">
-                            <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
-                            <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
-                            <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
-                            <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
-                        </div>
-                    </div>
-                    <button onclick="showSettings()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                    </button>
-                </div>
+                <button onclick="showSettings()" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors spring-active text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </button>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- 主内容 -->
+    <main class="max-w-5xl mx-auto px-6 py-12">
         
-        <section id="home" class="slide-in">
-            <div class="text-center mb-12">
-                <h1 class="text-4xl font-bold text-slate-900 mb-4" data-i18n="welcomeTitle">智能刷题助手</h1>
-                <p class="text-lg text-slate-600 max-w-2xl mx-auto" data-i18n="welcomeDesc">
-                    不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题
-                </p>
-                <div class="mt-4 inline-flex items-center px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full text-sm text-indigo-700">
-                    <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                    </svg>
-                    <span data-i18n="statsText">本站已生成</span>
-                    <span id="totalCount" class="mx-1 font-bold text-indigo-600">...</span>
-                    <span data-i18n="statsSuffix">次题库</span>
-                </div>
+        <!-- Hero 区域 -->
+        <section class="mb-16 text-center">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight" data-i18n="welcomeTitle">智能刷题助手</h1>
+            <p class="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed mb-8" data-i18n="welcomeDesc">
+                不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题
+            </p>
+            
+            <div class="inline-flex items-center gap-2 px-4 py-2 text-sm text-slate-600 bg-white/60 backdrop-blur rounded-full border border-black/5">
+                <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                </svg>
+                <span data-i18n="statsText">本站已生成</span>
+                <span id="totalCount" class="font-bold text-emerald-600 tabular-nums">...</span>
+                <span data-i18n="statsSuffix">次题库</span>
             </div>
+        </section>
 
-            <div class="grid md:grid-cols-3 gap-6 mb-12">
-                <a href="DocGenerate.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
-                    <div class="w-14 h-14 bg-indigo-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13l-3-3-3 3"/>
-                        </svg>
+        <!-- 功能卡片 -->
+        <section class="grid md:grid-cols-3 gap-5 mb-16">
+            <!-- 生成卡片 - 流体球体 -->
+            <a href="DocGenerate.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <div class="mb-5 relative z-10 icon-bounce">
+                    <div class="liquid-sphere">
+                        <div class="blob-1"></div>
+                        <div class="blob-2"></div>
+                        <div class="blob-3"></div>
+                        <div class="blob-4"></div>
                     </div>
-                    <h3 class="text-xl font-semibold mb-2" data-i18n="generateTitle">从资料生成</h3>
-                    <p class="text-slate-500 text-sm" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</p>
-                </a>
-
-                <a href="organize.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
-                    <div class="w-14 h-14 bg-purple-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 18l2-2 2 2M19 16v4"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2" data-i18n="organizeTitle">整理现成题库</h3>
-                    <p class="text-slate-500 text-sm" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</p>
-                </a>
-
-                <a href="manage.html" class="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all cursor-pointer p-6 border border-slate-100 group block">
-                    <div class="w-14 h-14 bg-emerald-100 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <svg class="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-2" data-i18n="manageTitle">题库管理</h3>
-                    <p class="text-slate-500 text-sm" data-i18n="manageDesc">查看、练习、导出或导入题库</p>
-                </a>
-            </div>
-
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 class="text-lg font-semibold mb-4 flex items-center">
-                    <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <span data-i18n="recentTitle">最近创建</span>
-                </h3>
-                <div id="recentList" class="space-y-3">
-                    <div class="text-slate-400 text-center py-8" data-i18n="noRecent">暂无最近记录</div>
                 </div>
+                
+                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="generateTitle">从资料生成</h3>
+                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</p>
+            </a>
+
+            <!-- 整理卡片 - 魔法对齐动画 -->
+            <a href="organize.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <div class="mb-5 relative z-10 icon-bounce">
+                    <div class="magic-align">
+                        <div class="sparkle"></div>
+                        <div class="magic-line magic-line-1"></div>
+                        <div class="magic-line magic-line-2"></div>
+                        <div class="magic-line magic-line-3"></div>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="organizeTitle">整理现成题库</h3>
+                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</p>
+            </a>
+
+            <!-- 管理卡片 - 生长树动画 -->
+            <a href="manage.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-green-50/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                
+                <div class="mb-5 relative z-10 icon-bounce">
+                    <div class="growing-tree">
+                        <div class="soil"></div>
+                        <div class="trunk"></div>
+                        <div class="foliage-left"></div>
+                        <div class="foliage-right"></div>
+                        <div class="foliage-top"></div>
+                        <div class="leaf leaf-1"></div>
+                        <div class="leaf leaf-2"></div>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="manageTitle">题库管理</h3>
+                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="manageDesc">查看、练习、导出或导入题库</p>
+            </a>
+        </section>
+
+        <!-- 最近创建 -->
+        <section class="glass-card squircle p-6 md:p-8">
+            <h3 class="text-lg font-semibold mb-6 flex items-center text-slate-900">
+                <svg class="w-5 h-5 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span data-i18n="recentTitle">最近创建</span>
+            </h3>
+            
+            <div id="recentList" class="space-y-3">
+                <div class="text-slate-400 text-center py-8" data-i18n="noRecent">暂无最近记录</div>
             </div>
         </section>
     </main>
 
     <!-- 设置模态框 -->
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+        <div class="bg-white/90 backdrop-blur-xl w-full max-w-md squircle p-6 shadow-2xl border border-white/50 modal-enter">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-slate-900" data-i18n="settings">设置</h3>
-                <button onclick="hideSettings()" class="text-slate-400 hover:text-slate-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <button onclick="hideSettings()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors text-slate-500 spring-active">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
             <div class="space-y-6">
-                <div class="p-4 bg-slate-50 rounded-xl">
-                    <h4 class="font-semibold text-slate-900 mb-2 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-5 bg-slate-50/80 rounded-2xl border border-slate-100">
+                    <h4 class="font-bold text-slate-900 mb-1 flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
                         </svg>
                         <span data-i18n="storage">存储管理</span>
                     </h4>
-                    <p class="text-sm text-slate-600 mb-3" data-i18n="localStorage">所有资料都保存在你的电脑上，不用担心泄露</p>
+                    <p class="text-xs text-slate-500 mb-4 leading-relaxed" data-i18n="localStorage">所有资料都保存在你的电脑上，不用担心泄露</p>
                     <p class="text-xs text-slate-400 mb-3" id="storageStats">已使用: 计算中...</p>
-                    <button onclick="clearAllData()" class="w-full px-4 py-2 text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium">
-                        <span data-i18n="clearAll">清空所有题库</span>
+                    <button onclick="clearAllData()" class="w-full py-3 rounded-xl border border-red-100 text-red-600 text-sm font-medium hover:bg-red-50 transition-colors spring-active" data-i18n="clearAll">
+                        清空所有题库
                     </button>
                 </div>
 
-                <div class="p-4 bg-amber-50 rounded-xl border border-amber-200">
-                    <h4 class="font-semibold text-amber-900 mb-2 flex items-center">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="p-5 bg-amber-50/50 rounded-2xl border border-amber-100">
+                    <h4 class="font-bold text-amber-900 mb-1 flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                         </svg>
                         <span data-i18n="dbResetTitle">修复数据问题</span>
                     </h4>
-                    <p class="text-sm text-amber-700 mb-3" data-i18n="dbResetDesc">
-                        如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。
-                    </p>
-                    <button onclick="resetDatabase()" class="w-full bg-amber-600 text-white font-semibold py-2 rounded-lg hover:bg-amber-700 transition-opacity text-sm">
-                        <span data-i18n="resetDbBtn">重置数据库</span>
+                    <p class="text-xs text-amber-700/80 mb-4 leading-relaxed" data-i18n="dbResetDesc">如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。</p>
+                    <button onclick="resetDatabase()" class="w-full py-3 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 transition-colors shadow-sm shadow-amber-200 spring-active" data-i18n="resetDbBtn">
+                        重置数据库
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
-        <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
-            <svg id="toastIcon" class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 transition-all duration-500 z-50">
+        <div class="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 text-sm font-medium border border-white/10">
+            <svg id="toastIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             <span id="toastMessage" data-i18n="toastSuccess">操作成功</span>
@@ -302,7 +752,7 @@
         db.version(5).stores({
             questionBanks: '++id, name, createdAt, updatedAt',
             practiceProgress: '++id, bankId, lastPracticeAt',
-            sourceFiles: '++id, name, safeName, bankId, data, createdAt', // 新增：原始文件缓存
+            sourceFiles: '++id, name, safeName, bankId, data, createdAt',
             settings: 'key'
         });
 
@@ -310,16 +760,16 @@
 
         const i18n = {
             zh: {
-                donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
+                donateBannerText: '生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们',
                 supportUs: '支持我们',
                 appName: '刷题考试助手',
                 welcomeTitle: '智能刷题助手',
                 welcomeDesc: '不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题',
-                generateTitle: '上传资料出题',
+                generateTitle: '从资料生成',
                 generateDesc: '上传 PDF、Word、PPT 等文件，AI 帮你自动出题',
-                organizeTitle: '整理已有题目',
+                organizeTitle: '整理现成题库',
                 organizeDesc: '把各种格式的题目快速整理成规范题库，自动添加答案解析',
-                manageTitle: '我的题库',
+                manageTitle: '题库管理',
                 manageDesc: '查看、练习、导出或导入题库',
                 recentTitle: '最近创建',
                 noRecent: '暂无最近记录',
@@ -329,9 +779,9 @@
                 clearAll: '清空所有题库',
                 dbResetTitle: '修复数据问题',
                 dbResetDesc: '如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。',
-                resetDbBtn: '修复数据问题',
-                dbResetSuccess: '数据已修复，请刷新页面后重新使用',
-                refreshPage: '立即刷新',
+                resetDbBtn: '重置数据库',
+                dbResetSuccess: '数据库已重置，请刷新页面以使用新数据库',
+                refreshPage: '刷新页面',
                 statsText: '本站已生成',
                 statsSuffix: '次题库',
                 clearConfirm: '确定要清空所有题库吗？此操作不可撤销。',
@@ -339,7 +789,6 @@
                 saveError: '保存失败',
                 pageTitle: 'GPA4.0 - 智能刷题助手',
                 toastSuccess: '操作成功',
-
             },
             'zh-TW': {
                 donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
@@ -347,11 +796,11 @@
                 appName: '刷題考試助手',
                 welcomeTitle: '智慧刷題助手',
                 welcomeDesc: '不想漫無目的地翻資料？上傳課件、筆記，AI 自動為你生成練習題',
-                generateTitle: '上傳資料出題',
+                generateTitle: '從資料生成',
                 generateDesc: '上傳 PDF、Word、PPT 等檔案，AI 幫你自動出題',
-                organizeTitle: '整理已有題目',
+                organizeTitle: '整理現成題庫',
                 organizeDesc: '把各種格式的題目快速整理成規範題庫，自動添加答案解析',
-                manageTitle: '我的題庫',
+                manageTitle: '題庫管理',
                 manageDesc: '查看、練習、匯出或匯入題庫',
                 recentTitle: '最近建立',
                 noRecent: '暫無最近記錄',
@@ -361,7 +810,7 @@
                 clearAll: '清空所有題庫',
                 dbResetTitle: '修復資料問題',
                 dbResetDesc: '如果遇到使用問題（如頁面卡頓、資料載入失敗），可以點擊修復。這會清空所有題庫並重新初始化。',
-                resetDbBtn: '修復資料問題',
+                resetDbBtn: '重置資料庫',
                 dbResetSuccess: '資料已修復，請重新整理頁面後重新使用',
                 refreshPage: '立即整理',
                 statsText: '本站已產生',
@@ -371,18 +820,13 @@
                 saveError: '儲存失敗',
                 pageTitle: 'GPA4.0 - 智慧刷題助手',
                 toastSuccess: '操作成功',
-                selectGenerateMode: '選擇生成方式',
-                textExtractMode: '快速生成模式（推薦）',
-                textExtractDesc: '提取文檔中和圖片裡的文本，快速生成高質量題庫。適用於大多數文檔。',
-                docUnderstandMode: '圖文理解模式（實驗）',
-                docUnderstandDesc: '深度理解文檔內容，生成更精準題目。耗時較長，目前僅支援PDF。'
             },
             en: {
                 donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
                 supportUs: 'Support Us',
                 appName: 'Exam Study Buddy',
                 welcomeTitle: 'Smart Exam Assistant',
-welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials and let AI generate practice questions for you',
+                welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials and let AI generate practice questions for you',
                 generateTitle: 'Generate from Material',
                 generateDesc: 'Upload PDF, Word, PPT files, AI extracts content to generate standard question banks',
                 organizeTitle: 'Organize Existing Bank',
@@ -407,7 +851,6 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
                 saveError: 'Save failed',
                 pageTitle: 'GPA4.0 - Smart Exam Assistant',
                 toastSuccess: 'Operation successful',
-
             },
             ko: {
                 donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
@@ -439,61 +882,46 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
                 saveError: '저장 실패',
                 pageTitle: 'GPA4.0 - 스마트 문제은행 도우미',
                 toastSuccess: '작업 성공',
-
             }
         };
 
         function t(key) {
-            return i18n[currentLang][key] || key;
+            return i18n[currentLang]?.[key] || key;
         }
-
-        const langDisplayNames = {
-            'zh': '简体中文',
-            'zh-TW': '繁體中文',
-            'en': 'English',
-            'ko': '한국어'
-        };
 
         function detectBrowserLanguage() {
             const browserLang = navigator.language || navigator.userLanguage || 'en';
             const lang = browserLang.toLowerCase();
-            if (lang.startsWith('zh') && (lang.includes('cn') || lang.includes('sg') || lang.includes('hans') || lang === 'zh')) return 'zh';
-            if (lang.startsWith('zh') && (lang.includes('tw') || lang.includes('hk') || lang.includes('mo') || lang.includes('hant'))) return 'zh-TW';
+            if (lang.startsWith('zh') && (lang.includes('tw') || lang.includes('hk'))) return 'zh-TW';
+            if (lang.startsWith('zh')) return 'zh';
             if (lang.startsWith('ko')) return 'ko';
-            if (lang.startsWith('en')) return 'en';
             return 'en';
         }
 
         function updateLanguage() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
-                if (i18n[currentLang] && i18n[currentLang][key]) {
+                if (i18n[currentLang]?.[key]) {
                     el.textContent = i18n[currentLang][key];
                 }
             });
-            document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
-        }
-
-        function toggleLangDropdown() {
-            const dropdown = document.getElementById('langDropdown');
-            dropdown.classList.toggle('show');
+            
+            document.querySelectorAll('.segment-btn').forEach(btn => {
+                if (btn.getAttribute('data-lang') === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            document.title = t('pageTitle');
         }
 
         function changeLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('language', currentLang);
             updateLanguage();
-            document.getElementById('langDropdown').classList.remove('show');
             loadRecent();
-        }
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) {
-                const dropdown = document.getElementById('langDropdown');
-                if (dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
         }
 
         function showSettings() {
@@ -507,14 +935,12 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
 
         async function resetDatabase() {
             if (!confirm(t('clearConfirm'))) return;
-            
             try {
                 await db.close();
                 await Dexie.delete('ExamBuddyDB');
                 await Dexie.delete('ExamBuddyDB_Clean_v1');
                 await Dexie.delete('ExamBuddyDB_Clean_v2');
-                
-                showToast(t('dbResetSuccess'), 'success');
+                showToast(t('dbResetSuccess'));
                 document.getElementById('dbResetBanner').classList.remove('hidden');
                 hideSettings();
             } catch (err) {
@@ -531,7 +957,7 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
         async function clearAllData() {
             if (!confirm(t('clearConfirm'))) return;
             await db.questionBanks.clear();
-            showToast(t('saveSuccess'), 'success');
+            showToast(t('saveSuccess'));
             loadSettings();
             loadRecent();
         }
@@ -541,24 +967,24 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
             const container = document.getElementById('recentList');
             
             if (banks.length === 0) {
-                container.innerHTML = `<div class="text-slate-400 text-center py-8">${t('noRecent')}</div>`;
+                container.innerHTML = `<div class="text-slate-400 text-center py-8" data-i18n="noRecent">${t('noRecent')}</div>`;
                 return;
             }
             
             container.innerHTML = banks.map(bank => `
-                <a href="practice.html?id=${bank.id}" class="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors block">
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
-                            <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <a href="practice.html?id=${bank.id}" class="group flex items-center justify-between p-4 bg-white/60 hover:bg-white rounded-2xl transition-all spring-hover border border-transparent hover:border-slate-100">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </div>
                         <div>
-                            <div class="font-medium text-slate-900 text-sm">${bank.name}</div>
-                            <div class="text-xs text-slate-500">${bank.questions.length} ${currentLang === 'en' || currentLang === 'ko' ? 'questions' : '题'} · ${new Date(bank.createdAt).toLocaleDateString()}</div>
+                            <div class="font-semibold text-slate-900 text-sm">${bank.name}</div>
+                            <div class="text-xs text-slate-500">${bank.questions?.length || 0} ${currentLang === 'en' || currentLang === 'ko' ? 'questions' : '题'} · ${new Date(bank.createdAt).toLocaleDateString()}</div>
                         </div>
                     </div>
-                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                     </svg>
                 </a>
@@ -588,10 +1014,10 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
             
             if (type === 'error') {
                 icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
-                toast.querySelector('div').className = 'bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+                toast.querySelector('div').className = 'bg-red-600 text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 text-sm font-medium';
             } else {
                 icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
-                toast.querySelector('div').className = 'bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+                toast.querySelector('div').className = 'bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 text-sm font-medium border border-white/10';
             }
             
             toast.classList.remove('translate-y-20', 'opacity-0');
@@ -601,30 +1027,28 @@ welcomeDesc: 'Tired of aimlessly flipping through notes? Upload your materials a
             }, 3000);
         }
 
-        // 关闭捐款横幅
         function closeDonateBanner() {
             const banner = document.getElementById('donateBanner');
-            if (banner) {
-                banner.style.display = 'none';
-                localStorage.setItem('donateBannerClosed', 'true');
+            if (banner) banner.style.display = 'none';
+            localStorage.setItem('donateBannerClosed', 'true');
+        }
+
+        function checkDonateBanner() {
+            if (localStorage.getItem('donateBannerClosed') === 'true') {
+                document.getElementById('donateBanner').style.display = 'none';
             }
         }
 
-        // 检查是否需要显示捐款横幅
-        function checkDonateBanner() {
-            const banner = document.getElementById('donateBanner');
-            if (banner && localStorage.getItem('donateBannerClosed') === 'true') {
-                banner.style.display = 'none';
-            }
-        }
+        document.getElementById('settingsModal')?.addEventListener('click', function(e) {
+            if (e.target === this) hideSettings();
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             updateLanguage();
             loadRecent();
             loadGlobalStats();
-
+            checkDonateBanner();
         });
     </script>
-
 </body>
 </html>
