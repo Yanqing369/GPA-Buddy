@@ -9,19 +9,62 @@
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+        
+        :root {
+            --paper-bg: #FAF9F6;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --forest: #86efac;
+            --forest-dark: #22c55e;
+            --purple-soft: #e9d5ff;
+            --blue-soft: #bfdbfe;
+            --orange-soft: #fed7aa;
+            --text-primary: #1c1c1e;
+            --text-secondary: #6b7280;
+        }
         
         body {
-            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: var(--paper-bg);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
         }
         
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
+        }
+        
+        .bg-mint { background-color: rgba(134, 239, 172, 0.15); }
+        .bg-lavender { background-color: rgba(233, 213, 255, 0.2); }
+        .bg-sky-soft { background-color: rgba(191, 219, 254, 0.2); }
+        
+        .spring-hover {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .spring-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+        }
+        
+        .spring-active:active {
+            transform: scale(0.96);
+        }
+        
+        .donate-banner {
+            background: linear-gradient(135deg, #ecfdf5 0%, #fffbeb 50%, #ecfdf5 100%);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
         }
         
         .slide-in {
@@ -87,11 +130,11 @@
         }
         
         ::-webkit-scrollbar-track {
-            background: #f1f5f9;
+            background: transparent;
         }
         
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: rgba(0,0,0,0.08);
             border-radius: 4px;
         }
 
@@ -109,37 +152,35 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
+    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-7xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
-                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0 hidden sm:block" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                </svg>
+                <span class="text-xl">🌱</span>
                 <span class="text-xs sm:text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-white text-indigo-600 text-xs sm:text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+                <a href="donate.html" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-full hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
             </div>
         </div>
         <!-- 关闭按钮 -->
-        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
+        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-emerald-600/60 hover:text-emerald-800 transition-colors p-1 z-10">
             <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
-    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+    <nav class="glass-nav sticky top-0 z-50 border-b border-slate-200 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
-                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                        E
+                <div class="flex items-center space-x-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
+                    <div class="w-10 h-10 bg-mint rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                        🌿
                     </div>
-                    <span class="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 hidden sm:block" data-i18n="appName">
+                    <span class="font-bold text-lg tracking-tight text-slate-900 hidden sm:block" data-i18n="appName">
                         刷题考试助手
                     </span>
                 </div>
@@ -151,6 +192,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                             </svg>
                             <span id="currentLangDisplay">简体中文</span>
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
                         </button>
                         <div id="langDropdown" class="lang-dropdown-content">
                             <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
@@ -159,7 +203,7 @@
                             <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
                         </div>
                     </div>
-                    <a href="index.html" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600 flex items-center">
+                    <a href="index.html" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600 flex items-center spring-active">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                         </svg>
@@ -190,10 +234,10 @@
                 </svg>
                 <p data-i18n="noBanks">暂无题库，请先生成或导入</p>
                 <div class="mt-6 flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4">
-                    <a href="DocGenerate.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium text-center">
+                    <a href="DocGenerate.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium text-center spring-active">
                         上传资料出题
                     </a>
-                    <a href="organize.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium text-center">
+                    <a href="organize.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium text-center spring-active">
                         整理已有题目
                     </a>
                 </div>
@@ -419,10 +463,10 @@
                         </svg>
                         <p>${t('noBanks')}</p>
                         <div class="mt-6 flex justify-center space-x-4">
-                            <a href="DocGenerate.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium">
+                            <a href="DocGenerate.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium spring-active">
                                 ${currentLang === 'zh' ? '从资料生成' : currentLang === 'zh-TW' ? '從數據產生' : currentLang === 'ko' ? '자료에서 생성' : 'Generate'}
                             </a>
-                            <a href="organize.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium">
+                            <a href="organize.html" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium spring-active">
                                 ${currentLang === 'zh' ? '整理现成题库' : currentLang === 'zh-TW' ? '整理現有題庫' : currentLang === 'ko' ? '기존 문제은행 정리' : 'Organize'}
                             </a>
                         </div>

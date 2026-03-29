@@ -7,30 +7,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --paper-bg: #FAF9F6;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --forest: #86efac;
+            --forest-dark: #22c55e;
+            --purple-soft: #e9d5ff;
+            --blue-soft: #bfdbfe;
+            --orange-soft: #fed7aa;
+            --text-primary: #1c1c1e;
+            --text-secondary: #6b7280;
+        }
+        
         body {
-            font-family: 'Space Grotesk', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
+            background-color: var(--paper-bg);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
             min-height: 100vh;
         }
         
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
+        }
+        
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
+            background: var(--card-bg);
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
         }
         
         .payment-tab {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.4);
         }
         
         .payment-tab.active {
-            background: rgba(99, 102, 241, 0.25);
-            border-color: rgba(99, 102, 241, 0.8);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.8);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
             transform: translateY(-2px);
         }
         
@@ -44,16 +73,19 @@
         
         .lang-btn {
             transition: all 0.2s;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--text-primary);
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
         
         .lang-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.8);
         }
         
         .lang-btn.active {
-            background: rgba(99, 102, 241, 0.8);
+            background: rgba(34, 197, 94, 0.8);
             color: white;
+            border-color: rgba(34, 197, 94, 0.8);
         }
         
         .fade-in {
@@ -82,10 +114,10 @@
         
         <!-- Language Switcher -->
         <div class="flex justify-center gap-2 mb-6">
-            <button onclick="switchLang('sc')" class="lang-btn px-4 py-2 rounded-full text-sm font-medium text-white border border-slate-600" data-lang-btn="sc">简</button>
-            <button onclick="switchLang('tc')" class="lang-btn px-4 py-2 rounded-full text-sm font-medium text-white border border-slate-600" data-lang-btn="tc">繁</button>
-            <button onclick="switchLang('en')" class="lang-btn active px-4 py-2 rounded-full text-sm font-medium text-white border border-slate-600" data-lang-btn="en">EN</button>
-            <button onclick="switchLang('kr')" class="lang-btn px-4 py-2 rounded-full text-sm font-medium text-white border border-slate-600" data-lang-btn="kr">한</button>
+            <button onclick="switchLang('sc')" class="lang-btn px-4 py-2 rounded-full text-sm font-medium" data-lang-btn="sc">简</button>
+            <button onclick="switchLang('tc')" class="lang-btn px-4 py-2 rounded-full text-sm font-medium" data-lang-btn="tc">繁</button>
+            <button onclick="switchLang('en')" class="lang-btn active px-4 py-2 rounded-full text-sm font-medium" data-lang-btn="en">EN</button>
+            <button onclick="switchLang('kr')" class="lang-btn px-4 py-2 rounded-full text-sm font-medium" data-lang-btn="kr">한</button>
         </div>
 
         <!-- Main Card -->
@@ -98,39 +130,39 @@
                         <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path>
                     </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-white mb-1" data-i18n="title">Support Developer</h1>
-                <p class="text-slate-400 text-sm" data-i18n="subtitle">Choose payment method & scan QR code</p>
+                <h1 class="text-2xl font-bold text-slate-900 mb-1" data-i18n="title">Support Developer</h1>
+                <p class="text-slate-500 text-sm" data-i18n="subtitle">Choose payment method & scan QR code</p>
             </div>
 
             <!-- Payment Methods -->
             <div class="space-y-3">
                 <div class="grid grid-cols-2 gap-3">
                     <!-- Alipay Mainland -->
-                    <button onclick="switchMethod('alipay')" class="payment-tab active flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-600 text-white font-medium" data-method="alipay">
+                    <button onclick="switchMethod('alipay')" class="payment-tab active flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 text-slate-700 font-medium" data-method="alipay">
                         <svg class="w-6 h-6 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10" opacity="0.2"/>
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
                         </svg>
                         <div class="flex flex-col items-start">
                             <span class="text-sm font-bold" data-i18n="alipay">Alipay</span>
-                            <span class="text-[10px] text-slate-400">CNY</span>
+                            <span class="text-[10px] text-slate-500">CNY</span>
                         </div>
                     </button>
                     
                     <!-- WeChat Pay -->
-                    <button onclick="switchMethod('wechat')" class="payment-tab flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-600 text-white font-medium" data-method="wechat">
+                    <button onclick="switchMethod('wechat')" class="payment-tab flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 text-slate-700 font-medium" data-method="wechat">
                         <svg class="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="currentColor">
                             <circle cx="12" cy="12" r="10" opacity="0.2"/>
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
                         </svg>
                         <div class="flex flex-col items-start">
                             <span class="text-sm font-bold" data-i18n="wechat">WeChat Pay</span>
-                            <span class="text-[10px] text-slate-400">CNY</span>
+                            <span class="text-[10px] text-slate-500">CNY</span>
                         </div>
                     </button>
                     
                     <!-- AlipayHK -->
-                    <button onclick="switchMethod('alipayhk')" class="payment-tab flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-600 text-white font-medium" data-method="alipayhk">
+                    <button onclick="switchMethod('alipayhk')" class="payment-tab flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 text-slate-700 font-medium" data-method="alipayhk">
                         <svg class="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                         </svg>
@@ -139,18 +171,18 @@
                                 <span data-i18n="alipayhk">AlipayHK</span>
                                 <span class="badge-hk">HK</span>
                             </span>
-                            <span class="text-[10px] text-slate-400">HKD</span>
+                            <span class="text-[10px] text-slate-500">HKD</span>
                         </div>
                     </button>
                     
                     <!-- FPS -->
-                    <button onclick="switchMethod('fps')" class="payment-tab flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-600 text-white font-medium" data-method="fps">
+                    <button onclick="switchMethod('fps')" class="payment-tab flex items-center justify-center gap-2 py-3 px-3 rounded-xl border border-slate-200 text-slate-700 font-medium" data-method="fps">
                         <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                         </svg>
                         <div class="flex flex-col items-start">
                             <span class="text-sm font-bold" data-i18n="fps">FPS</span>
-                            <span class="text-[10px] text-slate-400">HKD</span>
+                            <span class="text-[10px] text-slate-500">HKD</span>
                         </div>
                     </button>
                 </div>
@@ -189,24 +221,24 @@
                 </div>
 
                 <!-- Encouragement Text -->
-                <p class="text-center text-slate-300 font-medium text-lg" data-i18n="encouragement">
+                <p class="text-center text-slate-600 font-medium text-lg" data-i18n="encouragement">
                     Your support is the greatest encouragement to developers
                 </p>
 
                 <!-- FPS ID Copy (Only for FPS) -->
-                <div id="fpsCopy" class="hidden bg-orange-500/10 border border-orange-500/20 rounded-xl p-3">
+                <div id="fpsCopy" class="hidden bg-orange-100/50 border border-orange-200 rounded-xl p-3">
                     <div class="flex justify-between items-center">
-                        <span class="text-orange-400 text-sm font-medium" data-i18n="fpsid">FPS ID</span>
-                        <button onclick="copyFPS()" class="text-xs bg-orange-500/20 text-orange-300 px-3 py-1.5 rounded-lg hover:bg-orange-500/30 transition-colors" data-i18n="copy">
+                        <span class="text-orange-600 text-sm font-medium" data-i18n="fpsid">FPS ID</span>
+                        <button onclick="copyFPS()" class="text-xs bg-orange-200 text-orange-700 px-3 py-1.5 rounded-lg hover:bg-orange-300 transition-colors" data-i18n="copy">
                             Copy
                         </button>
                     </div>
-                    <p class="text-white font-mono text-lg mt-1 select-all">108994443</p>
+                    <p class="text-slate-900 font-mono text-lg mt-1 select-all">108994443</p>
                 </div>
             </div>
 
             <!-- Confirm Button -->
-            <button onclick="showThanks()" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2">
+            <button onclick="showThanks()" class="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                 </svg>
@@ -216,16 +248,16 @@
     </div>
 
     <!-- Thanks Modal -->
-    <div id="thanksModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
+    <div id="thanksModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
         <div class="glass-panel rounded-3xl p-8 max-w-sm w-full text-center transform scale-95 opacity-0 transition-all duration-300" id="modalContent">
-            <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-green-500/30">
+            <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-500/30">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
                 </svg>
             </div>
-            <h3 class="text-2xl font-bold text-white mb-2" data-i18n="thanks">Thank You!</h3>
-            <p class="text-slate-400 mb-6" data-i18n="thanksMsg">Your support means the world to me 🙏</p>
-            <button onclick="closeModal()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 rounded-xl transition-colors" data-i18n="close">
+            <h3 class="text-2xl font-bold text-slate-900 mb-2" data-i18n="thanks">Thank You!</h3>
+            <p class="text-slate-500 mb-6" data-i18n="thanksMsg">Your support means the world to me 🙏</p>
+            <button onclick="closeModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-medium py-3 rounded-xl transition-colors" data-i18n="close">
                 Close
             </button>
         </div>

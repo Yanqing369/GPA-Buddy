@@ -17,7 +17,63 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
         
-        body { font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif; }
+        :root {
+            --paper-bg: #FAF9F6;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --forest: #86efac;
+            --forest-dark: #22c55e;
+            --purple-soft: #e9d5ff;
+            --blue-soft: #bfdbfe;
+            --orange-soft: #fed7aa;
+            --text-primary: #1c1c1e;
+            --text-secondary: #6b7280;
+        }
+        
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: var(--paper-bg);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
+        }
+        
+        .bg-mint { background-color: rgba(134, 239, 172, 0.15); }
+        .bg-lavender { background-color: rgba(233, 213, 255, 0.2); }
+        .bg-sky-soft { background-color: rgba(191, 219, 254, 0.2); }
+        
+        .spring-hover {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .spring-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+        }
+        
+        .spring-active:active {
+            transform: scale(0.96);
+        }
+        
+        /* 捐款横幅 - 森林绿+米白+暖黄 */
+        .donate-banner {
+            background: linear-gradient(135deg, #ecfdf5 0%, #fffbeb 50%, #ecfdf5 100%);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+        }
+        
         .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
         .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .option-selected { background-color: #e0e7ff; border-color: #6366f1; }
@@ -81,35 +137,33 @@
         .ppt-bullet::before { content: "•"; margin-right: 0.5em; color: inherit; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body class="min-h-screen">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
+    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-7xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
-                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0 hidden sm:block" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                </svg>
+                <span class="text-xl">🌱</span>
                 <span class="text-xs sm:text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-white text-indigo-600 text-xs sm:text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+                <a href="donate.html" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-full hover:bg-emerald-600 transition-colors flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
             </div>
         </div>
         <!-- 关闭按钮 -->
-        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
+        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-emerald-600/60 hover:text-emerald-800 transition-colors p-1 z-10">
             <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
-    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
+    <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
-                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">E</div>
-                    <span class="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 hidden sm:block" data-i18n="appName">刷题考试助手</span>
+                <div class="flex items-center space-x-3 cursor-pointer h-full" onclick="window.location.href='index.html'">
+                    <div class="w-10 h-10 bg-mint rounded-2xl flex items-center justify-center text-xl shadow-sm">🌿</div>
+                    <span class="font-bold text-lg tracking-tight text-slate-900 hidden sm:block" data-i18n="appName">刷题考试助手</span>
                 </div>
                 <div class="flex items-center space-x-2 sm:space-x-3">
                     <div class="lang-dropdown">
@@ -256,7 +310,7 @@
                         <p class="text-xs text-amber-700" data-i18n="donateDesc">可以捐款支持开发者，让这个网站活到你下次考试。</p>
                     </div>
                 </div>
-                <a href="donate.html" target="_blank" class="mt-3 w-full inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
+                <a href="donate.html" class="mt-3 w-full inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                     <span data-i18n="supportDev">支持开发者</span>
                 </a>

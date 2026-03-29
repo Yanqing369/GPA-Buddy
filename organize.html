@@ -15,8 +15,23 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
         
+        :root {
+            --paper-bg: #FAF9F6;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --forest: #86efac;
+            --forest-dark: #22c55e;
+            --purple-soft: #e9d5ff;
+            --blue-soft: #bfdbfe;
+            --orange-soft: #fed7aa;
+            --text-primary: #1c1c1e;
+            --text-secondary: #6b7280;
+        }
+        
         body {
             font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
+            background-color: var(--paper-bg);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
         }
         
         .glass-effect {
@@ -26,6 +41,47 @@
         
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        /* iOS 风格玻璃拟态 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02), 0 2px 8px rgba(0, 0, 0, 0.01);
+        }
+        
+        /* 柔和色背景 */
+        .bg-mint { background-color: rgba(134, 239, 172, 0.15); }
+        .bg-lavender { background-color: rgba(233, 213, 255, 0.2); }
+        .bg-sky-soft { background-color: rgba(191, 219, 254, 0.2); }
+        
+        /* 弹性动画 */
+        .spring-hover {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .spring-hover:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+        }
+        
+        .spring-active:active {
+            transform: scale(0.96);
+        }
+        
+        /* 捐款横幅 - 森林绿+米白+暖黄 */
+        .donate-banner {
+            background: linear-gradient(135deg, #ecfdf5 0%, #fffbeb 50%, #ecfdf5 100%);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.1);
         }
         
         .slide-in {
@@ -88,6 +144,7 @@
             border-radius: 8px;
             z-index: 50;
             border: 1px solid #e2e8f0;
+            margin-top: 4px;
         }
 
         .lang-dropdown-content.show {
@@ -104,12 +161,12 @@
 
         .lang-option:hover {
             background-color: #f1f5f9;
-            color: #9333ea;
+            color: #6366f1;
         }
 
         .lang-option.active {
-            background-color: #faf5ff;
-            color: #9333ea;
+            background-color: #eef2ff;
+            color: #6366f1;
             font-weight: 500;
         }
 
@@ -131,22 +188,7 @@
             border-radius: 4px;
         }
         
-        .warning-banner {
-            background: linear-gradient(90deg, #fee2e2 0%, #fecaca 100%);
-            border: 2px solid #ef4444;
-            color: #dc2626;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            font-weight: 600;
-            text-align: center;
-            animation: pulse-warning 2s infinite;
-        }
 
-        @keyframes pulse-warning {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-        }
         
         .progress-info {
             display: flex;
@@ -199,7 +241,7 @@
         }
         
         .count-display {
-            background: linear-gradient(135deg, #9333ea 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
@@ -215,7 +257,7 @@
         }
         
         .processing-hint {
-            color: #9333ea;
+            color: #059669;
             font-weight: 600;
             text-align: center;
             margin-bottom: 12px;
@@ -223,85 +265,81 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen">
+<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 shadow-lg relative">
-        <div class="max-w-7xl mx-auto flex items-center justify-center">
-            <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-center sm:text-left">
-                <svg class="w-6 h-6 text-yellow-300 flex-shrink-0 hidden sm:block" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
-                </svg>
-                <span class="text-xs sm:text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="px-3 py-1 sm:px-4 sm:py-1.5 bg-white text-indigo-600 text-xs sm:text-sm font-bold rounded-full hover:bg-yellow-100 transition-colors flex-shrink-0">
+    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+        <div class="max-w-5xl mx-auto flex items-center justify-center">
+            <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
+                <span class="text-xl">🌱</span>
+                <span class="text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span>
+                <a href="donate.html" class="px-4 py-1.5 bg-emerald-500 text-white text-xs font-bold rounded-full hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200 flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
             </div>
         </div>
-        <!-- 关闭按钮 -->
-        <button onclick="closeDonateBanner()" class="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 text-white/80 hover:text-white transition-colors p-1">
-            <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-emerald-600/60 hover:text-emerald-800 transition-colors p-1 spring-active z-10">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
-    <nav class="glass-effect sticky top-0 z-50 border-b border-slate-200 shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
-                <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
-                    <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                        E
+    <nav class="glass-nav sticky top-0 z-50 h-16">
+        <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
+                <div class="w-10 h-10 bg-mint rounded-2xl flex items-center justify-center text-xl shadow-sm">
+                    🌿
+                </div>
+                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+            </div>
+                
+            <div class="flex items-center gap-4">
+                <div class="lang-dropdown hidden sm:block">
+                    <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
+                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                        </svg>
+                        <span id="currentLangDisplay">简体中文</span>
+                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="langDropdown" class="lang-dropdown-content">
+                        <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
+                        <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
+                        <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
+                        <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
                     </div>
-                    <span class="font-bold text-lg sm:text-xl bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 hidden sm:block" data-i18n="appName">
-                        刷题考试助手
-                    </span>
                 </div>
                 
-                <div class="flex items-center space-x-4">
-                    <div class="lang-dropdown">
-                        <button onclick="toggleLangDropdown()" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium text-slate-600 flex items-center">
-                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
-                            </svg>
-                            <span id="currentLangDisplay">简体中文</span>
-                        </button>
-                        <div id="langDropdown" class="lang-dropdown-content">
-                            <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
-                            <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
-                            <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
-                            <div class="lang-option" onclick="changeLanguage('ko')" data-lang="ko">한국어</div>
-                        </div>
-                    </div>
-                    <a href="index.html" class="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-600 flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                        </svg>
-                        <span data-i18n="back">返回</span>
-                    </a>
-                </div>
+                <a href="index.html" class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-black/5 transition-colors spring-active text-slate-600">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                </a>
             </div>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-6 flex items-center justify-between">
-            <h2 class="text-2xl font-bold text-slate-900" data-i18n="organizeHeader">整理现成题库</h2>
+    <main class="max-w-5xl mx-auto px-6 py-12">
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-slate-900 tracking-tight" data-i18n="organizeHeader">整理现成题库</h2>
         </div>
 
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start">
-            <svg class="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="glass-card rounded-2xl p-5 mb-8 flex items-start">
+            <svg class="w-5 h-5 text-emerald-600 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
-            <div class="text-sm text-blue-800">
-                <p class="font-medium mb-1" data-i18n="organizeTipTitle">整理说明</p>
-                <p data-i18n="organizeTipDesc">上传包含题目的文件（无论格式多么混乱），AI会自动识别题目、选项、答案和解析，并转换为标准格式。所有题目的来源字段将统一标记为"用户上传题库"。</p>
+            <div class="text-sm text-slate-700">
+                <p class="font-semibold mb-1" data-i18n="organizeTipTitle">整理说明</p>
+                <p class="text-slate-500" data-i18n="organizeTipDesc">上传包含题目的文件（无论格式多么混乱），AI会自动识别题目、选项、答案和解析，并转换为标准格式。所有题目的来源字段将统一标记为"用户上传题库"。</p>
             </div>
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-8">
+        <div class="grid lg:grid-cols-2 gap-6">
             <div class="space-y-6">
-                <div id="orgDropZone" class="drop-zone rounded-2xl p-8 text-center bg-white border-2 border-dashed border-slate-300 hover:border-purple-400 transition-all cursor-pointer">
+                <div id="orgDropZone" class="drop-zone rounded-2xl p-8 text-center glass-card border-2 border-dashed border-slate-300 hover:border-emerald-400 transition-all cursor-pointer spring-hover">
                     <input type="file" id="orgFileInput" class="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt">
                     <div class="mb-4">
                         <svg class="w-16 h-16 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,7 +351,7 @@
                     <div id="orgFileList" class="mt-4 space-y-2 text-left hidden"></div>
                 </div>
 
-                <button onclick="startOrganization()" id="orgBtn" class="w-full bg-purple-600 text-white font-semibold py-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <button onclick="startOrganization()" id="orgBtn" class="w-full bg-emerald-500 text-white font-semibold py-3 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-emerald-200 spring-active" disabled>
                     <span data-i18n="startOrganize">开始整理</span>
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
@@ -321,9 +359,9 @@
                 </button>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[400px] flex flex-col">
+            <div class="glass-card rounded-2xl p-6 h-[400px] flex flex-col">
                 <h3 class="font-semibold text-slate-900 mb-4" data-i18n="originalContent">原始内容预览</h3>
-                <div id="orgTextPreview" class="flex-1 bg-slate-50 rounded-lg p-4 overflow-y-auto text-sm text-slate-600 font-mono whitespace-pre-wrap border border-slate-200">
+                <div id="orgTextPreview" class="flex-1 bg-white/50 rounded-xl p-4 overflow-y-auto text-sm text-slate-600 font-mono whitespace-pre-wrap border border-slate-100">
                     <span class="text-slate-400 italic" data-i18n="waitingUpload">等待上传文件...</span>
                 </div>
             </div>
@@ -331,10 +369,10 @@
     </main>
 
     <!-- 进度弹窗 -->
-    <div id="orgProgress" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+    <div id="orgProgress" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl p-8 max-w-md w-full shadow-2xl border border-white/50">
             <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4 pulse-ring">
+                <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4 pulse-ring">
                     <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
@@ -364,8 +402,8 @@
                 </div>
             </div>
             
-            <div class="warning-banner" data-i18n="warningRefresh">
-                ⚠️ 整理过程中请勿关闭或刷新网页，否则会导致整理失败
+            <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 text-center">
+                <p class="text-sm font-medium text-red-600" data-i18n="warningRefresh">⚠️ 整理过程中请勿关闭或刷新网页，否则会导致整理失败</p>
             </div>
             
             <!-- 处理提示 -->
@@ -376,8 +414,8 @@
                 <span id="questionProgressText" data-i18n="questionProgressText">准备中...</span>
             </div>
             
-            <div class="w-full bg-slate-200 rounded-full h-3 mb-4">
-                <div id="orgProgressBar" class="bg-purple-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+            <div class="w-full bg-slate-100 rounded-full h-3 mb-4">
+                <div id="orgProgressBar" class="bg-emerald-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
             
             <div id="orgStatusText" class="text-center text-sm text-slate-500 font-mono" data-i18n="preparing">
@@ -387,9 +425,9 @@
     </div>
 
     <!-- 结果模态框 -->
-    <div id="resultModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl">
-            <div class="p-6 border-b border-slate-200">
+    <div id="resultModal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white/90 backdrop-blur-xl rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-white/50">
+            <div class="p-6 border-b border-slate-100">
                 <h3 class="text-xl font-bold text-slate-900" data-i18n="previewOrganizeResult">预览整理结果</h3>
             </div>
             
@@ -397,11 +435,11 @@
                 <div id="resultPreview" class="space-y-4"></div>
             </div>
 
-            <div class="p-6 border-t border-slate-200 bg-slate-50 rounded-b-2xl flex justify-end space-x-3">
-                <button onclick="discardResult()" class="px-4 py-2 text-slate-400 hover:text-slate-600 transition-colors text-sm" data-i18n="discardBank">
+            <div class="p-6 border-t border-slate-100 bg-slate-50/50 rounded-b-2xl flex justify-end gap-3">
+                <button onclick="discardResult()" class="px-4 py-2 text-slate-400 hover:text-slate-600 transition-colors text-sm spring-active" data-i18n="discardBank">
                     放弃此题库
                 </button>
-                <button onclick="saveAndPractice()" class="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-opacity flex items-center btn-pulse-glow font-semibold">
+                <button onclick="saveAndPractice()" class="px-6 py-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-600 transition-colors flex items-center font-semibold shadow-sm shadow-emerald-200 spring-active">
                     <span data-i18n="saveAndPractice">保存并练习</span>
                     <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -411,9 +449,9 @@
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50">
-        <div class="bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center">
-            <svg id="toastIcon" class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 transition-all duration-500 z-50">
+        <div class="bg-slate-900/90 backdrop-blur text-white px-6 py-3 rounded-full shadow-xl flex items-center gap-3 text-sm font-medium border border-white/10">
+            <svg id="toastIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
             <span id="toastMessage" data-i18n="toastSuccess">操作成功</span>
