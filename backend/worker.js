@@ -128,9 +128,14 @@ async function handleGoogleLogin(request, env) {
   const redirectUri = getRedirectUri(request, env);
   const state = generateState();
   
-  // 存储state到KV（5分钟过期），同时存储前端域名用于跳转回来
-  const frontendUrl = getFrontendUrl(env);
-  await env.EXAM_STATS.put(`oauth_state:${state}`, JSON.stringify({ redirectUri, frontendUrl }), { expirationTtl: 300 });
+  // 获取用户来源页面，用于登录后跳转回去
+  const referer = request.headers.get('Referer') || '';
+  
+  // 存储state和referer到KV（5分钟过期）
+  await env.EXAM_STATS.put(`oauth_state:${state}`, JSON.stringify({ 
+    redirectUri, 
+    referer 
+  }), { expirationTtl: 300 });
   
   const params = new URLSearchParams({
     client_id: env.GOOGLE_CLIENT_ID,
@@ -160,7 +165,10 @@ async function handleGoogleCallback(request, env) {
   }
   await env.EXAM_STATS.delete(`oauth_state:${state}`);
   
-  const { redirectUri, frontendUrl } = JSON.parse(stateData);
+  const { redirectUri, referer } = JSON.parse(stateData);
+  
+  // 动态判断前端URL（支持本地开发）
+  const frontendUrl = getFrontendUrl(request, env, referer);
   
   // 交换code获取access_token
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
@@ -235,8 +243,35 @@ function getRedirectUri(request, env) {
   return `${workerUrl}/auth/google/callback`;
 }
 
-function getFrontendUrl(env) {
-  // 从环境变量获取前端域名
+function getFrontendUrl(request, env, storedReferer) {
+  // 优先使用存储的 referer（登录时的来源页面）
+  if (storedReferer) {
+    try {
+      const url = new URL(storedReferer);
+      // 只保留协议、主机和端口
+      return `${url.protocol}//${url.host}`;
+    } catch (e) {
+      // 解析失败，继续其他判断
+    }
+  }
+  
+  // 检测请求来源
+  const referer = request.headers.get('Referer') || '';
+  const origin = request.headers.get('Origin') || '';
+  
+  // 如果是本地开发环境
+  if (referer.includes('localhost') || origin.includes('localhost') || 
+      referer.includes('127.0.0.1') || origin.includes('127.0.0.1')) {
+    // 尝试从 referer 中提取端口
+    try {
+      const url = new URL(referer || origin);
+      return `${url.protocol}//${url.host}`;
+    } catch (e) {
+      return 'http://localhost:8788';
+    }
+  }
+  
+  // 从环境变量获取前端域名（生产环境）
   return env.FRONTEND_URL || 'https://www.gpa-buddy.com';
 }
 
@@ -781,21 +816,9 @@ export default {
           return createResponse(JSON.stringify({ error: 'messages field is required' }), 400);
         }
 
-        // 检查用户配额（如果已登录）
-        const user = await getUserFromRequest(request, env);
-        if (user) {
-          const quotaCheck = await checkAndConsumeQuota(user.id, env);
-          if (!quotaCheck.allowed) {
-            return createResponse(JSON.stringify({ 
-              error: quotaCheck.reason,
-              code: 'QUOTA_EXCEEDED'
-            }), 403);
-          }
-        } else {
-          // 访客模式：增加计数
-          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
-          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
-        }
+        // 增加统计计数
+        const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+        await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
 
         const result = await callDeepSeekWithRetry(body.messages, env.DEEPSEEK_API_KEY);
         return createResponse(JSON.stringify(result));
@@ -819,22 +842,9 @@ export default {
         
         console.log(`[DEBUG] Received ${body.items.length} items for batch processing`);
 
-        // 检查配额
-        const user = await getUserFromRequest(request, env);
-        if (user) {
-          for (let i = 0; i < body.items.length; i++) {
-            const quotaCheck = await checkAndConsumeQuota(user.id, env);
-            if (!quotaCheck.allowed) {
-              return createResponse(JSON.stringify({ 
-                error: `Quota exceeded after ${i} items. ${quotaCheck.reason}`,
-                code: 'QUOTA_EXCEEDED'
-              }), 403);
-            }
-          }
-        } else {
-          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
-          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
-        }
+        // 增加统计计数
+        const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+        await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
 
         const promises = body.items.map(async (item) => {
           console.log(`[DEBUG] Processing chunk_id=${item.chunk_id}`);
@@ -889,20 +899,9 @@ export default {
           return createResponse(JSON.stringify({ error: 'No file received' }), 400);
         }
 
-        // 检查配额（如果已登录）
-        const user = await getUserFromRequest(request, env);
-        if (user) {
-          const quotaCheck = await checkAndConsumeQuota(user.id, env);
-          if (!quotaCheck.allowed) {
-            return createResponse(JSON.stringify({ 
-              error: quotaCheck.reason,
-              code: 'QUOTA_EXCEEDED'
-            }), 403);
-          }
-        } else {
-          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
-          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
-        }
+        // 增加统计计数
+        const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+        await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
 
         const token = await getAccessToken(env);
         const name = `${Date.now()}_${file.name}`;
@@ -931,20 +930,9 @@ export default {
         const { fileUris, prompt } = await request.json();
         const fileUri = fileUris[0];
 
-        // 检查配额（如果已登录）
-        const user = await getUserFromRequest(request, env);
-        if (user) {
-          const quotaCheck = await checkAndConsumeQuota(user.id, env);
-          if (!quotaCheck.allowed) {
-            return createResponse(JSON.stringify({ 
-              error: quotaCheck.reason,
-              code: 'QUOTA_EXCEEDED'
-            }), 403);
-          }
-        } else {
-          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
-          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
-        }
+        // 增加统计计数
+        const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+        await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
 
         const token = await getAccessToken(env);
         const vertexRes = await streamVertex(fileUri, prompt, env, token);
@@ -1034,20 +1022,9 @@ export default {
           return createResponse(JSON.stringify({ error: 'text and prompt are required' }), 400);
         }
 
-        // 检查配额（如果已登录）
-        const user = await getUserFromRequest(request, env);
-        if (user) {
-          const quotaCheck = await checkAndConsumeQuota(user.id, env);
-          if (!quotaCheck.allowed) {
-            return createResponse(JSON.stringify({ 
-              error: quotaCheck.reason,
-              code: 'QUOTA_EXCEEDED'
-            }), 403);
-          }
-        } else {
-          const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
-          await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
-        }
+        // 增加统计计数
+        const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+        await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
 
         const token = await getAccessToken(env);
         const vertexRes = await streamVertexFromText(text, prompt, env, token);
