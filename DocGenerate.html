@@ -547,74 +547,23 @@
 
     <script src="DocGenerate.js"></script>
     <script>
-        // 语言切换功能
-        let currentLang = localStorage.getItem('language') || 'zh';
-
-        const langDisplayNames = {
-            'zh': '简体中文',
-            'zh-TW': '繁體中文',
-            'en': 'English',
-            'ko': '한국어'
-        };
-
-        const i18n = {
-            zh: {
-                donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
-                donateBannerTextMobile: '如果你觉得此网站有用，可以捐款支持我们',
-                supportUs: '支持我们',
-                appName: '请出题',
-            },
-            'zh-TW': {
-                donateBannerText: '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們',
-                donateBannerTextMobile: '如你覺得這個網站有用，歡迎捐款支持我們',
-                supportUs: '支持我們',
-                appName: '請出題',
-            },
-            en: {
-                donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
-                donateBannerTextMobile: 'If you find this site helpful, please consider donating.',
-                supportUs: 'Support Us',
-                appName: 'gpa-buddy',
-            },
-            ko: {
-                donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
-                donateBannerTextMobile: '이 사이트가 도움이 된다면 기부로 후원해 주세요.',
-                supportUs: '후원하기',
-                appName: 'gpa-buddy',
-            }
-        };
-
-        function t(key) {
-            return i18n[currentLang]?.[key] || key;
-        }
-
-        function updateLanguage() {
-            document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if (i18n[currentLang]?.[key]) {
-                    el.textContent = i18n[currentLang][key];
-                }
-            });
-            document.querySelectorAll('.lang-option').forEach(btn => {
-                if (btn.getAttribute('data-lang') === currentLang) {
-                    btn.classList.add('active');
-                } else {
-                    btn.classList.remove('active');
-                }
-            });
-            document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
-        }
-
-        function toggleLangDropdown() {
-            const dropdown = document.getElementById('langDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        function changeLanguage(lang) {
-            currentLang = lang;
-            localStorage.setItem('language', currentLang);
-            updateLanguage();
-            document.getElementById('langDropdown').classList.remove('show');
+        // HTML 特有的 donate banner 文本（扩展 DocGenerate.js 的 i18n）
+        if (typeof i18n !== 'undefined') {
+            i18n.zh.donateBannerText = '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们';
+            i18n.zh.donateBannerTextMobile = '如果你觉得此网站有用，可以捐款支持我们';
+            i18n.zh.supportUs = '支持我们';
+            
+            i18n['zh-TW'].donateBannerText = '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們';
+            i18n['zh-TW'].donateBannerTextMobile = '如你覺得這個網站有用，歡迎捐款支持我們';
+            i18n['zh-TW'].supportUs = '支持我們';
+            
+            i18n.en.donateBannerText = 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.';
+            i18n.en.donateBannerTextMobile = 'If you find this site helpful, please consider donating.';
+            i18n.en.supportUs = 'Support Us';
+            
+            i18n.ko.donateBannerText = '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.';
+            i18n.ko.donateBannerTextMobile = '이 사이트가 도움이 된다면 기부로 후원해 주세요.';
+            i18n.ko.supportUs = '후원하기';
         }
 
         function closeDonateBanner() {
@@ -623,20 +572,6 @@
                 banner.style.display = 'none';
             }
         }
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) {
-                const dropdown = document.getElementById('langDropdown');
-                if (dropdown.classList.contains('show')) {
-                    dropdown.classList.remove('show');
-                }
-            }
-        }
-
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            updateLanguage();
-        });
 
         // 动态加载对应的 JS 文件
         (function() {

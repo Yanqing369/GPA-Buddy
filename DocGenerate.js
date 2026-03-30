@@ -1237,6 +1237,8 @@ window.saveAndPractice = saveAndPractice;
 window.closeDonateBanner = closeDonateBanner;
 window.setupDropZone = setupDropZone;
 window.handleFiles = handleFiles;
+window.i18n = i18n;
+window.currentLang = currentLang;
 
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
