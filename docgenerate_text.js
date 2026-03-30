@@ -284,7 +284,7 @@ function updateLanguageText() {
 
 function toggleLangDropdownText() {
     const dropdown = document.getElementById('langDropdown');
-    if (dropdown) dropdown.classList.toggle('hidden');
+    if (dropdown) dropdown.classList.toggle('show');
 }
 
 function changeLanguageText(lang) {
@@ -292,17 +292,18 @@ function changeLanguageText(lang) {
     localStorage.setItem('language', currentLangText);
     updateLanguageText();
     const dropdown = document.getElementById('langDropdown');
-    if (dropdown) dropdown.classList.add('hidden');
+    if (dropdown) dropdown.classList.remove('show');
 }
 
-window.onclick = function(event) {
+document.addEventListener('click', function(event) {
+    if (!event.target || !event.target.closest) return;
     if (!event.target.closest('.lang-dropdown')) {
         const dropdown = document.getElementById('langDropdown');
-        if (dropdown && !dropdown.classList.contains('hidden')) {
-            dropdown.classList.add('hidden');
+        if (dropdown && dropdown.classList.contains('show')) {
+            dropdown.classList.remove('show');
         }
     }
-};
+});
 
 function enableRefreshProtectionText() {
     preventRefreshText = true;
