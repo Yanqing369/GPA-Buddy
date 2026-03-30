@@ -396,15 +396,16 @@
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
-                        </div>
                         <button onclick="startGeneration()" id="genBtn" disabled class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
                             <span data-i18n="startGenerate">开始生成</span>
                         </button>
+                        <div class="mt-4 p-3 border border-slate-200 rounded-lg bg-slate-50">
+                            <p class="text-xs text-slate-500 mb-2" data-i18n="captchaLabel">人机验证</p>
+                            <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
+                        </div>
                     </div>
                 </div>
             </div>
