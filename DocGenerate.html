@@ -574,14 +574,15 @@
         }
 
         // 点击页面其他地方关闭语言下拉菜单
-        window.onclick = function(event) {
+        document.addEventListener('click', function(event) {
+            if (!event.target || !event.target.closest) return;
             if (!event.target.closest('.lang-dropdown')) {
                 const dropdown = document.getElementById('langDropdown');
                 if (dropdown && dropdown.classList.contains('show')) {
                     dropdown.classList.remove('show');
                 }
             }
-        }
+        });
 
         // 动态加载对应的 JS 文件
         (function() {
