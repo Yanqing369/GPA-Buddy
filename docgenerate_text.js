@@ -143,7 +143,7 @@ var i18nText = {
         mixedFileTypes: '請上傳相同類型的檔案（PPT或Excel或Word/TXT），不要混合上傳'
     },
     en: {
-        appName: 'Exam Study Buddy',
+        appName: 'GPA Buddy',
         back: 'Back',
         generateHeader: 'Generate from Material',
         dropText: 'Drop files here or click to upload',

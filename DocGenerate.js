@@ -139,7 +139,7 @@ const i18n = {
         supportUs: '支持我們'
     },
     en: {
-        appName: 'Exam Study Buddy',
+        appName: 'GPA Buddy',
         back: 'Back',
         generateHeader: 'Generate from Material',
         dropText: 'Drop files here or click to upload',
