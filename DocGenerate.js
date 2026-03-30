@@ -282,7 +282,7 @@ function updateLanguage() {
 
 function toggleLangDropdown() {
     const dropdown = document.getElementById('langDropdown');
-    if (dropdown) dropdown.classList.toggle('hidden');
+    if (dropdown) dropdown.classList.toggle('show');
 }
 
 function changeLanguage(lang) {
@@ -290,7 +290,7 @@ function changeLanguage(lang) {
     localStorage.setItem('language', currentLang);
     updateLanguage();
     const dropdown = document.getElementById('langDropdown');
-    if (dropdown) dropdown.classList.add('hidden');
+    if (dropdown) dropdown.classList.remove('show');
 }
 
 window.onclick = function(event) {
