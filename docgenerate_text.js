@@ -27,7 +27,7 @@ var streamingGeneratorText = null;
 // ==================== 国际化配置 ====================
 var i18nText = {
     zh: {
-        appName: '刷题考试助手',
+        appName: '請出題',
         back: '返回',
         generateHeader: '从资料生成题库',
         dropText: '拖拽文件到此处，或点击上传',
@@ -85,7 +85,7 @@ var i18nText = {
         mixedFileTypes: '请上传相同类型的文件（PPT或Excel或Word/TXT），不要混合上传'
     },
     'zh-TW': {
-        appName: '刷題考試助手',
+        appName: '請出題',
         back: '返回',
         generateHeader: '從資料生成題庫',
         dropText: '拖曳檔案到此處，或點擊上傳',

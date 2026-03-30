@@ -27,10 +27,10 @@ let streamingGenerator = null;
 // ==================== 国际化配置 ====================
 const i18n = {
     zh: {
-        appName: '刷题考试助手',
+        appName: '请出题',
         back: '返回',
         generateHeader: '从资料生成题库',
-        dropText: '拖拽PDF文件到此处，或点击上传',
+        dropText: '拖拽文件到此处，或点击上传',
         supportFormats: '支持 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 文件将自动提取文本生成题目',
         configTitle: '生成配置',
@@ -83,7 +83,7 @@ const i18n = {
         supportUs: '支持我们'
     },
     'zh-TW': {
-        appName: '刷題考試助手',
+        appName: '請出題',
         back: '返回',
         generateHeader: '從資料生成題庫',
         dropText: '拖曳PDF檔案到此處，或點擊上傳',
