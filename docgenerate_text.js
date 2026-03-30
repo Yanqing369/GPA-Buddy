@@ -41,6 +41,9 @@ var i18nText = {
         startGenerate: '开始生成',
         textPreview: '文本预览',
         filePreview: '文件预览',
+        captchaLabel: '人机验证',
+        pdfPreviewNote: 'PDF中的图表都将被读取',
+        officePreviewNote: 'Office文件将只有文字可以被读取',
         waitingUpload: '等待上传文件...',
         generating: '正在生成题库...',
         aiProcessing: 'AI正在分析文档内容',
@@ -96,6 +99,9 @@ var i18nText = {
         startGenerate: '開始生成',
         textPreview: '文本預覽',
         filePreview: '檔案預覽',
+        captchaLabel: '人機驗證',
+        pdfPreviewNote: 'PDF中的圖表都將被讀取',
+        officePreviewNote: 'Office文件將只有文字可以被讀取',
         waitingUpload: '等待上傳檔案...',
         generating: '正在生成題庫...',
         aiProcessing: 'AI正在分析文件內容',
@@ -1118,6 +1124,13 @@ async function handleFilesText(files) {
     fileList.innerHTML = '';
     fileList.classList.remove('hidden');
     
+    // 显示 Office 预览提示
+    const previewNote = document.getElementById('previewNote');
+    if (previewNote) {
+        previewNote.textContent = tText('officePreviewNote');
+        previewNote.classList.remove('hidden');
+    }
+    
     currentFilesText.forEach((file, index) => {
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200';
@@ -1189,6 +1202,10 @@ async function removeFileText(index) {
         if (pdfPreview) {
             pdfPreview.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 py-20">${tText('waitingUpload')}</div>`;
         }
+        
+        // 隐藏预览提示
+        const previewNote = document.getElementById('previewNote');
+        if (previewNote) previewNote.classList.add('hidden');
         
         extractedTextContent = '';
         currentFileTypeText = null;

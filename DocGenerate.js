@@ -40,6 +40,8 @@ const i18n = {
         langEN: 'English',
         startGenerate: '开始生成',
         captchaLabel: '人机验证',
+        pdfPreviewNote: 'PDF中的图表都将被读取',
+        officePreviewNote: 'Office文件将只有文字可以被读取',
         pdfPreview: 'PDF预览（已添加页码标记）',
         filePreview: '文件预览',
         waitingUpload: '等待上传文件...',
@@ -94,6 +96,8 @@ const i18n = {
         langEN: 'English',
         startGenerate: '開始生成',
         captchaLabel: '人機驗證',
+        pdfPreviewNote: 'PDF中的圖表都將被讀取',
+        officePreviewNote: 'Office文件將只有文字可以被讀取',
         pdfPreview: 'PDF預覽（已添加頁碼標記）',
         filePreview: '檔案預覽',
         waitingUpload: '等待上傳檔案...',
@@ -148,6 +152,8 @@ const i18n = {
         langEN: 'English',
         startGenerate: 'Start Generation',
         captchaLabel: 'Human Verification',
+        pdfPreviewNote: 'Charts and images in PDF will be read',
+        officePreviewNote: 'Only text will be extracted from Office files',
         pdfPreview: 'PDF Preview (with page markers)',
         filePreview: 'File Preview',
         waitingUpload: 'Waiting for file upload...',
@@ -202,6 +208,8 @@ const i18n = {
         langEN: '영어',
         startGenerate: '생성 시작',
         captchaLabel: '보안 인증',
+        pdfPreviewNote: 'PDF의 차트와 이미지가 모두 읽힙니다',
+        officePreviewNote: 'Office 파일에서는 텍스트만 추출됩니다',
         pdfPreview: 'PDF 미리보기 (페이지 표시 포함)',
         filePreview: '파일 미리보기',
         waitingUpload: '파일 업로드 대기 중...',
@@ -880,6 +888,13 @@ async function handlePdfFile(file) {
     fileList.innerHTML = '';
     fileList.classList.remove('hidden');
     
+    // 显示 PDF 预览提示
+    const previewNote = document.getElementById('previewNote');
+    if (previewNote) {
+        previewNote.textContent = t('pdfPreviewNote');
+        previewNote.classList.remove('hidden');
+    }
+    
     currentFiles.forEach((file, index) => {
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200';
@@ -1050,6 +1065,10 @@ async function removeFile(index) {
         if (pdfPreview) {
             pdfPreview.innerHTML = `<div class="flex items-center justify-center h-full text-slate-400 py-20">${t('waitingUpload')}</div>`;
         }
+        
+        // 隐藏预览提示
+        const previewNote = document.getElementById('previewNote');
+        if (previewNote) previewNote.classList.add('hidden');
         
         processedPdfBytes = null;
         processedFileName = '';
