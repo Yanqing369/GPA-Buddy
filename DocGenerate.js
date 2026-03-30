@@ -322,11 +322,19 @@ class StreamingQuestionGenerator {
         this.pageCount = count;
     }
 
-    async uploadFile(file) {
+    setTurnstileToken(token) {
+        this.turnstileToken = token;
+    }
+
+    async uploadFile(file, turnstileToken = null) {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await fetch(`${API_BASE}/upload`, {
+        const url = turnstileToken 
+            ? `${API_BASE}/upload?turnstileToken=${encodeURIComponent(turnstileToken)}`
+            : `${API_BASE}/upload`;
+
+        const response = await fetch(url, {
             method: 'POST',
             body: formData
         });
@@ -1060,6 +1068,13 @@ async function startGeneration() {
         return;
     }
 
+    // 获取 Turnstile token
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    if (!turnstileToken) {
+        showToast('请先完成人机验证 / Please complete the CAPTCHA', 'error');
+        return;
+    }
+
     const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
     const lang = document.querySelector('input[name="genLang"]:checked')?.value || 'zh';
     
@@ -1079,8 +1094,8 @@ async function startGeneration() {
     streamingGenerator.updateProgressStep(1, 'active');
     
     try {
-        // 上传文件阶段
-        await streamingGenerator.uploadFile(currentFiles[0]);
+        // 上传文件阶段（带人机验证）
+        await streamingGenerator.uploadFile(currentFiles[0], turnstileToken);
         streamingGenerator.updateProgressStep(1, 'completed');
         
         // 生成题目阶段

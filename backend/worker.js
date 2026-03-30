@@ -892,6 +892,27 @@ export default {
     /* ===== UPLOAD ===== */
     if (url.pathname === '/upload') {
       try {
+        const turnstileToken = url.searchParams.get('turnstileToken');
+
+        // Turnstile 人机验证
+        if (env.TURNSTILE_SECRET_KEY) {
+          if (!turnstileToken) {
+            return createResponse(JSON.stringify({ error: 'Turnstile token required' }), 403);
+          }
+          const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              secret: env.TURNSTILE_SECRET_KEY,
+              response: turnstileToken,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (!verifyData.success) {
+            return createResponse(JSON.stringify({ error: 'Turnstile verification failed' }), 403);
+          }
+        }
+
         const form = await request.formData();
         const file = form.get('file');
 

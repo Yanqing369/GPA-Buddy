@@ -11,6 +11,7 @@ FRONTEND_URL = "https://www.gpa-buddy.com"
 # DEEPSEEK_API_KEY = "your-api-key-here"
 # MOONSHOT_API_KEY = "your-moonshot-api-key-here"
 # GOOGLE_CLIENT_ID = "your-google-client-id"
+# TURNSTILE_SECRET_KEY = "your-turnstile-secret-key"
 
 # KV 命名空间绑定
 [[kv_namespaces]]
