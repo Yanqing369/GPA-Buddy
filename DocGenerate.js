@@ -1019,6 +1019,8 @@ async function renderPdfPreview(pdfBytes) {
         const context = canvas.getContext('2d');
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        canvas.style.maxWidth = '100%';
+        canvas.style.height = 'auto';
         
         const pageDiv = document.createElement('div');
         pageDiv.className = 'pdf-page-preview mb-4';
