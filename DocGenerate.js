@@ -282,9 +282,9 @@ function updateLanguage() {
     });
     const langDisplay = document.getElementById('currentLangDisplay');
     if (langDisplay) {
-        langDisplay.textContent = currentLang === 'zh' ? '简体中文' : 
-                                   currentLang === 'zh-TW' ? '繁體中文' : 
-                                   currentLang === 'ko' ? '한국어' : 'English';
+        langDisplay.textContent = currentLang === 'zh' ? '简' : 
+                                   currentLang === 'zh-TW' ? '繁' : 
+                                   currentLang === 'ko' ? '한' : 'En';
     }
 }
 
