@@ -633,44 +633,169 @@ class StreamingTextGeneratorText {
         this.totalBatches = chunks.length;
     }
 
-    async startGenerationText(config) {
-        const { totalQuestions, lang } = config;
-        
-        if (!this.chunks || this.chunks.length === 0) {
-            throw new Error(tText('fillRequired'));
-        }
+    // 新的统一生成方法 - 使用 /text_generate 接口
+    async generateAllText(text, config) {
+        const { questionCount, lang, turnstileToken, fileName, fileType } = config;
 
         this.isGenerating = true;
         this.questions = [];
         this.batchResults.clear();
+        this.totalBatches = Math.ceil(questionCount / 20);
         this.currentBatch = 0;
         this.abortControllers = [];
 
+        // 构建 form-data
+        const formData = new FormData();
+        formData.append('text', text);
+        formData.append('questionCount', questionCount);
+        formData.append('lang', lang);
+        formData.append('turnstileToken', turnstileToken);
+        formData.append('fileName', fileName);
+        formData.append('fileType', fileType);
+
         try {
             this.updateProgressStepText(2, 'active');
-            
-            // 第0批：流式传输，实时显示
-            await this.streamBatchText(0, lang);
-            
-            // 其他批次：静默处理
-            if (this.totalBatches > 1) {
-                const batchPromises = [];
-                for (let i = 1; i < this.totalBatches; i++) {
-                    batchPromises.push(this.silentBatchText(i, lang));
-                }
-                await Promise.allSettled(batchPromises);
+
+            const controller = new AbortController();
+            this.abortControllers.push(controller);
+
+            const response = await fetch(`${API_BASE_TEXT}/text_generate`, {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || tText('uploadError'));
             }
 
-            this.mergeAllBatches();
-            this.updateProgressStepText(2, 'completed');
-            this.showCompletionUIText();
-            
+            // 使用 SSE 读取响应
+            const reader = response.body.getReader();
+            let sseBuffer = '';
+            let batch0Buffer = '';
+            let displayedCount = 0;
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = this.decoder.decode(value, { stream: true });
+                sseBuffer += chunk;
+
+                // 处理 SSE 消息（以 \n\n 分隔）
+                let messageEnd = sseBuffer.indexOf('\n\n');
+                while (messageEnd !== -1) {
+                    const message = sseBuffer.substring(0, messageEnd);
+                    sseBuffer = sseBuffer.substring(messageEnd + 2);
+
+                    // 解析 SSE 消息中的 data: 行
+                    const lines = message.split('\n');
+                    let dataLine = '';
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            dataLine += line.substring(6);
+                        }
+                    }
+
+                    if (dataLine) {
+                        try {
+                            const data = JSON.parse(dataLine);
+
+                            switch (data.type) {
+                                case 'batch0_chunk':
+                                    // 实时显示 batch0 的题目
+                                    batch0Buffer += data.data;
+                                    const newQuestions = this.extractCompleteObjects(batch0Buffer);
+
+                                    if (newQuestions.length > displayedCount) {
+                                        for (let i = displayedCount; i < newQuestions.length; i++) {
+                                            this.renderQuestionStreamText(newQuestions[i], i, true);
+                                        }
+                                        displayedCount = newQuestions.length;
+                                        this.updateProgressText(0, displayedCount);
+                                    }
+                                    break;
+
+                                case 'batch0_done':
+                                    console.log('[DEBUG] Batch 0 done:', data.count);
+                                    break;
+
+                                case 'final_result':
+                                    // 接收所有批次的最终结果
+                                    console.log('[DEBUG] Received final_result');
+                                    console.log('[DEBUG] data.data length:', data.data?.length);
+                                    this.questions = data.data || [];
+                                    generatedQuestionsText = this.questions;
+                                    // 将结果存储到 batchResults 以便兼容旧代码
+                                    this.batchResults.set(0, this.questions.slice(0, 20));
+                                    for (let i = 1; i < this.totalBatches; i++) {
+                                        this.batchResults.set(i, this.questions.slice(i * 20, (i + 1) * 20));
+                                    }
+                                    break;
+
+                                case 'done':
+                                    console.log('[DEBUG] Received done');
+                                    this.updateProgressStepText(2, 'completed');
+                                    this.showCompletionUIText();
+                                    break;
+
+                                case 'error':
+                                    console.error('[DEBUG] Received error:', data.message);
+                                    throw new Error(data.message);
+                            }
+                        } catch (e) {
+                            console.error('[DEBUG] Error parsing SSE data:', e);
+                            console.error('[DEBUG] Data line length:', dataLine.length);
+                            console.error('[DEBUG] Data line (first 200 chars):', dataLine.substring(0, 200));
+                        }
+                    }
+
+                    messageEnd = sseBuffer.indexOf('\n\n');
+                }
+
+                // 如果缓冲区太大但没有完整消息，防止内存溢出
+                if (sseBuffer.length > 1000000) {
+                    console.warn('[DEBUG] SSE buffer too large, clearing');
+                    sseBuffer = '';
+                }
+            }
+
+            // 处理剩余的数据
+            if (sseBuffer.trim()) {
+                console.log('[DEBUG] Processing remaining SSE buffer');
+                const lines = sseBuffer.split('\n');
+                let dataLine = '';
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        dataLine += line.substring(6);
+                    }
+                }
+                if (dataLine) {
+                    try {
+                        const data = JSON.parse(dataLine);
+                        if (data.type === 'final_result') {
+                            console.log('[DEBUG] Processing final_result from remaining buffer');
+                            this.questions = data.data || [];
+                            generatedQuestionsText = this.questions;
+                        }
+                    } catch (e) {
+                        console.error('[DEBUG] Error parsing remaining buffer:', e);
+                    }
+                }
+            }
+
         } catch (error) {
             this.handleErrorText(error);
         } finally {
             this.isGenerating = false;
             disableRefreshProtectionText();
         }
+    }
+
+    // 保留旧方法以兼容（但内部使用新方法）
+    async startGenerationText(config) {
+        console.warn('startGenerationText is deprecated, use generateAllText instead');
     }
 
     buildBatchPrompt(batchIndex, lang) {
@@ -1229,42 +1354,37 @@ async function startGenerationText() {
         return;
     }
 
+    // 获取 Turnstile token
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    if (!turnstileToken) {
+        showToastText('请先完成人机验证 / Please complete the CAPTCHA', 'error');
+        return;
+    }
+
     const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
     const lang = document.querySelector('input[name="genLang"]:checked')?.value || 'zh';
-    const numGroups = totalCount / 20;
     
     const resultPreview = document.getElementById('resultPreview');
     if (resultPreview) resultPreview.innerHTML = '';
     
-    // 分割文本
-    let chunks = [];
-    const category = getFileCategoryText(currentFileTypeText);
-    
-    if (category === 'page-based') {
-        chunks = splitByPagesText(extractedTextContent, numGroups);
-    } else if (category === 'row-based') {
-        chunks = splitByRowsText(extractedTextContent, numGroups);
-    } else {
-        chunks = overlapSplitText(extractedTextContent, numGroups, 500);
-    }
-    
     streamingGeneratorText = new StreamingTextGeneratorText();
     streamingGeneratorText.setFileName(currentFilesText[0]?.name || 'document');
-    streamingGeneratorText.setChunks(chunks);
     
     enableRefreshProtectionText();
     streamingGeneratorText.showProgressModal(totalCount);
     streamingGeneratorText.updateProgressStepText(1, 'active');
     
-    // 模拟第一步完成
-    setTimeout(() => {
-        streamingGeneratorText.updateProgressStepText(1, 'completed');
-    }, 500);
+    // 步骤1完成（文本已在本地提取）
+    streamingGeneratorText.updateProgressStepText(1, 'completed');
     
     try {
-        await streamingGeneratorText.startGenerationText({
-            totalQuestions: totalCount,
-            lang: lang
+        // 使用新的统一接口，一次性完成所有操作
+        await streamingGeneratorText.generateAllText(extractedTextContent, {
+            questionCount: totalCount,
+            lang: lang,
+            turnstileToken: turnstileToken,
+            fileName: currentFilesText[0]?.name.replace(/\.[^/.]+$/, '') || 'document',
+            fileType: currentFileTypeText || 'txt'
         });
     } catch (err) {
         console.error('Generation error:', err);

@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
@@ -394,6 +395,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
                     </svg>
                 </button>
+
+                <!-- 人机验证 -->
+                <div class="bg-white/70 rounded-xl p-4 border border-slate-200">
+                    <p class="text-xs text-slate-500 mb-2 text-center" data-i18n="captchaLabel">人机验证</p>
+                    <div class="flex justify-center">
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
+                    </div>
+                </div>
             </div>
 
             <div class="glass-card rounded-2xl p-6 h-[400px] flex flex-col">
@@ -500,8 +509,10 @@
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
         
         const db = new Dexie(DB_NAME);
-        db.version(4).stores({
+        db.version(5).stores({
             questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, safeName, bankId, data, createdAt',
             settings: 'key'
         });
 
@@ -561,7 +572,8 @@
                 questionProgressText: '准备中...',
                 donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
                 donateBannerTextMobile: '如果你觉得此网站有用，可以捐款支持我们',
-                supportUs: '支持我们'
+                supportUs: '支持我们',
+                captchaLabel: '人机验证 / Human Verification'
             },
             'zh-TW': {
                 appName: '請出題',
@@ -602,7 +614,8 @@
                 questionProgressText: '準備中...',
                 donateBannerText: '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們',
                 donateBannerTextMobile: '如你覺得這個網站有用，歡迎捐款支持我們',
-                supportUs: '支持我們'
+                supportUs: '支持我們',
+                captchaLabel: '人機驗證 / Human Verification'
             },
             en: {
                 appName: 'GPA Buddy',
@@ -643,7 +656,8 @@
                 questionProgressText: 'Preparing...',
                 donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
                 donateBannerTextMobile: 'If you find this site helpful, please consider donating.',
-                supportUs: 'Support Us'
+                supportUs: 'Support Us',
+                captchaLabel: 'Human Verification / 人机验证'
             },
             ko: {
                 appName: '문제은행 도우미',
@@ -683,7 +697,8 @@
                 stage2: '정리',
                 preparing: '준비 중...',
                 processingHint: '약 2분 소요됩니다. 새로고침하거나 페이지를 닫지 마세요...',
-                completed: '완료!'
+                completed: '완료!',
+                captchaLabel: '보안 인증 / Human Verification'
             }
         };
 
@@ -1188,116 +1203,67 @@ Extract as many valid questions as possible from this section. Assign ids starti
                 return;
             }
             
+            // 获取 Turnstile token
+            const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+            if (!turnstileToken) {
+                showToast('请先完成人机验证 / Please complete the CAPTCHA', 'error');
+                return;
+            }
+            
             enableRefreshProtection();
             
             document.getElementById('orgProgress').classList.remove('hidden');
-            document.getElementById('orgProgressBar').style.width = '5%';
+            document.getElementById('orgProgressBar').style.width = '10%';
             document.getElementById('orgStatusText').textContent = t('preparing');
             
-            // 隐藏之前的数量显示和处理提示
+            // 隐藏之前的数量显示
             document.getElementById('questionCountDisplay').classList.add('hidden');
-            document.getElementById('processingHint').textContent = '';
+            document.getElementById('processingHint').textContent = t('processingHint');
             
             // 设置阶段1（识别阶段）
             updateStage(1);
             
             try {
-                // 第一阶段：识别题目数量
                 document.getElementById('progressTitle').textContent = t('identifyingBank');
                 document.getElementById('progressSubtitle').textContent = t('aiCounting');
                 
-                const countPrompt = getCountPrompt(extractedText);
-                const countResponse = await callLLM([{role: "user", content: countPrompt}]);
+                // 构建 form-data
+                const formData = new FormData();
+                formData.append('text', extractedText);
+                formData.append('turnstileToken', turnstileToken);
+                formData.append('lang', currentLang);
                 
-                // 解析数量
-                let questionCount = parseInt(countResponse.trim().match(/\d+/)?.[0] || '0');
-                if (!questionCount || questionCount <= 0) {
-                    // 如果无法识别数量，默认使用40（2组）
-                    questionCount = 40;
+                // 更新进度
+                document.getElementById('orgProgressBar').style.width = '30%';
+                
+                // 调用统一的 /organize 接口
+                const response = await fetch(`${API_BASE}/organize`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Organization failed');
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error('Organization failed');
                 }
                 
                 // 显示识别到的题目数量
-                document.getElementById('detectedCount').textContent = questionCount;
+                document.getElementById('detectedCount').textContent = result.detectedCount || 0;
                 document.getElementById('questionCountDisplay').classList.remove('hidden');
                 
-                // 计算组数：如果不是20的整数倍，分为(x//20)+1组
-                const numGroups = Math.ceil(questionCount / 20);
-                const questionsPerGroup = 20;
-                
-                // 更新进度到20%（进入第二阶段）
-                document.getElementById('orgProgressBar').style.width = '20%';
+                // 更新阶段2
                 updateStage(2);
-                
+                document.getElementById('orgProgressBar').style.width = '80%';
                 document.getElementById('progressTitle').textContent = t('organizingBank');
                 document.getElementById('progressSubtitle').textContent = t('aiOrganizing');
                 
-                // 显示处理提示（大约需要2分钟）
-                document.getElementById('processingHint').textContent = t('processingHint');
-                document.getElementById('questionProgressText').textContent = 
-                    t('estimatedTime', 120); // 显示"预计需要等待 120 秒"
-                
-                // 分割文本
-                let chunks = [];
-                const category = getFileCategory(currentFileType);
-                
-                if (category === 'page-based') {
-                    chunks = splitByPages(extractedText, numGroups);
-                } else if (category === 'row-based') {
-                    chunks = splitByRows(extractedText, numGroups);
-                } else {
-                    chunks = overlapSplit(extractedText, numGroups, 500);
-                }
-                
-                // 确保有足够的chunks
-                while (chunks.length < numGroups) {
-                    chunks.push('');
-                }
-                
-                // 并行处理所有分组（无并发限制）
-                const promises = chunks.map((chunk, i) => {
-                    if (!chunk || chunk.trim().length === 0) {
-                        console.warn(`Chunk ${i+1} is empty, skipping...`);
-                        return Promise.resolve([]);
-                    }
-                    
-                    const startId = i * questionsPerGroup + 1;
-                    const prompt = getOrganizePrompt(chunk, startId, i, numGroups);
-                    
-                    return callLLM([{role: "user", content: prompt}])
-                        .then(fullResponse => {
-                            const questions = extractJSON(fullResponse);
-                            
-                            if (Array.isArray(questions)) {
-                                // 重新编号
-                                questions.forEach((q, idx) => {
-                                    q.id = startId + idx;
-                                    q.source = '用户上传题库';
-                                });
-                                
-                                // 最后一组如果不足20题，补齐
-                                if (i === numGroups - 1 && questions.length < 20 && questions.length > 0) {
-                                    const padded = padQuestionsToTwenty([...questions]);
-                                    // 重新调整编号，确保连续
-                                    padded.forEach((q, idx) => {
-                                        q.id = startId + idx;
-                                    });
-                                    return padded;
-                                }
-                            }
-                            
-                            return questions || [];
-                        })
-                        .catch(err => {
-                            console.error(`Chunk ${i+1} failed:`, err);
-                            return []; // 返回空数组，不中断整体流程
-                        });
-                });
-                
-                // 等待所有并行请求完成
-                const allQuestionsArrays = await Promise.all(promises);
-                const allQuestions = allQuestionsArrays.flat();
-                
-                generatedQuestions = allQuestions;
+                generatedQuestions = result.questions || [];
                 
                 if (generatedQuestions.length === 0) {
                     throw new Error('No questions found in material');

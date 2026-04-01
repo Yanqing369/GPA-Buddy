@@ -338,202 +338,198 @@ class StreamingQuestionGenerator {
         this.turnstileToken = token;
     }
 
-    async uploadFile(file, turnstileToken = null) {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const url = turnstileToken 
-            ? `${API_BASE}/upload?turnstileToken=${encodeURIComponent(turnstileToken)}`
-            : `${API_BASE}/upload`;
-
-        const response = await fetch(url, {
-            method: 'POST',
-            body: formData
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || t('uploadError'));
-        }
-
-        const data = await response.json();
-        this.fileUri = data.fileUri;
-        this.fileName = data.fileName;
-        return data;
-    }
-
-    async startGeneration(config) {
-        const { totalQuestions, lang } = config;
-        
-        if (!this.fileUri) {
-            throw new Error(t('fillRequired'));
-        }
+    // 新的统一生成方法 - 使用 /pdf_generate 接口
+    async generateAll(file, config) {
+        const { questionCount, lang, turnstileToken } = config;
 
         this.isGenerating = true;
         this.questions = [];
         this.batchResults.clear();
-        this.totalBatches = Math.ceil(totalQuestions / 20);
+        this.totalBatches = Math.ceil(questionCount / 20);
         this.currentBatch = 0;
         this.abortControllers = [];
 
         // 计算每批的页码范围
-        this.pagesPerBatch = this.pageCount > 0 
-            ? Math.ceil(this.pageCount / this.totalBatches) 
+        this.pagesPerBatch = this.pageCount > 0
+            ? Math.ceil(this.pageCount / this.totalBatches)
             : 20;
+
+        // 构建 form-data
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('questionCount', questionCount);
+        formData.append('lang', lang);
+        formData.append('turnstileToken', turnstileToken);
+        formData.append('pageCount', this.pageCount);
+        formData.append('safeFileName', this.safeFileName);
 
         try {
             this.updateProgressStep(2, 'active');
-            
-            await this.streamBatch(0, lang);
-            
-            if (this.totalBatches > 1) {
-                const batchPromises = [];
-                for (let i = 1; i < this.totalBatches; i++) {
-                    batchPromises.push(this.silentBatch(i, lang));
-                }
-                await Promise.allSettled(batchPromises);
+
+            const controller = new AbortController();
+            this.abortControllers.push(controller);
+
+            const response = await fetch(`${API_BASE}/pdf_generate`, {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || t('uploadError'));
             }
 
-            this.mergeAllBatches();
-            this.updateProgressStep(2, 'completed');
-            this.showCompletionUI();
-            
+            // 使用 SSE 读取响应
+            const reader = response.body.getReader();
+            let batch0Buffer = '';
+            let displayedCount = 0;
+            let sseBuffer = ''; // 用于累积 SSE 消息
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = this.decoder.decode(value, { stream: true });
+                sseBuffer += chunk;
+
+                // 处理 SSE 消息（以 \n\n 分隔）
+                let messageEnd = sseBuffer.indexOf('\n\n');
+                while (messageEnd !== -1) {
+                    const message = sseBuffer.substring(0, messageEnd);
+                    sseBuffer = sseBuffer.substring(messageEnd + 2);
+
+                    // 解析 SSE 消息中的 data: 行
+                    const lines = message.split('\n');
+                    let dataLine = '';
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            dataLine += line.substring(6);
+                        }
+                    }
+
+                    if (dataLine) {
+                        try {
+                            const data = JSON.parse(dataLine);
+
+                            switch (data.type) {
+                                case 'batch0_chunk':
+                                    // 实时显示 batch0 的题目
+                                    batch0Buffer += data.data;
+                                    const newQuestions = this.extractCompleteObjects(batch0Buffer);
+
+                                    if (newQuestions.length > displayedCount) {
+                                        for (let i = displayedCount; i < newQuestions.length; i++) {
+                                            this.renderQuestionStream(newQuestions[i], i, true);
+                                        }
+                                        displayedCount = newQuestions.length;
+                                        this.updateProgress(0, displayedCount);
+                                    }
+                                    break;
+
+                                case 'batch0_done':
+                                    console.log('[DEBUG] Batch 0 done:', data.count);
+                                    break;
+
+                                case 'final_result':
+                                    // 接收所有批次的最终结果
+                                    console.log('[DEBUG] Received final_result');
+                                    console.log('[DEBUG] data.data type:', typeof data.data);
+                                    console.log('[DEBUG] data.data is array:', Array.isArray(data.data));
+                                    console.log('[DEBUG] data.data length:', data.data?.length);
+                                    if (data.data && data.data.length > 0) {
+                                        console.log('[DEBUG] First question:', data.data[0].question?.substring(0, 50));
+                                    }
+                                    this.questions = data.data || [];
+                                    generatedQuestions = this.questions;
+                                    console.log('[DEBUG] generatedQuestions set, length:', generatedQuestions.length);
+                                    // 将结果存储到 batchResults 以便兼容旧代码
+                                    this.batchResults.set(0, this.questions.slice(0, 20));
+                                    for (let i = 1; i < this.totalBatches; i++) {
+                                        this.batchResults.set(i, this.questions.slice(i * 20, (i + 1) * 20));
+                                    }
+                                    break;
+
+                                case 'done':
+                                    console.log('[DEBUG] Received done');
+                                    this.updateProgressStep(2, 'completed');
+                                    this.showCompletionUI();
+                                    break;
+
+                                case 'error':
+                                    console.error('[DEBUG] Received error:', data.message);
+                                    throw new Error(data.message);
+                            }
+                        } catch (e) {
+                            console.error('[DEBUG] Error parsing SSE data:', e);
+                            console.error('[DEBUG] Data line length:', dataLine.length);
+                            console.error('[DEBUG] Data line (first 200 chars):', dataLine.substring(0, 200));
+                            // 对于 final_result 之外的消息，继续处理；对于 final_result，可能需要特殊处理
+                            if (!dataLine.includes('"type":"final_result"')) {
+                                // 不是 final_result，可以忽略解析错误
+                            } else {
+                                console.error('[DEBUG] final_result parse error, trying to recover...');
+                            }
+                        }
+                    }
+
+                    messageEnd = sseBuffer.indexOf('\n\n');
+                }
+
+                // 如果缓冲区太大但没有完整消息，防止内存溢出
+                if (sseBuffer.length > 1000000) {
+                    console.warn('[DEBUG] SSE buffer too large, clearing');
+                    sseBuffer = '';
+                }
+            }
+
+            // 处理剩余的数据（可能没有 \n\n 结尾）
+            if (sseBuffer.trim()) {
+                console.log('[DEBUG] Processing remaining SSE buffer');
+                const lines = sseBuffer.split('\n');
+                let dataLine = '';
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                        dataLine += line.substring(6);
+                    }
+                }
+                if (dataLine) {
+                    try {
+                        const data = JSON.parse(dataLine);
+                        if (data.type === 'final_result') {
+                            console.log('[DEBUG] Processing final_result from remaining buffer');
+                            this.questions = data.data || [];
+                            generatedQuestions = this.questions;
+                        }
+                    } catch (e) {
+                        console.error('[DEBUG] Error parsing remaining buffer:', e);
+                    }
+                }
+            }
+
         } catch (error) {
             this.handleError(error);
         } finally {
             this.isGenerating = false;
             disableRefreshProtection();
-            await this.cleanupFile();
         }
     }
 
-    async streamBatch(batchIndex, lang) {
-        const batchPrompt = this.buildBatchPrompt(batchIndex, lang);
-        const controller = new AbortController();
-        this.abortControllers.push(controller);
-        
-        const response = await fetch(`${API_BASE}/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                fileUris: [this.fileUri],
-                prompt: batchPrompt,
-                batchIndex: batchIndex,
-                totalBatches: this.totalBatches
-            }),
-            signal: controller.signal
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || `Batch ${batchIndex} failed`);
-        }
-
-        const reader = response.body.getReader();
-        let jsonBuffer = '';
-        let displayedCount = 0;
-        let isDone = false;
-
-        try {
-            while (!isDone) {
-                const { done, value } = await reader.read();
-                if (done) break;
-
-                const chunk = this.decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
-                
-                for (const line of lines) {
-                    if (!line.trim() || !line.startsWith('data: ')) continue;
-                    
-                    try {
-                        const data = JSON.parse(line.replace('data: ', ''));
-                        
-                        if (data.type === 'chunk') {
-                            jsonBuffer += data.data;
-                            const newQuestions = this.extractCompleteObjects(jsonBuffer);
-                            
-                            if (newQuestions.length > displayedCount) {
-                                for (let i = displayedCount; i < newQuestions.length; i++) {
-                                    this.renderQuestionStream(newQuestions[i], i, batchIndex === 0);
-                                }
-                                displayedCount = newQuestions.length;
-                                this.updateProgress(batchIndex, displayedCount);
-                            }
-                        } else if (data.type === 'error') {
-                            throw new Error(data.message);
-                        } else if (data.type === 'done') {
-                            isDone = true;
-                            const finalQuestions = this.parseCompleteJSON(jsonBuffer);
-                            this.batchResults.set(batchIndex, finalQuestions);
-                        }
-                    } catch (e) {
-                        if (e.message.includes('JSON')) continue;
-                        throw e;
-                    }
-                }
-            }
-        } finally {
-            reader.releaseLock();
-        }
+    // 保留旧方法以兼容（但内部使用新方法）
+    async uploadFile(file, turnstileToken = null) {
+        // 新的流程中不再需要单独上传，标记为已设置
+        this.turnstileToken = turnstileToken;
+        return { fileUri: 'unified', fileName: file.name };
     }
 
-    async silentBatch(batchIndex, lang) {
-        try {
-            const batchPrompt = this.buildBatchPrompt(batchIndex, lang);
-            const controller = new AbortController();
-            this.abortControllers.push(controller);
-            
-            const response = await fetch(`${API_BASE}/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    fileUris: [this.fileUri],
-                    prompt: batchPrompt,
-                    batchIndex: batchIndex,
-                    totalBatches: this.totalBatches
-                }),
-                signal: controller.signal
-            });
+    async startGeneration(config) {
+        // 新的流程直接使用 generateAll
+        console.warn('startGeneration is deprecated, use generateAll instead');
+    }
 
-            if (!response.ok) throw new Error(`Batch ${batchIndex} failed`);
-
-            const reader = response.body.getReader();
-            let buffer = '';
-            let isDone = false;
-            
-            while (!isDone) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                const chunk = this.decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
-                
-                for (const line of lines) {
-                    if (!line.trim() || !line.startsWith('data: ')) continue;
-                    
-                    try {
-                        const data = JSON.parse(line.replace('data: ', ''));
-                        if (data.type === 'chunk') {
-                            buffer += data.data;
-                        } else if (data.type === 'done') {
-                            isDone = true;
-                        } else if (data.type === 'error') {
-                            throw new Error(data.message);
-                        }
-                    } catch (e) {
-                        continue;
-                    }
-                }
-            }
-
-            const questions = this.parseCompleteJSON(buffer);
-            this.batchResults.set(batchIndex, questions);
-            this.updateTotalProgress();
-            
-        } catch (error) {
-            console.error(`Silent batch ${batchIndex} error:`, error);
-            this.batchResults.set(batchIndex, []);
-        }
+    async cleanupFile() {
+        // 新的流程中后端自动清理，无需前端处理
+        console.log('Cleanup handled by backend');
     }
 
     extractCompleteObjects(buffer) {
@@ -1119,15 +1115,15 @@ async function startGeneration() {
     streamingGenerator.updateProgressStep(1, 'active');
     
     try {
-        // 上传文件阶段（带人机验证）
-        await streamingGenerator.uploadFile(currentFiles[0], turnstileToken);
+        // 使用新的统一接口，一次性完成上传、生成和清理
+        // 步骤1和步骤2合并
         streamingGenerator.updateProgressStep(1, 'completed');
+        streamingGenerator.updateProgressStep(2, 'active');
         
-        // 生成题目阶段
-        await streamingGenerator.startGeneration({
-            totalQuestions: totalCount,
+        await streamingGenerator.generateAll(currentFiles[0], {
+            questionCount: totalCount,
             lang: lang,
-            pageCount: processedPageCount
+            turnstileToken: turnstileToken
         });
         
     } catch (err) {
@@ -1149,6 +1145,11 @@ function discardResult() {
 }
 
 async function saveAndPractice() {
+    console.log('[DEBUG] saveAndPractice called');
+    console.log('[DEBUG] generatedQuestions:', generatedQuestions);
+    console.log('[DEBUG] generatedQuestions type:', typeof generatedQuestions);
+    console.log('[DEBUG] generatedQuestions is array:', Array.isArray(generatedQuestions));
+    console.log('[DEBUG] generatedQuestions length:', generatedQuestions?.length);
     if (!generatedQuestions || generatedQuestions.length === 0) {
         showToast('No questions to save', 'error');
         return;

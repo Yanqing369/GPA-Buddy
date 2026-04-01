@@ -488,166 +488,165 @@
             animation-duration: 1s;
         }
 
-        /* ===== 写字动画（开始练习） ===== */
-        .writing-animation {
+        /* ===== 生长树动画（题库管理） ===== */
+        .growing-tree {
             position: relative;
             width: 56px;
             height: 56px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-radius: 50%;
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
             overflow: hidden;
             box-shadow: 
                 inset 0 1px 2px rgba(255,255,255,0.8),
-                0 2px 8px rgba(245, 158, 11, 0.15);
+                0 2px 8px rgba(34, 197, 94, 0.15);
         }
 
-        /* 纸张 */
-        .writing-animation .paper {
+        /* 土壤/种子 */
+        .growing-tree .soil {
             position: absolute;
             bottom: 8px;
             left: 50%;
             transform: translateX(-50%);
-            width: 36px;
-            height: 40px;
-            background: #ffffff;
+            width: 16px;
+            height: 4px;
+            background: #d6d3d1;
             border-radius: 2px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 1;
         }
 
-        /* 纸张上的横线 */
-        .writing-animation .paper-line {
+        /* 树干 */
+        .growing-tree .trunk {
             position: absolute;
-            left: 4px;
-            right: 4px;
-            height: 2px;
-            background: #e5e7eb;
-            border-radius: 1px;
-        }
-
-        .writing-animation .paper-line-1 { top: 10px; }
-        .writing-animation .paper-line-2 { top: 18px; }
-        .writing-animation .paper-line-3 { top: 26px; }
-
-        /* 铅笔 */
-        .writing-animation .pencil {
-            position: absolute;
-            width: 6px;
-            height: 28px;
-            background: linear-gradient(to bottom, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
-            border-radius: 1px;
-            transform-origin: center bottom;
-            animation: write-move 10s ease-in-out infinite;
-            z-index: 10;
-        }
-
-        /* 铅笔笔尖 */
-        .writing-animation .pencil::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
+            bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            width: 0;
+            width: 3px;
             height: 0;
-            border-left: 3px solid transparent;
-            border-right: 3px solid transparent;
-            border-top: 5px solid #92400e;
+            background: linear-gradient(to top, #92400e 0%, #b45309 100%);
+            border-radius: 2px;
+            transform-origin: bottom center;
+            animation: grow-trunk 6s ease-in-out infinite;
+            z-index: 2;
         }
 
-        /* 铅笔橡皮 */
-        .writing-animation .pencil::before {
-            content: '';
+        @keyframes grow-trunk {
+            0%, 100% { height: 0; opacity: 0; }
+            20% { height: 0; opacity: 0; }
+            40% { height: 16px; opacity: 1; }
+            80% { height: 20px; opacity: 1; }
+        }
+
+        /* 树冠 - 左 */
+        .growing-tree .foliage-left {
             position: absolute;
-            top: -4px;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: #f472b6;
-            border-radius: 1px 1px 0 0;
-        }
-
-        /* 书写轨迹 */
-        .writing-animation .writing-trail {
-            position: absolute;
-            height: 2px;
-            background: #3b82f6;
-            border-radius: 1px;
-            opacity: 0;
-            animation: trail-appear 10s ease-in-out infinite;
-        }
-
-        .writing-animation .trail-1 {
-            top: 22px;
-            left: 14px;
-            width: 16px;
-            animation-delay: 0.2s;
-        }
-
-        .writing-animation .trail-2 {
-            top: 30px;
-            left: 14px;
-            width: 22px;
-            animation-delay: 0.8s;
-        }
-
-        .writing-animation .trail-3 {
-            top: 38px;
-            left: 14px;
+            bottom: 22px;
+            left: 50%;
             width: 12px;
-            animation-delay: 1.4s;
+            height: 12px;
+            background: #22c55e;
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            animation: grow-foliage 6s ease-in-out infinite;
+            z-index: 3;
         }
 
-        @keyframes write-move {
-            0% {
-                left: 14px;
-                top: 8px;
-                transform: rotate(-15deg);
-            }
-            15% {
-                left: 30px;
-                top: 10px;
-                transform: rotate(10deg);
-            }
-            30% {
-                left: 14px;
-                top: 16px;
-                transform: rotate(-15deg);
-            }
-            45% {
-                left: 36px;
-                top: 18px;
-                transform: rotate(10deg);
-            }
-            60% {
-                left: 14px;
-                top: 24px;
-                transform: rotate(-15deg);
-            }
-            75% {
-                left: 26px;
-                top: 26px;
-                transform: rotate(10deg);
-            }
-            90%, 100% {
-                left: 14px;
-                top: 8px;
-                transform: rotate(-15deg);
-            }
+        /* 树冠 - 右 */
+        .growing-tree .foliage-right {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: #16a34a;
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            animation: grow-foliage 6s ease-in-out infinite 0.3s;
+            z-index: 2;
         }
 
-        @keyframes trail-appear {
-            0%, 10% { opacity: 0; width: 0; }
-            20%, 90% { opacity: 1; }
-            100% { opacity: 0; }
+        /* 树冠 - 顶 */
+        .growing-tree .foliage-top {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            width: 14px;
+            height: 14px;
+            background: #4ade80;
+            border-radius: 50%;
+            transform: translateX(-50%) scale(0);
+            transform-origin: bottom center;
+            animation: grow-foliage 4s ease-in-out infinite 0.6s;
+            z-index: 4;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.3);
         }
 
-        /* 悬停加速 */
-        .group:hover .writing-animation .pencil {
-            animation-duration: 2s;
+        @keyframes grow-foliage {
+            0%, 40% { transform: translateX(-50%) scale(0); }
+            60% { transform: translateX(-50%) scale(1.1); }
+            80%, 100% { transform: translateX(-50%) scale(1); }
         }
 
-        .group:hover .writing-animation .writing-trail {
-            animation-duration: 2s;
+        /* 呼吸摇摆效果 */
+        .growing-tree .foliage-left,
+        .growing-tree .foliage-right,
+        .growing-tree .foliage-top {
+            animation-name: grow-and-breathe;
+        }
+
+        @keyframes grow-and-breathe {
+            0% { transform: translateX(-50%) scale(0); }
+            30% { transform: translateX(-50%) scale(0); }
+            50% { transform: translateX(-50%) scale(1.1); }
+            60% { transform: translateX(-50%) scale(1) rotate(-2deg); }
+            70% { transform: translateX(-50%) scale(1) rotate(2deg); }
+            80% { transform: translateX(-50%) scale(1) rotate(-1deg); }
+            90% { transform: translateX(-50%) scale(1) rotate(1deg); }
+            100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+        }
+
+        /* 悬停加速生长 */
+        .group:hover .growing-tree .trunk,
+        .group:hover .growing-tree .foliage-left,
+        .group:hover .growing-tree .foliage-right,
+        .group:hover .growing-tree .foliage-top {
+            animation-duration: 1.5s;
+        }
+
+        /* 飘落的叶子 */
+        .growing-tree .leaf {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #4ade80;
+            border-radius: 0 50% 0 50%;
+            opacity: 0;
+            animation: falling-leaf 6s ease-in-out infinite;
+        }
+
+        .growing-tree .leaf-1 {
+            top: 20px;
+            left: 20px;
+            animation-delay: 2s;
+        }
+
+        .growing-tree .leaf-2 {
+            top: 24px;
+            right: 18px;
+            animation-delay: 2.5s;
+        }
+
+        @keyframes falling-leaf {
+            0%, 60% { 
+                opacity: 0; 
+                transform: translate(0, 0) rotate(0deg); 
+            }
+            70% { opacity: 1; }
+            100% { 
+                opacity: 0; 
+                transform: translate(5px, 20px) rotate(360deg); 
+            }
         }
 
         /* 语言下拉选择器 */
@@ -775,8 +774,8 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
-                    ✏️
+                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(134, 239, 172, 0.3) 0%, rgba(134, 239, 172, 0.15) 100%);">
+                    🌿
                 </div>
                 <span class="hidden sm:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
@@ -919,16 +918,14 @@
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-emerald-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
                 <div class="mb-5 relative z-10 icon-bounce">
-                    <div class="writing-animation">
-                        <div class="paper">
-                            <div class="paper-line paper-line-1"></div>
-                            <div class="paper-line paper-line-2"></div>
-                            <div class="paper-line paper-line-3"></div>
-                        </div>
-                        <div class="pencil"></div>
-                        <div class="writing-trail trail-1"></div>
-                        <div class="writing-trail trail-2"></div>
-                        <div class="writing-trail trail-3"></div>
+                    <div class="growing-tree">
+                        <div class="soil"></div>
+                        <div class="trunk"></div>
+                        <div class="foliage-left"></div>
+                        <div class="foliage-right"></div>
+                        <div class="foliage-top"></div>
+                        <div class="leaf leaf-1"></div>
+                        <div class="leaf leaf-2"></div>
                     </div>
                 </div>
                 
@@ -936,17 +933,6 @@
                 <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="manageDesc">查看、练习、导出或导入题库</p>
             </a>
         </section>
-
-        <!-- 学习女孩装饰 - 爱在栏目上方 -->
-        <div class="relative h-20 z-10 flex justify-center pointer-events-none">
-            <img src="resources/girl.png" alt="studying girl" class="h-28 w-auto object-cover object-top" style="position: relative; left: 411px; top: -10px;">
-            <!-- 说话气泡 -->
-            <div id="girlBubble" class="absolute bg-white rounded-2xl px-4 py-2 shadow-lg border border-slate-200 opacity-0 transition-opacity duration-500" style="left: 600px; top: -5px;">
-                <p class="text-sm text-slate-700 whitespace-nowrap">加油学习呀！📚</p>
-                <!-- 气泡小三角 -->
-                <div class="absolute -right-2 top-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-l-white border-y-4 border-y-transparent"></div>
-            </div>
-        </div>
 
         <!-- 最近创建 -->
         <section class="glass-card squircle p-6 md:p-8 relative overflow-hidden">
@@ -1092,7 +1078,7 @@
                     currentUser = await res.json();
                     console.log('User loaded:', currentUser);
                     updateUserUI();
-                    showToast(`${t('loginSuccess')}，${currentUser.name || currentUser.email}!`, 'success');
+                    showToast(`欢迎回来，${currentUser.name || currentUser.email}!`, 'success');
                 } else {
                     const errorText = await res.text();
                     console.error('Failed to load user info:', res.status, errorText);
@@ -1149,7 +1135,7 @@
             localStorage.removeItem('auth_token');
             updateUserUI();
             toggleUserDropdown();
-            showToast(t('logoutSuccess'), 'info');
+            showToast('已退出登录', 'info');
         }
         
         // 带认证的fetch包装
@@ -1194,8 +1180,6 @@
                 storage: '存储管理',
                 login: '登录',
                 logout: '退出登录',
-                loginSuccess: '欢迎回来',
-                logoutSuccess: '已退出登录',
                 myBanks: '我的题库',
                 unlimited: '不限次数',
                 localStorage: '所有资料都保存在你的电脑上，不用担心泄露',
@@ -1213,13 +1197,6 @@
                 pageTitle: 'GPA4.0 - 智能复习助手',
                 feedbackText: '遇到问题？联系我们',
                 toastSuccess: '操作成功',
-                bubbleMessages: [
-                    '今天也要好好复习呀~ 尽力就好！✨',
-                    '学累了就休息一下，等会儿继续📚',
-                    '你表现很好哦，继续保持就行啦💪',
-                    '熟能生巧，考试顺利！相信你自己🎯',
-                    '优秀的你，必定前途似锦！加油🎓'
-                ]
             },
             'zh-TW': {
                 donateBannerText: '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們',
@@ -1240,8 +1217,6 @@
                 storage: '儲存管理',
                 login: '登入',
                 logout: '登出',
-                loginSuccess: '歡迎回來',
-                logoutSuccess: '已登出',
                 myBanks: '我的題庫',
                 unlimited: '不限次數',
                 localStorage: '所有資料均儲存在你的電腦內，不用擔心外洩',
@@ -1259,13 +1234,6 @@
                 pageTitle: 'GPA4.0 - 智能溫書助手',
                 feedbackText: '遇到問題？聯絡我們',
                 toastSuccess: '操作成功',
-                bubbleMessages: [
-                    '今日都要好好用功呀~ 盡力就好！✨',
-                    '做練習累了就休息一陣，等陣再繼續📚',
-                    '你表現很好哦，繼續保持就行啦💪',
-                    '熟能生巧，考試順利！相信自己🎯',
-                    '你這麼厲害，前途一定光明！加油🎓'
-                ]
             },
             en: {
                 "donateBannerText": "Each quiz costs about HK$0.50 to generate. Find this useful? Buy us a coffee!",
@@ -1286,8 +1254,6 @@
                 "storage": "Storage",
                 "login": "Sign In",
                 "logout": "Sign Out",
-                "loginSuccess": "Welcome back",
-                "logoutSuccess": "Signed out",
                 "myBanks": "My Question Sets",
                 "unlimited": "Unlimited",
                 "localStorage": "All data is stored locally in your browser (IndexedDB)",
@@ -1304,14 +1270,7 @@
                 "saveError": "Something went wrong",
                 "pageTitle": "GPA Buddy - Smart Study Assistant",
                 "feedbackText": "Got feedback? Drop us a line",
-                "toastSuccess": "Done",
-                "bubbleMessages": [
-                    "Keep up the good work today~✨",
-                    "Take a break if you're tired📚",
-                    "You're great, just keep going! 💪",
-                    "Practice makes perfect. 🎯",
-                    "You worth every success~ 🎓"
-                ]
+                "toastSuccess": "Done"
             },
             ko: {
                 "donateBannerText": "문제 1세트 생성 비용은 약 HK$0.50입니다. 도움이 되셨다면 커피 한 잔 부탁드려요!",
@@ -1332,8 +1291,6 @@
                 "storage": "저장공간",
                 "login": "로그인",
                 "logout": "로그아웃",
-                "loginSuccess": "다시 오셔서 환영합니다",
-                "logoutSuccess": "로그아웃 되었습니다",
                 "myBanks": "내 문제세트",
                 "unlimited": "무제한",
                 "localStorage": "모든 데이터는 브라우저에 로컬로 저장됩니다 (IndexedDB)",
@@ -1350,14 +1307,7 @@
                 "saveError": "저장 중 오류가 발생했습니다",
                 "pageTitle": "GPA Buddy - 스마트 학습 도우미",
                 "feedbackText": "피드백이 있으신가요? 연락주세요",
-                "toastSuccess": "완료",
-                "bubbleMessages": [
-                    "오늘도 열심히 해봐요~ 최선을 다해요! ✨",
-                    "피곤한 순간 쉬었다 가요 ㅎㅎ 📚",
-                    "잘하고 있어요! 지금 이대로 손만 알아요 💪",
-                    "반복하면 서는 생긴다는데 잘될 거예요! 🎯",
-                    "우수인 당신! 앞으로 더 착착할 거예요 🎓"
-                ]
+                "toastSuccess": "완료"
             }
         };
 
@@ -1376,10 +1326,10 @@
         }
 
         const langDisplayNames = {
-            'zh': '简',
-            'zh-TW': '繁',
-            'en': 'En',
-            'ko': '한'
+            'zh': '简体中文',
+            'zh-TW': '繁體中文',
+            'en': 'English',
+            'ko': '한국어'
         };
 
         function updateLanguage() {
@@ -1552,40 +1502,7 @@
             updateLanguage();
             loadRecent();
             loadGlobalStats();
-            
-            // 女孩说话气泡定时显示
-            initGirlBubble();
         });
-        
-        // 女孩说话气泡 - 每16秒显示一次，持续3秒
-        function initGirlBubble() {
-            const bubble = document.getElementById('girlBubble');
-            if (!bubble) return;
-            
-            // 获取当前语言的气泡消息
-            const messages = i18n[currentLang]?.bubbleMessages || i18n['zh'].bubbleMessages;
-            let msgIndex = 0;
-            
-            function showBubble() {
-                // 更换消息
-                bubble.querySelector('p').textContent = messages[msgIndex];
-                msgIndex = (msgIndex + 1) % messages.length;
-                
-                // 显示气泡
-                bubble.classList.remove('opacity-0');
-                
-                // 3秒后隐藏
-                setTimeout(() => {
-                    bubble.classList.add('opacity-0');
-                }, 3000);
-            }
-            
-            // 第一次延迟2秒显示，然后每16秒循环
-            setTimeout(() => {
-                showBubble();
-                setInterval(showBubble, 16000);
-            }, 2000);
-        }
         
         // 额外保险：页面完全加载后再滚动到顶部
         window.addEventListener('load', () => {
