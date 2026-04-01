@@ -937,18 +937,21 @@
             </a>
         </section>
 
-        <!-- 最近创建 -->
-        <section class="glass-card squircle p-6 md:p-8 relative overflow-hidden">
+        <!-- 最近创建容器 - 包含女孩、气泡和栏目 -->
+        <div class="relative">
             <!-- 学习女孩装饰 - 贴右侧 -->
-            <div class="absolute top-2 right-0 z-30 pointer-events-none hidden md:block">
-                <img src="resources/girl.png" alt="studying girl" class="h-32 w-auto object-cover" style="margin-top: -40px;">
+            <div class="absolute -top-16 right-0 z-30 pointer-events-none hidden md:block">
+                <img src="resources/girl.png" alt="studying girl" class="h-28 w-auto object-cover object-top">
             </div>
             <!-- 说话气泡 - 在女孩左侧 -->
-            <div id="girlBubble" class="absolute bg-white rounded-2xl px-4 py-2 shadow-lg border border-slate-200 opacity-0 transition-opacity duration-500 z-20 hidden md:block" style="right: 100px; top: -40px;">
+            <div id="girlBubble" class="absolute bg-white rounded-2xl px-4 py-2 shadow-lg border border-slate-200 opacity-0 transition-opacity duration-500 z-40 hidden md:block" style="right: 100px; top: -40px;">
                 <p class="text-sm text-slate-700 whitespace-nowrap">加油学习呀！📚</p>
                 <!-- 气泡小三角 -->
                 <div class="absolute -right-2 top-1/2 -translate-y-1/2 w-0 h-0 border-l-8 border-l-white border-y-4 border-y-transparent"></div>
             </div>
+
+        <!-- 最近创建 -->
+        <section class="glass-card squircle p-6 md:p-8 relative z-10 overflow-hidden">
             <div class="absolute -top-10 -left-10 w-32 h-32 bg-indigo-200/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-purple-200/10 rounded-full blur-3xl pointer-events-none"></div>
             <h3 class="text-lg font-semibold mb-6 flex items-center text-slate-900">
@@ -962,6 +965,7 @@
                 <div class="text-slate-400 text-center py-8" data-i18n="noRecent">暂无最近记录</div>
             </div>
         </section>
+        </div><!-- 最近创建容器结束 -->
     </main>
 
     <!-- 社交反馈 -->
