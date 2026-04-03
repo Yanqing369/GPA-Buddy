@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pageTitle">整理现有题库 - GPA4.0</title>
     
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="整理往年试卷、试题文档，生成在线交互习题集。支持多种格式导入。">
+    <meta name="keywords" content="整理题库,试卷整理,试题导入,生成习题集,往年试卷">
+    <meta name="author" content="GPA4.0">
+    <link rel="canonical" href="https://gpa4.app/organize.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="整理现有题库 - 请出题">
+    <meta property="og:description" content="整理往年试卷，生成在线习题集">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gpa4.app/organize.html">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
@@ -315,7 +327,7 @@
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
-                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">如果你觉得此网站有用，可以捐款支持我们</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">欢迎捐款支持我们</span>
                 <a href="donate.html" target="_blank" class="px-4 py-1.5 liquid-btn-emerald text-white text-xs font-bold rounded-full flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
@@ -335,7 +347,7 @@
                 <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
                     ✏️
                 </div>
-                <span class="hidden sm:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
@@ -567,11 +579,11 @@
                 preparing: '准备中...',
                 processingHint: '大约需要2分钟，请勿刷新或关闭网页...',
                 completed: '完成！',
-                pageTitle: '整理现有题库 - GPA4.0',
+                pageTitle: '请出题',
                 toastSuccess: '操作成功',
                 questionProgressText: '准备中...',
-                donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
-                donateBannerTextMobile: '如果你觉得此网站有用，可以捐款支持我们',
+                donateBannerText: '我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们',
+                donateBannerTextMobile: '欢迎捐款支持我们',
                 supportUs: '支持我们',
                 captchaLabel: '人机验证 / Human Verification'
             },
@@ -609,16 +621,16 @@
                 preparing: '準備中...',
                 processingHint: '大約需要2分鐘，請勿重新整理或關閉網頁...',
                 completed: '完成！',
-                pageTitle: '整理現有題庫 - GPA4.0',
+                pageTitle: '請出題',
                 toastSuccess: '操作成功',
                 questionProgressText: '準備中...',
-                donateBannerText: '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們',
-                donateBannerTextMobile: '如你覺得這個網站有用，歡迎捐款支持我們',
+                donateBannerText: '我們是一個公益模式免費網站。如果本網站對你有幫助，歡迎捐款支持我們',
+                donateBannerTextMobile: '歡迎捐款支持我們',
                 supportUs: '支持我們',
                 captchaLabel: '人機驗證 / Human Verification'
             },
             en: {
-                appName: 'GPA Buddy',
+                appName: 'GPA4.0',
                 back: 'Back',
                 organizeHeader: 'Organize Question Bank',
                 organizeTipTitle: 'Instructions',
@@ -651,16 +663,16 @@
                 preparing: 'Preparing...',
                 processingHint: 'About 2 minutes needed, please do not refresh or close the page...',
                 completed: 'Completed!',
-                pageTitle: 'Organize Question Bank - GPA4.0',
+                pageTitle: 'GPA4.0',
                 toastSuccess: 'Operation successful',
                 questionProgressText: 'Preparing...',
-                donateBannerText: 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.',
-                donateBannerTextMobile: 'If you find this site helpful, please consider donating.',
+                donateBannerText: 'We are a free, non-profit website. If this site helps you, please consider donating to support us.',
+                donateBannerTextMobile: 'Consider donating to support us.',
                 supportUs: 'Support Us',
                 captchaLabel: 'Human Verification / 人机验证'
             },
             ko: {
-                appName: '문제은행 도우미',
+                appName: 'GPA4.0',
                 back: '돌아가기',
                 organizeHeader: '기존 문제은행 정리',
                 organizeTipTitle: '정리 안내',
@@ -687,11 +699,11 @@
                 extractionError: '파일에서 텍스트를 추출하지 못했습니다. 파일 내용을 확인하세요',
                 parseError: '파일 분석 실패',
                 networkError: '네트워크 오류, 백엔드 서비스가 실행 중인지 확인하세요',
-                pageTitle: '기존 문제은행 정리 - GPA4.0',
+                pageTitle: 'GPA4.0',
                 toastSuccess: '작업 성공',
                 questionProgressText: '준비 중...',
-                donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
-                donateBannerTextMobile: '이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+                donateBannerText: '우리는 비영리 묵료 웹사이트입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+                donateBannerTextMobile: '기부로 후원해 주세요.',
                 supportUs: '후원하기',
                 stage1: '인식',
                 stage2: '정리',

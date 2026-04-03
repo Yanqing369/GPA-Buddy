@@ -1,0 +1,90 @@
+<view class="container">
+  <!-- 标题区域 -->
+  <view class="header">
+    <text class="title">🔧 后端连接检测</text>
+    <text class="subtitle">检测微信环境下能否访问 moyuxiaowu.org</text>
+  </view>
+
+  <!-- 控制按钮 -->
+  <view class="control-area">
+    <button class="test-btn {{testing ? 'testing' : ''}}" bindtap="startTest" disabled="{{testing}}">
+      {{testing ? '检测中...' : '开始检测'}}
+    </button>
+    <button class="clear-btn" bindtap="clearLog">清空日志</button>
+  </view>
+
+  <!-- 状态摘要 -->
+  <view class="summary" wx:if="{{hasTested}}">
+    <view class="summary-item">
+      <text class="summary-num total">{{stats.total}}</text>
+      <text class="summary-label">总测试</text>
+    </view>
+    <view class="summary-item">
+      <text class="summary-num success">{{stats.success}}</text>
+      <text class="summary-label">成功</text>
+    </view>
+    <view class="summary-item">
+      <text class="summary-num fail">{{stats.fail}}</text>
+      <text class="summary-label">失败</text>
+    </view>
+    <view class="summary-item">
+      <text class="summary-num">{{stats.duration}}ms</text>
+      <text class="summary-label">耗时</text>
+    </view>
+  </view>
+
+  <!-- 检测结果状态 -->
+  <view class="status-card {{overallStatus}}" wx:if="{{hasTested}}">
+    <text class="status-icon">{{overallStatus === 'success' ? '✅' : overallStatus === 'partial' ? '⚠️' : '❌'}}</text>
+    <text class="status-text">{{statusText}}</text>
+  </view>
+
+  <!-- 详细日志 -->
+  <view class="log-area">
+    <view class="log-header">
+      <text class="log-title">📋 检测日志</text>
+      <text class="log-count" wx:if="{{logs.length > 0}}">{{logs.length}} 条</text>
+    </view>
+    <scroll-view class="log-container" scroll-y="true" scroll-top="{{scrollTop}}">
+      <block wx:if="{{logs.length > 0}}">
+        <view class="log-item {{item.type}}" wx:for="{{logs}}" wx:key="index">
+          <text class="log-time">{{item.time}}</text>
+          <text class="log-content">{{item.message}}</text>
+        </view>
+      </block>
+      <view class="log-empty" wx:else>
+        <text>点击"开始检测"按钮开始测试后端连接</text>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 网络信息 -->
+  <view class="network-info" wx:if="{{networkInfo}}">
+    <view class="info-title">📶 网络信息</view>
+    <view class="info-item">
+      <text class="info-label">网络类型:</text>
+      <text class="info-value">{{networkInfo.networkType}}</text>
+    </view>
+    <view class="info-item">
+      <text class="info-label">信号强度:</text>
+      <text class="info-value">{{networkInfo.signalStrength || '未知'}}</text>
+    </view>
+  </view>
+
+  <!-- 提示信息 -->
+  <view class="tips">
+    <view class="tip-title">💡 常见问题</view>
+    <view class="tip-item">
+      <text class="tip-dot">•</text>
+      <text>如果检测失败，请检查微信开发者工具中的"不校验合法域名"设置</text>
+    </view>
+    <view class="tip-item">
+      <text class="tip-dot">•</text>
+      <text>生产环境需要在微信公众平台配置 request 合法域名</text>
+    </view>
+    <view class="tip-item">
+      <text class="tip-dot">•</text>
+      <text>确保后端服务已开启并支持 HTTPS</text>
+    </view>
+  </view>
+</view>

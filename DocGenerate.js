@@ -68,7 +68,7 @@ const i18n = {
         partialSuccessTitle: '生成完成（部分成功）',
         partialSuccessMessage: '由于服务器速率限制，此次实际生成 {0} 题（原计划 {1} 题），抱歉造成不便。',
         partialSuccessHint: '如需更多题目，请稍后重新生成。',
-        pageTitle: '从资料生成 - GPA4.0',
+        pageTitle: '请出题',
         toastSuccess: '操作成功',
         streamingStatus: '实时生成中...',
         batchProgress: '批次 {0}/{1}: 已生成 {2} 题',
@@ -80,7 +80,11 @@ const i18n = {
         generateCostText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，欢迎捐款支持',
         donate: '捐款',
         donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
-        supportUs: '支持我们'
+        supportUs: '支持我们',
+        donateDialogTitle: '支持我们',
+        donateDialogMessage: '如果你觉得本网站有用，欢迎捐款支持，帮我们活到下学期',
+        donateDialogButton: '知道了',
+        donateDialogLink: '前往捐款页面'
     },
     'zh-TW': {
         appName: '請出題',
@@ -124,7 +128,7 @@ const i18n = {
         partialSuccessTitle: '生成完成（部分成功）',
         partialSuccessMessage: '由於伺服器速率限制，此次實際生成 {0} 題（原計劃 {1} 題），抱歉造成不便。',
         partialSuccessHint: '如需更多題目，請稍後重新生成。',
-        pageTitle: '從資料生成 - GPA4.0',
+        pageTitle: '請出題',
         toastSuccess: '操作成功',
         streamingStatus: '實時生成中...',
         batchProgress: '批次 {0}/{1}: 已生成 {2} 題',
@@ -136,10 +140,14 @@ const i18n = {
         generateCostText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，歡迎捐款支持',
         donate: '捐款',
         donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
-        supportUs: '支持我們'
+        supportUs: '支持我們',
+        donateDialogTitle: '支持我們',
+        donateDialogMessage: '如果你覺得本網站有用，歡迎捐款支持，幫我們活到下學期',
+        donateDialogButton: '知道了',
+        donateDialogLink: '前往捐款頁面'
     },
     en: {
-        appName: 'GPA Buddy',
+        appName: 'GPA4.0',
         back: 'Back',
         generateHeader: 'Generate from Material',
         dropText: 'Drop files here or click to upload',
@@ -180,7 +188,7 @@ const i18n = {
         partialSuccessTitle: 'Generation Complete (Partial Success)',
         partialSuccessMessage: 'Due to server rate limiting, only {0} of {1} questions were generated. We apologize for the inconvenience.',
         partialSuccessHint: 'Please try again later if you need more questions.',
-        pageTitle: 'Generate from Material - GPA4.0',
+        pageTitle: 'GPA4.0',
         toastSuccess: 'Operation successful',
         streamingStatus: 'Streaming generation...',
         batchProgress: 'Batch {0}/{1}: {2} questions generated',
@@ -192,10 +200,14 @@ const i18n = {
         generateCostText: 'Each question bank generation costs about 0.5 HKD. If this site helps you, please consider donating.',
         donate: 'Donate',
         donateBannerText: 'Each generation costs 0.5 HKD. If this site helps you, please consider donating to support us.',
-        supportUs: 'Support Us'
+        supportUs: 'Support Us',
+        donateDialogTitle: 'Support Us',
+        donateDialogMessage: 'If you find this site helpful, please consider donating to help us survive until next semester.',
+        donateDialogButton: 'Got it',
+        donateDialogLink: 'Go to Donation Page'
     },
     ko: {
-        appName: '문제은행 도우미',
+        appName: 'GPA4.0',
         back: '돌아가기',
         generateHeader: '자료에서 문제은행 생성',
         dropText: '파일을 여기로 끌어다 놓거나 클릭하여 업로드',
@@ -236,7 +248,7 @@ const i18n = {
         partialSuccessTitle: '생성 완료 (일부 성공)',
         partialSuccessMessage: '서버 속도 제한으로 인해 {0}개 문제 중 {1}개 문제만 생성되었습니다. 불편을 드려 죄송합니다.',
         partialSuccessHint: '더 많은 문제가 필요하면 나중에 다시 시도하세요.',
-        pageTitle: '자료에서 생성 - GPA4.0',
+        pageTitle: 'GPA4.0',
         toastSuccess: '작업 성공',
         streamingStatus: '실시간 생성 중...',
         batchProgress: '배치 {0}/{1}: {2}개 문제 생성됨',
@@ -248,7 +260,11 @@ const i18n = {
         generateCostText: '문제은행 생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부를 고려해 주세요.',
         donate: '기부',
         donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
-        supportUs: '후원하기'
+        supportUs: '후원하기',
+        donateDialogTitle: '후원하기',
+        donateDialogMessage: '이 사이트가 도움이 되셨다면 기부로 후원해 주세요. 다음 학기까지 운영할 수 있도록 도와주세요.',
+        donateDialogButton: '알겠습니다',
+        donateDialogLink: '기부 페이지로 이동'
     }
 };
 
@@ -1184,11 +1200,47 @@ async function saveAndPractice() {
         if (modal) modal.classList.add('hidden');
         
         showToast(t('saveSuccess'), 'success');
-        window.location.href = `practice.html?id=${id}`;
+        
+        // 显示捐款提示对话框
+        showDonateDialog(id);
     } catch (err) {
         console.error('Save error:', err);
         showToast('Save failed: ' + err.message, 'error');
     }
+}
+
+// 显示捐款提示对话框
+function showDonateDialog(bankId) {
+    // 创建对话框元素
+    const dialog = document.createElement('div');
+    dialog.id = 'donateDialog';
+    dialog.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+    dialog.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all scale-100 animate-fade-in">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">${t('donateDialogTitle')}</h3>
+                <p class="text-slate-600 text-base leading-relaxed">${t('donateDialogMessage')}</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button id="donateDialogBtn" class="w-full px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg">
+                    ${t('donateDialogButton')}
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // 绑定按钮事件
+    document.getElementById('donateDialogBtn').addEventListener('click', function() {
+        document.body.removeChild(dialog);
+        window.location.href = `practice.html?id=${bankId}`;
+    });
 }
 
 // ==================== 工具函数 ====================

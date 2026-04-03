@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pageTitle">从资料生成 - GPA4.0</title>
     
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="从PDF、Word、PPT资料自动生成练习题。AI智能提取知识点，一键生成题库。">
+    <meta name="keywords" content="PDF出题,Word出题,PPT出题,自动生成题库,AI出题,课件生成题目">
+    <meta name="author" content="GPA4.0">
+    <link rel="canonical" href="https://gpa4.app/DocGenerate.html">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="从资料生成题库 - 请出题">
+    <meta property="og:description" content="上传PDF、Word、PPT，AI自动生成练习题">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://gpa4.app/DocGenerate.html">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -287,7 +299,7 @@
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
-                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">生成一次题库的成本约为 0.5 元 / 0.5 港币，如果本网站对你有帮助，可以捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">如果你觉得此网站有用，可以捐款支持我们</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">欢迎捐款支持我们</span>
                 <a href="donate.html" target="_blank" class="px-4 py-1.5 liquid-btn-emerald text-white text-xs font-bold rounded-full flex-shrink-0 spring-active">
                     <span data-i18n="supportUs">支持我们</span>
                 </a>
@@ -307,7 +319,7 @@
                 <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
                     ✏️
                 </div>
-                <span class="hidden sm:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
@@ -549,20 +561,20 @@
     <script>
         // HTML 特有的 donate banner 文本（扩展 DocGenerate.js 的 i18n）
         if (typeof i18n !== 'undefined') {
-            i18n.zh.donateBannerText = '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们';
-            i18n.zh.donateBannerTextMobile = '如果你觉得此网站有用，可以捐款支持我们';
+            i18n.zh.donateBannerText = '我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们';
+            i18n.zh.donateBannerTextMobile = '欢迎捐款支持我们';
             i18n.zh.supportUs = '支持我们';
             
-            i18n['zh-TW'].donateBannerText = '製作一次試題庫成本約 0.5 港元，如這個網站對你有幫助，歡迎捐款支持我們';
-            i18n['zh-TW'].donateBannerTextMobile = '如你覺得這個網站有用，歡迎捐款支持我們';
+            i18n['zh-TW'].donateBannerText = '我們是一個公益模式免費網站。如果本網站對你有幫助，歡迎捐款支持我們';
+            i18n['zh-TW'].donateBannerTextMobile = '歡迎捐款支持我們';
             i18n['zh-TW'].supportUs = '支持我們';
             
-            i18n.en.donateBannerText = 'Each generation costs around 0.5 HKD. If this site helps you, please consider donating to support us.';
-            i18n.en.donateBannerTextMobile = 'If you find this site helpful, please consider donating.';
+            i18n.en.donateBannerText = 'We are a free, non-profit website. If this site helps you, please consider donating to support us.';
+            i18n.en.donateBannerTextMobile = 'Consider donating to support us.';
             i18n.en.supportUs = 'Support Us';
             
-            i18n.ko.donateBannerText = '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.';
-            i18n.ko.donateBannerTextMobile = '이 사이트가 도움이 된다면 기부로 후원해 주세요.';
+            i18n.ko.donateBannerText = '우리는 비영리 묵료 웹사이트입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.';
+            i18n.ko.donateBannerTextMobile = '기부로 후원해 주세요.';
             i18n.ko.supportUs = '후원하기';
         }
 

@@ -80,6 +80,10 @@ var i18nText = {
         donate: '捐款',
         donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
         supportUs: '支持我们',
+        donateDialogTitle: '支持我们',
+        donateDialogMessage: '如果你觉得本网站有用，欢迎捐款支持，帮我们活到下学期',
+        donateDialogButton: '知道了',
+        donateDialogLink: '前往捐款页面',
         oldFormatDoc: '不支持旧版doc，请将文件另存为新版docx再上传',
         oldFormatPpt: '不支持旧版ppt，请将文件另存为新版pptx再上传',
         mixedFileTypes: '请上传相同类型的文件（PPT或Excel或Word/TXT），不要混合上传'
@@ -138,6 +142,10 @@ var i18nText = {
         donate: '捐款',
         donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
         supportUs: '支持我們',
+        donateDialogTitle: '支持我們',
+        donateDialogMessage: '如果你覺得本網站有用，歡迎捐款支持，幫我們活到下學期',
+        donateDialogButton: '知道了',
+        donateDialogLink: '前往捐款頁面',
         oldFormatDoc: '不支援舊版doc，請將檔案另存為新版docx再上傳',
         oldFormatPpt: '不支援舊版ppt，請將檔案另存為新版pptx再上傳',
         mixedFileTypes: '請上傳相同類型的檔案（PPT或Excel或Word/TXT），不要混合上傳'
@@ -192,6 +200,10 @@ var i18nText = {
         donate: 'Donate',
         donateBannerText: 'Each generation costs 0.5 HKD. If this site helps you, please consider donating to support us.',
         supportUs: 'Support Us',
+        donateDialogTitle: 'Support Us',
+        donateDialogMessage: 'If you find this site helpful, please consider donating to help us survive until next semester.',
+        donateDialogButton: 'Got it',
+        donateDialogLink: 'Go to Donation Page',
         oldFormatDoc: 'Old .doc format not supported. Please save as .docx and re-upload.',
         oldFormatPpt: 'Old .ppt format not supported. Please save as .pptx and re-upload.',
         mixedFileTypes: 'Please upload files of the same type (PPT or Excel or Word/TXT), do not mix different types'
@@ -246,6 +258,10 @@ var i18nText = {
         donate: '기부',
         donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
         supportUs: '후원하기',
+        donateDialogTitle: '후원하기',
+        donateDialogMessage: '이 사이트가 도움이 되셨다면 기부로 후원해 주세요. 다음 학기까지 운영할 수 있도록 도와주세요.',
+        donateDialogButton: '알겠습니다',
+        donateDialogLink: '기부 페이지로 이동',
         oldFormatDoc: '구형 .doc 형식은 지원하지 않습니다. .docx로 저장 후 업로드하세요.',
         oldFormatPpt: '구형 .ppt 형식은 지원하지 않습니다. .pptx로 저장 후 업로드하세요.',
         mixedFileTypes: '같은 유형의 파일만 업로드하세요(PPT 또는 Excel 또는 Word/TXT), 다른 유형을 혼합하지 마세요'
@@ -1435,11 +1451,47 @@ async function saveAndPracticeText() {
         if (modal) modal.classList.add('hidden');
         
         showToastText(tText('saveSuccess'), 'success');
-        window.location.href = `practice.html?id=${id}`;
+        
+        // 显示捐款提示对话框
+        showDonateDialogText(id);
     } catch (err) {
         console.error('Save error:', err);
         showToastText('Save failed: ' + err.message, 'error');
     }
+}
+
+// 显示捐款提示对话框
+function showDonateDialogText(bankId) {
+    // 创建对话框元素
+    const dialog = document.createElement('div');
+    dialog.id = 'donateDialog';
+    dialog.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
+    dialog.innerHTML = `
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all scale-100 animate-fade-in">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-800 mb-2">${tText('donateDialogTitle')}</h3>
+                <p class="text-slate-600 text-base leading-relaxed">${tText('donateDialogMessage')}</p>
+            </div>
+            <div class="flex flex-col gap-3">
+                <button id="donateDialogBtn" class="w-full px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg">
+                    ${tText('donateDialogButton')}
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(dialog);
+    
+    // 绑定按钮事件
+    document.getElementById('donateDialogBtn').addEventListener('click', function() {
+        document.body.removeChild(dialog);
+        window.location.href = `practice.html?id=${bankId}`;
+    });
 }
 
 // ==================== 全局暴露 ====================
