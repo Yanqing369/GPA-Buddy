@@ -7,12 +7,50 @@ const DB_NAME = 'ExamBuddyDB_Clean_v2';
 
 // ==================== 数据库初始化 ====================
 const db = new Dexie(DB_NAME);
-db.version(5).stores({
+
+// 版本5：旧版本
+// 版本6：将 sourceFiles.safeName 改为 fileName，支持题库ID关联，添加 markerFileName
+db.version(6).stores({
     questionBanks: '++id, name, createdAt, updatedAt',
     practiceProgress: '++id, bankId, lastPracticeAt',
-    sourceFiles: '++id, name, safeName, bankId, data, createdAt',
+    sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt',
     settings: 'key'
+}).upgrade(tx => {
+    // 数据迁移：将旧数据从 safeName 复制到 fileName
+    return tx.table('sourceFiles').toCollection().modify(file => {
+        if (file.safeName && !file.fileName) {
+            file.fileName = file.safeName;
+        }
+        // 确保 bankId 字段存在
+        if (!file.bankId) {
+            file.bankId = null;
+        }
+    });
 });
+
+// 数据库打开时执行数据恢复检查
+db.open().then(async () => {
+    // 检查是否有数据丢失（题库数量为0但备份存在）
+    const count = await db.questionBanks.count();
+    const backupData = localStorage.getItem('exam_banks_backup_v5');
+    if (count === 0 && backupData) {
+        console.log('检测到数据丢失，正在恢复...');
+        try {
+            const banks = JSON.parse(backupData);
+            await db.transaction('rw', db.questionBanks, async () => {
+                for (const bank of banks) {
+                    // 移除id让数据库重新分配
+                    delete bank.id;
+                    await db.questionBanks.add(bank);
+                }
+            });
+            console.log(`成功恢复 ${banks.length} 个题库`);
+            localStorage.removeItem('exam_banks_backup_v5');
+        } catch (e) {
+            console.error('数据恢复失败:', e);
+        }
+    }
+}).catch(e => console.error('数据库打开失败:', e));
 
 // ==================== 状态变量 ====================
 let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
@@ -41,7 +79,7 @@ const i18n = {
         startGenerate: '开始生成',
         captchaLabel: '人机验证',
         pdfPreviewNote: 'PDF中的图表都将被读取',
-        officePreviewNote: 'Office文件将只有文字可以被读取',
+        officePreviewNote: 'Office文件仅提取图文，不影响出题效果',
         pdfPreview: 'PDF预览（已添加页码标记）',
         filePreview: '文件预览',
         waitingUpload: '等待上传文件...',
@@ -75,7 +113,7 @@ const i18n = {
         stepUploading: '上传文件',
         stepGeneratingQuestions: 'AI生成题目',
         streamingPreview: '实时预览',
-        waitingFirstQuestion: '等待第一道题...',
+        waitingFirstQuestion: '正在琢磨怎么出题...',
         totalQuestionsHint: '以上仅显示前20题预览，共生成 {0} 题',
         generateCostText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，欢迎捐款支持',
         donate: '捐款',
@@ -84,7 +122,10 @@ const i18n = {
         donateDialogTitle: '支持我们',
         donateDialogMessage: '如果你觉得本网站有用，欢迎捐款支持，帮我们活到下学期',
         donateDialogButton: '知道了',
-        donateDialogLink: '前往捐款页面'
+        donateDialogLink: '前往捐款页面',
+        converting: '转换中...',
+        convertedToPDF: '已转换为PDF',
+        loadingFont: '加载字体...'
     },
     'zh-TW': {
         appName: '請出題',
@@ -101,7 +142,7 @@ const i18n = {
         startGenerate: '開始生成',
         captchaLabel: '人機驗證',
         pdfPreviewNote: 'PDF中的圖表都將被讀取',
-        officePreviewNote: 'Office文件將只有文字可以被讀取',
+        officePreviewNote: 'Office文件僅提取圖文，不影響出題效果',
         pdfPreview: 'PDF預覽（已添加頁碼標記）',
         filePreview: '檔案預覽',
         waitingUpload: '等待上傳檔案...',
@@ -135,7 +176,7 @@ const i18n = {
         stepUploading: '上傳檔案',
         stepGeneratingQuestions: 'AI生成題目',
         streamingPreview: '實時預覽',
-        waitingFirstQuestion: '等待第一道題...',
+        waitingFirstQuestion: '正在思考出咩題...',
         totalQuestionsHint: '以上僅顯示前20題預覽，共生成 {0} 題',
         generateCostText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，歡迎捐款支持',
         donate: '捐款',
@@ -144,7 +185,10 @@ const i18n = {
         donateDialogTitle: '支持我們',
         donateDialogMessage: '如果你覺得本網站有用，歡迎捐款支持，幫我們活到下學期',
         donateDialogButton: '知道了',
-        donateDialogLink: '前往捐款頁面'
+        donateDialogLink: '前往捐款頁面',
+        converting: '轉換中...',
+        convertedToPDF: '已轉換為PDF',
+        loadingFont: '加載字體...'
     },
     en: {
         appName: 'GPA4.0',
@@ -161,7 +205,7 @@ const i18n = {
         startGenerate: 'Start Generation',
         captchaLabel: 'Human Verification',
         pdfPreviewNote: 'Charts and images in PDF will be read',
-        officePreviewNote: 'Only text will be extracted from Office files',
+        officePreviewNote: 'Office files will be extracted as text and images only, which does not affect question generation',
         pdfPreview: 'PDF Preview (with page markers)',
         filePreview: 'File Preview',
         waitingUpload: 'Waiting for file upload...',
@@ -195,7 +239,7 @@ const i18n = {
         stepUploading: 'Uploading File',
         stepGeneratingQuestions: 'AI Generating',
         streamingPreview: 'Live Preview',
-        waitingFirstQuestion: 'Waiting for first question...',
+        waitingFirstQuestion: 'Thinking about questions...',
         totalQuestionsHint: 'Showing first 20 questions preview, {0} questions generated in total',
         generateCostText: 'Each question bank generation costs about 0.5 HKD. If this site helps you, please consider donating.',
         donate: 'Donate',
@@ -204,7 +248,10 @@ const i18n = {
         donateDialogTitle: 'Support Us',
         donateDialogMessage: 'If you find this site helpful, please consider donating to help us survive until next semester.',
         donateDialogButton: 'Got it',
-        donateDialogLink: 'Go to Donation Page'
+        donateDialogLink: 'Go to Donation Page',
+        converting: 'Converting...',
+        convertedToPDF: 'Converted to PDF',
+        loadingFont: 'Loading font...'
     },
     ko: {
         appName: 'GPA4.0',
@@ -221,7 +268,7 @@ const i18n = {
         startGenerate: '생성 시작',
         captchaLabel: '보안 인증',
         pdfPreviewNote: 'PDF의 차트와 이미지가 모두 읽힙니다',
-        officePreviewNote: 'Office 파일에서는 텍스트만 추출됩니다',
+        officePreviewNote: 'Office 파일은 텍스트와 이미지만 추출되며 문제 생성에는 영향이 없습니다',
         pdfPreview: 'PDF 미리보기 (페이지 표시 포함)',
         filePreview: '파일 미리보기',
         waitingUpload: '파일 업로드 대기 중...',
@@ -255,7 +302,7 @@ const i18n = {
         stepUploading: '파일 업로드',
         stepGeneratingQuestions: 'AI 문제 생성',
         streamingPreview: '실시간 미리보기',
-        waitingFirstQuestion: '첫 번째 문제 대기 중...',
+        waitingFirstQuestion: '문제를 생각하는 중...',
         totalQuestionsHint: '처음 20문제 미리보기, 총 {0}문제 생성됨',
         generateCostText: '문제은행 생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부를 고려해 주세요.',
         donate: '기부',
@@ -264,7 +311,10 @@ const i18n = {
         donateDialogTitle: '후원하기',
         donateDialogMessage: '이 사이트가 도움이 되셨다면 기부로 후원해 주세요. 다음 학기까지 운영할 수 있도록 도와주세요.',
         donateDialogButton: '알겠습니다',
-        donateDialogLink: '기부 페이지로 이동'
+        donateDialogLink: '기부 페이지로 이동',
+        converting: '변환 중...',
+        convertedToPDF: 'PDF로 변환됨',
+        loadingFont: '폰트 로드 중...'
     }
 };
 
@@ -331,7 +381,7 @@ class StreamingQuestionGenerator {
     constructor() {
         this.fileUri = null;
         this.fileName = null;
-        this.safeFileName = null;
+        this.originalFileName = null;
         this.pageCount = 0;
         this.isGenerating = false;
         this.questions = [];
@@ -342,8 +392,8 @@ class StreamingQuestionGenerator {
         this.abortControllers = [];
     }
 
-    setSafeFileName(safeFileName) {
-        this.safeFileName = safeFileName;
+    setOriginalFileName(originalFileName) {
+        this.originalFileName = originalFileName;
     }
 
     setPageCount(count) {
@@ -377,7 +427,7 @@ class StreamingQuestionGenerator {
         formData.append('lang', lang);
         formData.append('turnstileToken', turnstileToken);
         formData.append('pageCount', this.pageCount);
-        formData.append('safeFileName', this.safeFileName);
+        formData.append('originalFileName', this.originalFileName);
 
         try {
             this.updateProgressStep(2, 'active');
@@ -459,6 +509,11 @@ class StreamingQuestionGenerator {
                                     this.questions = data.data || [];
                                     generatedQuestions = this.questions;
                                     console.log('[DEBUG] generatedQuestions set, length:', generatedQuestions.length);
+                                    // 显示 token 消耗数量
+                                    if (data.tokenCount) {
+                                        console.log(`[DEBUG] Total token count: ${data.tokenCount}`);
+                                        console.log(`本次生成共消耗 ${data.tokenCount} 个 token`);
+                                    }
                                     // 将结果存储到 batchResults 以便兼容旧代码
                                     this.batchResults.set(0, this.questions.slice(0, 20));
                                     for (let i = 1; i < this.totalBatches; i++) {
@@ -584,7 +639,7 @@ class StreamingQuestionGenerator {
         const startId = batchIndex * 20 + 1;
         const endId = startId + 19;
         const langInstruction = lang === 'zh' ? '使用中文' : 'Use English';
-        const hardcodedFileName = this.safeFileName || 'document';
+        const hardcodedFileName = this.originalFileName || 'document';
         
         // 计算当前批次的页码范围
         const startPage = batchIndex * this.pagesPerBatch + 1;
@@ -680,7 +735,12 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         // 初始化实时题目显示区域
         const streamingContainer = document.getElementById('streamingQuestions');
         if (streamingContainer) {
-            streamingContainer.innerHTML = `<div class="text-center text-slate-400 text-sm py-8">${t('waitingFirstQuestion')}</div>`;
+            streamingContainer.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-8">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+                    <div class="text-center text-slate-400 text-sm">${t('waitingFirstQuestion')}</div>
+                </div>
+            `;
         }
         
         // 重置步骤显示
@@ -880,17 +940,131 @@ async function handleFiles(files) {
     const file = currentFiles[0];
     const ext = file.name.split('.').pop().toLowerCase();
     
-    // 如果是非PDF文件，触发切换事件，让HTML中的脚本加载器处理
-    if (ext !== 'pdf') {
-        // 触发一个自定义事件，通知HTML加载docgenerate_text.js
-        const switchEvent = new CustomEvent('switchToTextHandler', { 
-            detail: { file: file, ext: ext } 
-        });
-        document.dispatchEvent(switchEvent);
+    // 支持的非PDF格式
+    const officeExts = ['docx', 'pptx', 'xlsx', 'xls', 'txt'];
+    
+    if (ext !== 'pdf' && officeExts.includes(ext)) {
+        // 使用 document-converter.js 将 Office 文件转换为 PDF
+        try {
+            await handleOfficeFile(file);
+        } catch (err) {
+            console.error('Office conversion error:', err);
+            showToast(t('parseError') + ': ' + err.message, 'error');
+        }
         return;
     }
     
     await handlePdfFile(file);
+}
+
+// 用于存储转换后的 PDF Blob
+let convertedPdfBlob = null;
+let originalFileName = '';
+
+async function handleOfficeFile(file) {
+    const fileList = document.getElementById('fileList');
+    if (!fileList) return;
+    
+    fileList.innerHTML = '';
+    fileList.classList.remove('hidden');
+    
+    // 显示 Office 文件预览提示
+    const previewNote = document.getElementById('previewNote');
+    if (previewNote) {
+        previewNote.textContent = t('officePreviewNote');
+        previewNote.classList.remove('hidden');
+    }
+    
+    originalFileName = file.name;
+    
+    // 显示文件信息（显示转换中状态）
+    const div = document.createElement('div');
+    div.id = 'officeFileItem';
+    div.className = 'flex items-center justify-between bg-slate-50 p-3 rounded-lg border border-slate-200';
+    div.innerHTML = `
+        <div class="flex items-center overflow-hidden">
+            <svg class="w-5 h-5 text-slate-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="text-sm text-slate-700 truncate">${file.name}</span>
+            <span class="text-xs text-slate-400 ml-2 flex-shrink-0">${(file.size/1024/1024).toFixed(2)}MB</span>
+            <span id="conversionStatus" class="text-xs text-indigo-600 ml-2 flex-shrink-0">(${t('converting')})</span>
+        </div>
+        <button onclick="removeFile(0)" class="text-red-500 hover:text-red-700 ml-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+        </button>
+    `;
+    fileList.appendChild(div);
+    
+    let statusEl = document.getElementById('conversionStatus');
+    
+    try {
+        // 使用 document-converter.js 转换文件
+        const converter = new DocumentConverter({
+            onProgress: (current, total, status) => {
+                console.log(`Conversion progress: ${current}/${total} - ${status}`);
+            }
+        });
+        
+        // 先加载中文字体
+        if (statusEl) statusEl.textContent = `(${t('loadingFont')})`;
+        await converter.loadFont();
+        
+        if (!converter.isFontLoaded || !converter.fontBytes) {
+            throw new Error('字体加载失败，无法转换中文内容');
+        }
+        
+        if (statusEl) statusEl.textContent = `(${t('converting')})`;
+        
+        // 转换文件
+        convertedPdfBlob = await converter.convert(file, { download: false });
+        
+        // 调试模式：下载转换后的 PDF
+        const isDebugMode = new URLSearchParams(window.location.search).get('debug') === '1' || 
+                           localStorage.getItem('debugPdf') === 'true';
+        if (isDebugMode && convertedPdfBlob) {
+            const debugFileName = file.name.replace(/\.[^/.]+$/, '_converted.pdf');
+            const url = URL.createObjectURL(convertedPdfBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = debugFileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log('[DEBUG] PDF downloaded:', debugFileName);
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        if (statusEl) {
+            statusEl.textContent = `(${t('convertedToPDF')})`;
+            statusEl.className = 'text-xs text-emerald-600 ml-2 flex-shrink-0';
+        }
+        
+        // 创建 File 对象
+        const pdfFileName = file.name.replace(/\.[^/.]+$/, '.pdf');
+        const pdfFile = new File([convertedPdfBlob], pdfFileName, { type: 'application/pdf' });
+        
+        // 替换 currentFiles 中的文件
+        currentFiles[0] = pdfFile;
+        
+        // 像处理普通 PDF 一样处理：添加页码标记并保存
+        // 使用 iframe 原生渲染，即使 ToUnicode CMap 被破坏也能正确显示
+        await processPdfWithPageMarkers(pdfFile);
+        
+        const genBtn = document.getElementById('genBtn');
+        if (genBtn) genBtn.disabled = false;
+        
+    } catch (err) {
+        console.error('Office conversion error:', err);
+        if (statusEl) {
+            statusEl.textContent = '(转换失败)';
+            statusEl.className = 'text-xs text-red-600 ml-2 flex-shrink-0';
+        }
+        throw err;
+    }
 }
 
 async function handlePdfFile(file) {
@@ -937,6 +1111,16 @@ async function handlePdfFile(file) {
     }
 }
 
+// 生成随机文件名（纯字母数字，用于PDF页码标记）
+function generateRandomFileName() {
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = 'doc_';
+    for (let i = 0; i < 8; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+}
+
 async function processPdfWithPageMarkers(file) {
     const preview = document.getElementById('pdfPreview');
     if (!preview) return;
@@ -950,45 +1134,30 @@ async function processPdfWithPageMarkers(file) {
     const pages = pdfDoc.getPages();
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
     
-    const baseName = file.name.replace(/\.pdf$/i, '');
-    const safeFileName = baseName.replace(/[^a-zA-Z0-9\-_]/g, '_');
+    // 生成随机文件名用于页码标记（避免中文编码问题）
+    const markerFileName = generateRandomFileName();
+    // 保存原始文件名用于显示
+    const originalFileName = file.name.replace(/\.pdf$/i, '');
     
     for (let i = 0; i < pages.length; i++) {
         const page = pages[i];
         const { width, height } = page.getSize();
-        const markerText = `-----[${safeFileName}_page${i + 1}]-----`;
-        const fontSize = 12;
+        const markerText = `-----[${markerFileName}_page${i + 1}]-----`;
+        const fontSize = 6; // 小字号，不易察觉
         const textWidth = helveticaFont.widthOfTextAtSize(markerText, fontSize);
         
-        const padding = 10;
-        const rectX = (width - textWidth) / 2 - padding;
-        const rectY = height - 30;
-        const rectWidth = textWidth + padding * 2;
-        const rectHeight = fontSize + 6;
+        // 放在右下角角落，尽可能不显眼
+        const margin = 5;
+        const x = width - textWidth - margin;
+        const y = margin; // 底部边缘
         
-        page.drawRectangle({
-            x: rectX,
-            y: rectY - 2,
-            width: rectWidth,
-            height: rectHeight,
-            color: rgb(1, 1, 1),
-        });
-        
-        page.drawRectangle({
-            x: rectX,
-            y: rectY - 2,
-            width: rectWidth,
-            height: rectHeight,
-            borderColor: rgb(0, 0, 0),
-            borderWidth: 1,
-        });
-        
+        // 白色文字，无背景，无边框，给AI看而不是给人看
         page.drawText(markerText, {
-            x: (width - textWidth) / 2,
-            y: rectY,
+            x: x,
+            y: y,
             size: fontSize,
             font: helveticaFont,
-            color: rgb(0, 0, 0),
+            color: rgb(1, 1, 1), // 白色
         });
     }
     
@@ -999,7 +1168,8 @@ async function processPdfWithPageMarkers(file) {
     await db.sourceFiles.where('name').equals(file.name).delete();
     await db.sourceFiles.add({
         name: file.name,
-        safeFileName: safeFileName,
+        fileName: originalFileName, // 存储原始文件名（不含扩展名）
+        markerFileName: markerFileName, // 存储用于页码标记的随机文件名
         bankId: null,
         data: processedPdfBytes,
         type: 'application/pdf',
@@ -1018,45 +1188,25 @@ async function renderPdfPreview(pdfBytes) {
     
     preview.innerHTML = '';
     
-    const pdfData = new Uint8Array(pdfBytes);
-    const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-    const pagesToRender = Math.min(3, pdf.numPages);
+    // 使用 iframe 让浏览器原生 PDF 引擎渲染
+    // 浏览器内置引擎（Chrome PDFium/Firefox PDF.js 内置版）能正确解析嵌入字体
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
     
-    for (let i = 1; i <= pagesToRender; i++) {
-        const page = await pdf.getPage(i);
-        const scale = 0.5;
-        const viewport = page.getViewport({ scale });
-        
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-        canvas.style.maxWidth = '100%';
-        canvas.style.height = 'auto';
-        
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'pdf-page-preview mb-4';
-        pageDiv.appendChild(canvas);
-        
-        const label = document.createElement('div');
-        label.className = 'text-center text-xs text-slate-500 mt-1';
-        label.textContent = t('pageLabel', i);
-        pageDiv.appendChild(label);
-        
-        preview.appendChild(pageDiv);
-        
-        await page.render({
-            canvasContext: context,
-            viewport: viewport
-        }).promise;
-    }
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.width = '100%';
+    iframe.style.height = '580px';
+    iframe.style.border = 'none';
+    iframe.style.borderRadius = '8px';
     
-    if (pdf.numPages > 3) {
-        const more = document.createElement('div');
-        more.className = 'text-center text-slate-500 text-sm py-4';
-        more.textContent = `... ${pdf.numPages - 3} more pages ...`;
-        preview.appendChild(more);
-    }
+    preview.appendChild(iframe);
+    
+    // 清理 URL 对象（iframe 加载完成后）
+    iframe.onload = () => {
+        // 延迟清理，确保资源已加载
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
 }
 
 async function removeFile(index) {
@@ -1087,6 +1237,8 @@ async function removeFile(index) {
         processedPdfBytes = null;
         processedFileName = '';
         processedPageCount = 0;
+        convertedPdfBlob = null;
+        originalFileName = '';
         
         const genBtn = document.getElementById('genBtn');
         if (genBtn) genBtn.disabled = true;
@@ -1119,10 +1271,11 @@ async function startGeneration() {
     if (resultPreview) resultPreview.innerHTML = '';
     
     const baseName = processedFileName.replace(/\.pdf$/i, '');
-    const safeFileName = baseName.replace(/[^a-zA-Z0-9\-_]/g, '_');
+    // 使用原始文件名，不再进行safeName处理
+    const originalFileName = baseName;
     
     streamingGenerator = new StreamingQuestionGenerator();
-    streamingGenerator.setSafeFileName(safeFileName);
+    streamingGenerator.setOriginalFileName(originalFileName);
     streamingGenerator.setPageCount(processedPageCount);
     
     // 立即启用刷新保护并显示进度框
@@ -1311,6 +1464,8 @@ window.saveAndPractice = saveAndPractice;
 window.closeDonateBanner = closeDonateBanner;
 window.setupDropZone = setupDropZone;
 window.handleFiles = handleFiles;
+window.handleOfficeFile = handleOfficeFile;
+window.handlePdfFile = handlePdfFile;
 window.i18n = i18n;
 window.currentLang = currentLang;
 
@@ -1318,31 +1473,4 @@ window.currentLang = currentLang;
 document.addEventListener('DOMContentLoaded', () => {
     updateLanguage();
     setupDropZone();
-
-    // 检查是否有从其他模式切换过来的待处理文件
-    const pendingFile = sessionStorage.getItem('pendingFile');
-    if (pendingFile) {
-        try {
-            const fileInfo = JSON.parse(pendingFile);
-            // 检查是否在5分钟内（避免过期）
-            if (Date.now() - fileInfo.timestamp < 5 * 60 * 1000) {
-                // 将 base64 转换回文件
-                fetch(fileInfo.data)
-                    .then(res => res.blob())
-                    .then(blob => {
-                        const file = new File([blob], fileInfo.name, { type: fileInfo.type });
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        handleFiles(dataTransfer.files);
-                    });
-            }
-        } catch (e) {
-            console.error('Error loading pending file:', e);
-        }
-        sessionStorage.removeItem('pendingFile');
-    }
-    
-    if (typeof pdfjsLib !== 'undefined') {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    }
 });

@@ -317,10 +317,23 @@
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
 
         const db = new Dexie(DB_NAME);
-        db.version(5).stores({
+        // 版本5：旧版本
+        // 版本6：将 sourceFiles.safeName 改为 fileName，支持题库ID关联，添加 markerFileName
+        db.version(6).stores({
             questionBanks: '++id, name, createdAt, updatedAt',
             practiceProgress: '++id, bankId, lastPracticeAt',
-            sourceFiles: '++id, name, safeName, bankId, data, createdAt' // 新增：原始文件缓存
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt'
+        }).upgrade(tx => {
+            // 数据迁移：将旧数据从 safeName 复制到 fileName
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (file.safeName && !file.fileName) {
+                    file.fileName = file.safeName;
+                }
+                // 确保 bankId 字段存在
+                if (!file.bankId) {
+                    file.bankId = null;
+                }
+            });
         });
 
         let currentLang = localStorage.getItem('language') || detectBrowserLanguage();

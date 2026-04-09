@@ -24,6 +24,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="fileViewer.js"></script>
     
     <style>
@@ -192,8 +193,6 @@
         /* Source Viewer Styles */
         .source-viewer-overlay { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
         .pdf-page-container { margin: 20px auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); background: white; }
-        .source-link { cursor: pointer; color: #6366f1; text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
-        .source-link:hover { color: #4f46e5; background: #eef2ff; padding: 2px 4px; border-radius: 4px; margin: -2px -4px; }
         .text-viewer { font-family: 'Consolas', 'Monaco', 'Courier New', monospace; white-space: pre-wrap; line-height: 1.6; font-size: 14px; }
         .page-highlight { background: #fef3c7; border-left: 4px solid #f59e0b; padding-left: 12px; margin: 10px 0; }
         
@@ -329,7 +328,11 @@
 
         <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
             <div id="questionContent" class="mb-8">
-                <h3 class="text-xl font-medium text-slate-900 mb-6 leading-relaxed" id="questionText" data-i18n="loadingQuestion">题目内容加载中...</h3>
+                <h3 class="text-xl font-medium text-slate-900 mb-4 leading-relaxed" id="questionText" data-i18n="loadingQuestion">题目内容加载中...</h3>
+                <button onclick="openSourceViewer()" id="viewSourceBtn" class="mb-6 px-4 py-2 text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    <span data-i18n="viewSource">查看原文</span>
+                </button>
                 <div id="optionsList" class="space-y-3"></div>
             </div>
 
@@ -345,7 +348,7 @@
                             <div class="flex items-center text-xs text-slate-400 mt-2">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                                 <span data-i18n="source">来源</span>: 
-                                <span id="sourceText" class="ml-1 source-link" onclick="openSourceViewer()" title="点击查看原始文件位置"></span>
+                                <span id="sourceText" class="ml-1"></span>
                             </div>
                         </div>
                     </div>
@@ -423,10 +426,24 @@
     <script>
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
         const db = new Dexie(DB_NAME);
-        db.version(5).stores({
+        
+        // 版本5：旧版本
+        // 版本6：将 sourceFiles.safeName 改为 fileName，支持题库ID关联，添加 markerFileName
+        db.version(6).stores({
             questionBanks: '++id, name, createdAt, updatedAt',
             practiceProgress: '++id, bankId, lastPracticeAt',
-            sourceFiles: '++id, name, safeName, bankId, data, createdAt'
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt'
+        }).upgrade(tx => {
+            // 数据迁移：将旧数据从 safeName 复制到 fileName
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (file.safeName && !file.fileName) {
+                    file.fileName = file.safeName;
+                }
+                // 确保 bankId 字段存在
+                if (!file.bankId) {
+                    file.bankId = null;
+                }
+            });
         });
 
         let currentBank = null;
@@ -444,7 +461,7 @@
 
         const i18n = {
             zh: { 
-                appName: '请出题', saveAndExit: '保存并退出', exitPractice: '退出练习', bankName: '题库名称', accuracy: '正确率', accuracyLabel: '正确率', progress: '进度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精选', removeFromFavorites: '移除精选', loadingQuestion: '题目内容加载中...', answerExplanation: '答案解析', source: '来源', prevQuestion: '上一题', submitAnswer: '提交答案', nextQuestion: '下一题', submitted: '已提交', practiceComplete: '练习完成！', congratsComplete: '恭喜您完成了所有题目', finalAccuracy: '最终正确率', correct: '正确', findHelpful: '觉得这个工具对您有帮助？', donateDesc: '可以捐款支持开发者，让这个网站活到你下次考试。', supportDev: '支持开发者', backToManage: '返回管理页', practiceAgain: '再练一次', favorites: '精选', noFavorites: '暂无精选题目', confirmRemoveFavorite: '确定要从精选中移除这道题吗？', invalidBankId: '无效的题库ID', bankNotFound: '未找到题库', noExplanation: '暂无解析', unknownSource: '未知来源', sourceNotFound: '未找到源文件，可能已被删除', fileOpenError: '文件打开失败', page: '页', slide: '幻灯片', section: '章节', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '预览失败', cannotPreview: '无法预览此文件格式', pptTextOnly: '提示：PPT 目前仅支持显示文本内容，图片、图表等完整效果请下载后用 PowerPoint 查看。', pageTitle: '请出题', finishAndShowResult: '结束并查看结果',
+                appName: '请出题', saveAndExit: '保存并退出', exitPractice: '退出练习', bankName: '题库名称', accuracy: '正确率', accuracyLabel: '正确率', progress: '进度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精选', removeFromFavorites: '移除精选', loadingQuestion: '题目内容加载中...', answerExplanation: '答案解析', source: '来源', viewSource: '查看原文', prevQuestion: '上一题', submitAnswer: '提交答案', nextQuestion: '下一题', submitted: '已提交', practiceComplete: '练习完成！', congratsComplete: '恭喜您完成了所有题目', finalAccuracy: '最终正确率', correct: '正确', findHelpful: '觉得这个工具对您有帮助？', donateDesc: '可以捐款支持开发者，让这个网站活到你下次考试。', supportDev: '支持开发者', backToManage: '返回管理页', practiceAgain: '再练一次', favorites: '精选', noFavorites: '暂无精选题目', confirmRemoveFavorite: '确定要从精选中移除这道题吗？', invalidBankId: '无效的题库ID', bankNotFound: '未找到题库', noExplanation: '暂无解析', unknownSource: '未知来源', sourceNotFound: '未找到源文件，可能已被删除', fileOpenError: '文件打开失败', page: '页', slide: '幻灯片', section: '章节', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '预览失败', cannotPreview: '无法预览此文件格式', pptTextOnly: '提示：PPT 目前仅支持显示文本内容，图片、图表等完整效果请下载后用 PowerPoint 查看。', pageTitle: '请出题', finishAndShowResult: '结束并查看结果',
                 confirmFinish: '确定要结束练习并查看结果吗？',
                 unfinishedCount: '您还有 {count} 道题未完成',
                 submitUnansweredZero: '未作答题目将计为 0 分',
@@ -455,7 +472,7 @@
                 supportUs: '支持我们'
             },
             'zh-TW': { 
-                appName: '請出題', saveAndExit: '儲存並退出', exitPractice: '退出練習', bankName: '題庫名稱', accuracy: '正確率', accuracyLabel: '正確率', progress: '進度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精選', removeFromFavorites: '移除精選', loadingQuestion: '題目內容載入中...', answerExplanation: '答案解析', source: '來源', prevQuestion: '上一題', submitAnswer: '提交答案', nextQuestion: '下一題', submitted: '已提交', practiceComplete: '練習完成！', congratsComplete: '恭喜您完成了所有題目', finalAccuracy: '最終正確率', correct: '正確', findHelpful: '覺得這個工具對您有幫助？', donateDesc: '可以捐款支持開發者，讓這個網站活到你下次考試。', supportDev: '支持開發者', backToManage: '返回管理頁', practiceAgain: '再練一次', favorites: '精選', noFavorites: '暫無精選題目', confirmRemoveFavorite: '確定要從精選中移除這道題嗎？', invalidBankId: '無效的題庫ID', bankNotFound: '未找到題庫', noExplanation: '暫無解析', unknownSource: '未知來源', sourceNotFound: '未找到來源檔案，可能已被刪除', fileOpenError: '檔案開啟失敗', page: '頁', slide: '投影片', section: '章節', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '預覽失敗', cannotPreview: '無法預覽此檔案格式', pptTextOnly: '提示：PPT 目前僅支援顯示文字內容，圖片、圖表等完整效果請下載後用 PowerPoint 查看。', pageTitle: '請出題', finishAndShowResult: '結束並查看結果',
+                appName: '請出題', saveAndExit: '儲存並退出', exitPractice: '退出練習', bankName: '題庫名稱', accuracy: '正確率', accuracyLabel: '正確率', progress: '進度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精選', removeFromFavorites: '移除精選', loadingQuestion: '題目內容載入中...', answerExplanation: '答案解析', source: '來源', viewSource: '查看原文', prevQuestion: '上一題', submitAnswer: '提交答案', nextQuestion: '下一題', submitted: '已提交', practiceComplete: '練習完成！', congratsComplete: '恭喜您完成了所有題目', finalAccuracy: '最終正確率', correct: '正確', findHelpful: '覺得這個工具對您有幫助？', donateDesc: '可以捐款支持開發者，讓這個網站活到你下次考試。', supportDev: '支持開發者', backToManage: '返回管理頁', practiceAgain: '再練一次', favorites: '精選', noFavorites: '暫無精選題目', confirmRemoveFavorite: '確定要從精選中移除這道題嗎？', invalidBankId: '無效的題庫ID', bankNotFound: '未找到題庫', noExplanation: '暫無解析', unknownSource: '未知來源', sourceNotFound: '未找到來源檔案，可能已被刪除', fileOpenError: '檔案開啟失敗', page: '頁', slide: '投影片', section: '章節', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '預覽失敗', cannotPreview: '無法預覽此檔案格式', pptTextOnly: '提示：PPT 目前僅支援顯示文字內容，圖片、圖表等完整效果請下載後用 PowerPoint 查看。', pageTitle: '請出題', finishAndShowResult: '結束並查看結果',
                 confirmFinish: '確定要結束練習並查看結果嗎？',
                 unfinishedCount: '您還有 {count} 道題未完成',
                 submitUnansweredZero: '未作答題目將計為 0 分',
@@ -466,7 +483,7 @@
                 supportUs: '支持我們'
             },
             en: { 
-                appName: 'GPA4.0', saveAndExit: 'Save & Exit', exitPractice: 'Exit Practice', bankName: 'Question Bank', accuracy: 'Accuracy', accuracyLabel: 'Accuracy', progress: 'Progress', progressText: '1/30', questionNumber: '1/30', addToFavorites: 'Add to Favorites', removeFromFavorites: 'Remove from Favorites', loadingQuestion: 'Loading question...', answerExplanation: 'Explanation', source: 'Source', prevQuestion: 'Previous', submitAnswer: 'Submit', nextQuestion: 'Next', submitted: 'Submitted', practiceComplete: 'Practice Complete!', congratsComplete: 'Congratulations on completing all questions', finalAccuracy: 'Final Accuracy', correct: 'correct', findHelpful: 'Found this tool helpful?', donateDesc: 'Donate to support the developer and keep this site running.', supportDev: 'Support Developer', backToManage: 'Back to Manage', practiceAgain: 'Practice Again', favorites: 'Favorites', noFavorites: 'No favorite questions yet', confirmRemoveFavorite: 'Remove this question from favorites?', invalidBankId: 'Invalid bank ID', bankNotFound: 'Bank not found', noExplanation: 'No explanation available', unknownSource: 'Unknown source', sourceNotFound: 'Source file not found, may have been deleted', fileOpenError: 'Failed to open file', page: 'Page', slide: 'Slide', section: 'Section', sheet: 'Sheet', approximateLocation: 'approximate location', previewFailed: 'Preview Failed', cannotPreview: 'Cannot preview this file format', pptTextOnly: 'Note: PPT files currently only support text display. For images, charts and other full effects, please download and view with PowerPoint.', pageTitle: 'GPA4.0', finishAndShowResult: 'Finish & View Results',
+                appName: 'GPA4.0', saveAndExit: 'Save & Exit', exitPractice: 'Exit Practice', bankName: 'Question Bank', accuracy: 'Accuracy', accuracyLabel: 'Accuracy', progress: 'Progress', progressText: '1/30', questionNumber: '1/30', addToFavorites: 'Add to Favorites', removeFromFavorites: 'Remove from Favorites', loadingQuestion: 'Loading question...', answerExplanation: 'Explanation', source: 'Source', viewSource: 'View Source', prevQuestion: 'Previous', submitAnswer: 'Submit', nextQuestion: 'Next', submitted: 'Submitted', practiceComplete: 'Practice Complete!', congratsComplete: 'Congratulations on completing all questions', finalAccuracy: 'Final Accuracy', correct: 'correct', findHelpful: 'Found this tool helpful?', donateDesc: 'Donate to support the developer and keep this site running.', supportDev: 'Support Developer', backToManage: 'Back to Manage', practiceAgain: 'Practice Again', favorites: 'Favorites', noFavorites: 'No favorite questions yet', confirmRemoveFavorite: 'Remove this question from favorites?', invalidBankId: 'Invalid bank ID', bankNotFound: 'Bank not found', noExplanation: 'No explanation available', unknownSource: 'Unknown source', sourceNotFound: 'Source file not found, may have been deleted', fileOpenError: 'Failed to open file', page: 'Page', slide: 'Slide', section: 'Section', sheet: 'Sheet', approximateLocation: 'approximate location', previewFailed: 'Preview Failed', cannotPreview: 'Cannot preview this file format', pptTextOnly: 'Note: PPT files currently only support text display. For images, charts and other full effects, please download and view with PowerPoint.', pageTitle: 'GPA4.0', finishAndShowResult: 'Finish & View Results',
                 confirmFinish: 'Are you sure you want to finish and view results?',
                 unfinishedCount: 'You have {count} questions remaining',
                 submitUnansweredZero: 'Unanswered questions will be scored as 0',
@@ -477,7 +494,7 @@
                 supportUs: 'Support Us'
             },
             ko: { 
-                appName: 'GPA4.0', saveAndExit: '저장하고 나가기', exitPractice: '연습 나가기', bankName: '문제은행', accuracy: '정확도', accuracyLabel: '정확도', progress: '진행률', progressText: '1/30', questionNumber: '1/30', addToFavorites: '즐겨찾기 추가', removeFromFavorites: '즐겨찾기 제거', loadingQuestion: '문제 로딩 중...', answerExplanation: '해설', source: '출처', prevQuestion: '이전', submitAnswer: '제출', nextQuestion: '다음', submitted: '제출됨', practiceComplete: '연습 완료!', congratsComplete: '모든 문제를 완료했습니다', finalAccuracy: '최종 정확도', correct: '정답', findHelpful: '이 도구가 도움이 되셨나요?', donateDesc: '개발자를 후원하여 사이트를 유지할 수 있도록 도와주세요.', supportDev: '개발자 후원', backToManage: '관리 페이지로', practiceAgain: '다시 연습하기', favorites: '즐겨찾기', noFavorites: '즐겨찾기한 문제 없음', confirmRemoveFavorite: '즐겨찾기에서 제거하시겠습니까?', invalidBankId: '잘못된 문제은행 ID', bankNotFound: '문제은행을 찾을 수 없습니다', noExplanation: '해설 없음', unknownSource: '출처 불명', sourceNotFound: '원본 파일을 찾을 수 없습니다. 삭제되었을 수 있습니다.', fileOpenError: '파일 열기 실패', page: '페이지', slide: '슬라이드', section: '섹션', sheet: '시트', approximateLocation: '대략적인 위치', previewFailed: '미리보기 실패', cannotPreview: '이 파일 형식을 미리 볼 수 없습니다', pptTextOnly: '참고: PPT 파일은 현재 텍스트 표시만 지원합니다. 이미지, 차트 등의 전체 효과를 보려면 다운로드하여 PowerPoint에서 열어보세요.', pageTitle: 'GPA4.0', finishAndShowResult: '종료 및 결과 확인',
+                appName: 'GPA4.0', saveAndExit: '저장하고 나가기', exitPractice: '연습 나가기', bankName: '문제은행', accuracy: '정확도', accuracyLabel: '정확도', progress: '진행률', progressText: '1/30', questionNumber: '1/30', addToFavorites: '즐겨찾기 추가', removeFromFavorites: '즐겨찾기 제거', loadingQuestion: '문제 로딩 중...', answerExplanation: '해설', source: '출처', viewSource: '원문 보기', prevQuestion: '이전', submitAnswer: '제출', nextQuestion: '다음', submitted: '제출됨', practiceComplete: '연습 완료!', congratsComplete: '모든 문제를 완료했습니다', finalAccuracy: '최종 정확도', correct: '정답', findHelpful: '이 도구가 도움이 되셨나요?', donateDesc: '개발자를 후원하여 사이트를 유지할 수 있도록 도와주세요.', supportDev: '개발자 후원', backToManage: '관리 페이지로', practiceAgain: '다시 연습하기', favorites: '즐겨찾기', noFavorites: '즐겨찾기한 문제 없음', confirmRemoveFavorite: '즐겨찾기에서 제거하시겠습니까?', invalidBankId: '잘못된 문제은행 ID', bankNotFound: '문제은행을 찾을 수 없습니다', noExplanation: '해설 없음', unknownSource: '출처 불명', sourceNotFound: '원본 파일을 찾을 수 없습니다. 삭제되었을 수 있습니다.', fileOpenError: '파일 열기 실패', page: '페이지', slide: '슬라이드', section: '섹션', sheet: '시트', approximateLocation: '대략적인 위치', previewFailed: '미리보기 실패', cannotPreview: '이 파일 형식을 미리 볼 수 없습니다', pptTextOnly: '참고: PPT 파일은 현재 텍스트 표시만 지원합니다. 이미지, 차트 등의 전체 효과를 보려면 다운로드하여 PowerPoint에서 열어보세요.', pageTitle: 'GPA4.0', finishAndShowResult: '종료 및 결과 확인',
                 confirmFinish: '연습을 종료하고 결과를 확인하시겠습니까?',
                 unfinishedCount: '남은 문제: {count}개',
                 submitUnansweredZero: '미완료 문제는 0점 처리됩니다',
@@ -550,16 +567,11 @@
             const sourceInfo = parseSource(q.source);
             if (!sourceInfo) { alert(t('unknownSource')); return; }
             
-            let fileRecord = await db.sourceFiles.where('safeName').equals(sourceInfo.filename).first();
-            if (!fileRecord) {
-                fileRecord = await db.sourceFiles.where('name').equals(sourceInfo.filename).first();
-            }
-            if (!fileRecord && !sourceInfo.filename.endsWith('.pdf')) {
-                fileRecord = await db.sourceFiles.where('name').equals(sourceInfo.filename + '.pdf').first();
-            }
+            // 使用当前题库ID查找关联的文件
+            const fileRecord = await db.sourceFiles.where('bankId').equals(practiceState.bankId).first();
             
             if (!fileRecord) { 
-                console.error('File not found:', sourceInfo.filename, 'Available files:', await db.sourceFiles.toArray());
+                console.error('File not found for bankId:', practiceState.bankId, 'Available files:', await db.sourceFiles.toArray());
                 alert(t('sourceNotFound')); 
                 return; 
             }
@@ -683,7 +695,15 @@
             const correct = practiceState.answers.filter((a, i) => a && a.selected === practiceState.questions[i].correctAnswer).length;
             const accuracy = Math.round((correct / totalQuestions) * 100);
             document.getElementById('accuracy').innerHTML = `${t('accuracy')}: ${accuracy}%`;
-            document.getElementById('questionText').textContent = `${practiceState.currentIndex + 1}. ${q.question}`;
+            document.getElementById('questionText').innerHTML = `${practiceState.currentIndex + 1}. ${marked.parse(q.question || '')}`;
+            
+            // 控制"查看原文"按钮的显示
+            const viewSourceBtn = document.getElementById('viewSourceBtn');
+            if (q.source) {
+                viewSourceBtn.classList.remove('hidden');
+            } else {
+                viewSourceBtn.classList.add('hidden');
+            }
             
             const favBtn = document.getElementById('favoriteBtn');
             const favIcon = document.getElementById('favoriteIcon');
@@ -712,7 +732,8 @@
                     else if (key === q.correctAnswer && answered.selected !== q.correctAnswer) btn.classList.add('option-correct');
                 }
                 
-                btn.innerHTML = `<div class="w-8 h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && key === answered.selected ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${value}</span>${answered && key === q.correctAnswer ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && key === answered.selected && key !== q.correctAnswer ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
+                const markedValue = marked.parse(value || '');
+                btn.innerHTML = `<div class="w-8 h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && key === answered.selected ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${markedValue}</span>${answered && key === q.correctAnswer ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && key === answered.selected && key !== q.correctAnswer ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
                 if (!answered) btn.dataset.option = key;
                 optionsContainer.appendChild(btn);
             });
@@ -720,10 +741,10 @@
             const explanationSection = document.getElementById('explanationSection');
             if (answered) {
                 explanationSection.classList.remove('hidden');
-                document.getElementById('explanationText').textContent = q.explanation || t('noExplanation');
+                document.getElementById('explanationText').innerHTML = marked.parse(q.explanation || t('noExplanation'));
                 const sourceEl = document.getElementById('sourceText');
-                if (q.source) { sourceEl.textContent = q.source; sourceEl.classList.add('source-link'); }
-                else { sourceEl.textContent = t('unknownSource'); sourceEl.classList.remove('source-link'); }
+                if (q.source) { sourceEl.textContent = q.source; }
+                else { sourceEl.textContent = t('unknownSource'); }
                 
                 const icon = document.getElementById('resultIcon');
                 if (answered.selected === q.correctAnswer) {
@@ -904,6 +925,39 @@
                 banner.style.display = 'none';
             }
         }
+
+        // 数据恢复函数：用于恢复版本6升级时丢失的数据
+        async function recoverLostData() {
+            try {
+                // 检查是否有版本5的备份数据
+                const backupData = localStorage.getItem('exam_banks_backup_v5');
+                if (backupData) {
+                    const banks = JSON.parse(backupData);
+                    for (const bank of banks) {
+                        delete bank.id; // 移除id让数据库重新分配
+                        await db.questionBanks.add(bank);
+                    }
+                    console.log(`已恢复 ${banks.length} 个题库`);
+                    localStorage.removeItem('exam_banks_backup_v5');
+                    return true;
+                }
+            } catch (e) {
+                console.error('数据恢复失败:', e);
+            }
+            return false;
+        }
+
+        // 数据库打开时执行数据恢复检查
+        db.open().then(async () => {
+            const count = await db.questionBanks.count();
+            const backupData = localStorage.getItem('exam_banks_backup_v5');
+            if (count === 0 && backupData) {
+                console.log('检测到数据丢失，正在恢复...');
+                await recoverLostData();
+                // 刷新页面以加载恢复的数据
+                window.location.reload();
+            }
+        }).catch(e => console.error('数据库打开失败:', e));
 
         document.addEventListener('DOMContentLoaded', () => {
             init();

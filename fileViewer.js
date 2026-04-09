@@ -50,63 +50,46 @@ const fileViewer = (function() {
         };
     }
 
-    // =================== PDF 渲染 ===================
+    // =================== PDF 渲染（使用 iframe 原生引擎） ===================
     async function renderPDF(container, controls) {
         const pdfData = new Uint8Array(currentSourceFile.data);
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-        const totalPages = pdf.numPages;
         const targetPage = currentSourceFile.page || 1;
         
-        if (totalPages > 1) {
-            controls.innerHTML = `
-                <button onclick="fileViewer.changePDFPage(-1)" class="px-3 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-sm" ${targetPage <= 1 ? 'disabled' : ''}>←</button>
-                <span class="text-sm text-slate-600 px-3">Page <span id="currentPageNum">${targetPage}</span> / ${totalPages}</span>
-                <button onclick="fileViewer.changePDFPage(1)" class="px-3 py-1 bg-white border border-slate-300 rounded hover:bg-slate-50 text-sm" ${targetPage >= totalPages ? 'disabled' : ''}>→</button>
-            `;
-        }
-        const pageContainer = document.createElement('div');
-        pageContainer.id = 'pdfPageContainer';
-        pageContainer.className = 'pdf-page-container';
-        container.appendChild(pageContainer);
-        await renderPDFPage(pdf, targetPage);
-    }
-
-    async function renderPDFPage(pdf, pageNum) {
-        const container = document.getElementById('pdfPageContainer');
-        if (!container) return;
-        container.innerHTML = '';
-        const page = await pdf.getPage(pageNum);
+        // 创建 iframe 显示 PDF，使用 #page= 参数指定页面
+        const blob = new Blob([pdfData], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const pageUrl = `${url}#page=${targetPage}`;
         
-        const containerWidth = container.clientWidth || 800;
-        const viewport = page.getViewport({ scale: 1 });
-        const scale = Math.min(containerWidth / viewport.width, 1.5);
-        const scaledViewport = page.getViewport({ scale });
+        // 创建 iframe 容器
+        const iframeContainer = document.createElement('div');
+        iframeContainer.className = 'pdf-iframe-container';
+        iframeContainer.style.width = '100%';
+        iframeContainer.style.height = '70vh';
+        iframeContainer.style.overflow = 'hidden';
+        iframeContainer.style.borderRadius = '8px';
+        iframeContainer.style.border = targetPage > 1 ? '4px solid #f59e0b' : 'none';
         
-        const canvas = document.createElement('canvas');
-        canvas.width = scaledViewport.width;
-        canvas.height = scaledViewport.height;
-        container.appendChild(canvas);
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport: scaledViewport }).promise;
+        // 创建 iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = pageUrl;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
         
-        const pageNumEl = document.getElementById('currentPageNum');
-        if (pageNumEl) pageNumEl.textContent = pageNum;
-        container.style.border = pageNum === currentSourceFile.page ? '4px solid #f59e0b' : 'none';
-        container.style.borderRadius = '4px';
-    }
-
-    async function changePDFPage(delta) {
-        const pageNumEl = document.getElementById('currentPageNum');
-        if (!pageNumEl) return;
-        const currentNum = parseInt(pageNumEl.textContent);
-        const newNum = currentNum + delta;
-        const pdfData = new Uint8Array(currentSourceFile.data);
-        const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-        if (newNum >= 1 && newNum <= pdf.numPages) {
-            await renderPDFPage(pdf, newNum);
-            const buttons = document.querySelectorAll('#viewerControls button');
-            if (buttons[0]) buttons[0].disabled = newNum <= 1;
-            if (buttons[2]) buttons[2].disabled = newNum >= pdf.numPages;
-        }
+        iframeContainer.appendChild(iframe);
+        container.appendChild(iframeContainer);
+        
+        // 显示页码信息
+        const pageInfo = document.createElement('div');
+        pageInfo.className = 'text-center text-sm text-slate-500 mt-3';
+        pageInfo.textContent = `第 ${targetPage} 页`;
+        container.appendChild(pageInfo);
+        
+        // 清理 URL（iframe 加载完成后）
+        iframe.onload = () => setTimeout(() => URL.revokeObjectURL(url), 1000);
+        
+        // 清空控制按钮（iframe 自带 PDF 工具栏）
+        controls.innerHTML = '';
     }
 
     // =================== 文本文件渲染 ===================
@@ -435,7 +418,6 @@ const fileViewer = (function() {
         render,
         download,
         close,
-        changePDFPage,
         switchExcelSheet,
         changeSlide
     };

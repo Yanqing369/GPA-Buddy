@@ -19,15 +19,29 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     
+    <!-- document-converter.js 依赖 -->
+    <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+    <script src="https://unpkg.com/pptxtojson@latest/dist/index.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/seikichi/tiff.js@master/tiff.min.js"></script>
+    <script src="document-converter.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+        
+        /* 预加载思源黑体 */
+        @font-face {
+            font-family: 'SourceHanSansCN';
+            src: url('https://cdn.jsdelivr.net/gh/adobe-fonts/source-han-sans@release/SubsetOTF/CN/SourceHanSansCN-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
         
         :root {
             --paper-bg: #FAF9F6;
@@ -434,7 +448,7 @@
                     <span id="pageStats" class="text-sm text-slate-500"></span>
                 </div>
                 <p id="previewNote" class="text-sm text-amber-600 mb-3 hidden" data-i18n="pdfPreviewNote">PDF中的图表都将被读取</p>
-                <div id="pdfPreview" class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 max-w-full" style="min-height: 300px;">
+                <div id="pdfPreview" class="border border-slate-200 rounded-lg overflow-hidden bg-slate-50 max-w-full" style="min-height: 600px;">
                     <div class="flex items-center justify-center h-full text-slate-400 py-20" data-i18n="waitingUpload">
                         等待上传文件...
                     </div>
@@ -595,76 +609,6 @@
                 }
             }
         });
-
-        // 动态加载对应的 JS 文件
-        (function() {
-            let textJsLoaded = false;
-            
-            // 监听来自 DocGenerate.js 的切换事件
-            document.addEventListener('switchToTextHandler', function(e) {
-                if (textJsLoaded) return;
-                
-                const file = e.detail.file;
-                const ext = e.detail.ext;
-                
-                // 标记已加载
-                textJsLoaded = true;
-                
-                // 移除 DocGenerate.js 相关的全局函数和变量
-                window.handleFiles = null;
-                window.removeFile = null;
-                window.startGeneration = null;
-                
-                // 加载 docgenerate_text.js
-                const newScript = document.createElement('script');
-                newScript.src = 'docgenerate_text.js';
-                newScript.onload = function() {
-                    // 脚本加载完成后，手动调用 handleFilesText 处理文件
-                    if (typeof window.handleFilesText === 'function') {
-                        // 创建一个新的 FileList-like 对象
-                        const dataTransfer = new DataTransfer();
-                        dataTransfer.items.add(file);
-                        window.handleFilesText(dataTransfer.files);
-                    }
-                    // 更新按钮事件绑定 - docgenerate_text.js 导出的是 startGeneration
-                    const genBtn = document.getElementById('genBtn');
-                    if (genBtn) {
-                        genBtn.onclick = function() {
-                            if (typeof window.startGeneration === 'function') {
-                                window.startGeneration();
-                            }
-                        };
-                    }
-                };
-                document.body.appendChild(newScript);
-            });
-            
-            const fileInput = document.getElementById('fileInput');
-            
-            // 监听文件选择 - 用于 PDF/非PDF 切换
-            fileInput.addEventListener('change', function(e) {
-                if (e.target.files.length > 0) {
-                    const file = e.target.files[0];
-                    const ext = file.name.split('.').pop().toLowerCase();
-                    
-                    // 如果已经加载了 docgenerate_text.js 但用户选择了 PDF，刷新页面加载 PDF 模式
-                    if (ext === 'pdf' && textJsLoaded) {
-                        // 保存文件到 sessionStorage，刷新后自动加载
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            sessionStorage.setItem('pendingFile', JSON.stringify({
-                                name: file.name,
-                                type: file.type,
-                                data: e.target.result,
-                                timestamp: Date.now()
-                            }));
-                            location.reload();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                }
-            });
-        })();
     </script>
 </body>
 </html>
