@@ -337,6 +337,10 @@
             </div>
             
             <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                    <span>💎</span>
+                    <span data-visitor-credits>--</span>
+                </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -381,13 +385,13 @@
 
                 <div id="fileList" class="hidden space-y-2"></div>
 
-                <!-- 生成配置 -->
+                <!-- 出题设置 -->
                 <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
                     <h3 class="text-lg font-semibold mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                         </svg>
-                        <span data-i18n="configTitle">生成配置</span>
+                        <span data-i18n="configTitle">出题设置</span>
                     </h3>
                     
                     <div class="space-y-4">
@@ -408,17 +412,27 @@
                         </div>
                         
                         <div>
-                            <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="language">生成语言</label>
-                            <div class="flex gap-4">
-                                <label class="flex items-center">
-                                    <input type="radio" name="genLang" value="zh" checked class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                                    <span class="ml-2 text-slate-700" data-i18n="langZH">中文</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="radio" name="genLang" value="en" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500">
-                                    <span class="ml-2 text-slate-700" data-i18n="langEN">English</span>
-                                </label>
+                            <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="language">输出语言</label>
+                            <input type="hidden" id="genLangValue" value="zh">
+                            <div class="lang-dropdown" id="genLangDropdown">
+                                <button type="button" onclick="toggleGenLangDropdown()" class="px-3 py-2 rounded-lg liquid-btn text-sm font-medium text-slate-700 flex items-center w-full justify-between bg-white border border-slate-200">
+                                    <span id="genLangDisplay">简体中文</span>
+                                    <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                                <div id="genLangOptions" class="lang-dropdown-content w-full">
+                                    <div class="lang-option active" onclick="selectGenLang('zh')" data-lang="zh">简体中文</div>
+                                    <div class="lang-option" onclick="selectGenLang('zh-TW')" data-lang="zh-TW">繁體中文</div>
+                                    <div class="lang-option" onclick="selectGenLang('en')" data-lang="en">English</div>
+                                    <div class="lang-option" onclick="selectGenLang('ko')" data-lang="ko">한국어</div>
+                                </div>
                             </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2" data-i18n="customPrompt">个性化要求</label>
+                            <textarea id="customPrompt" rows="3" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none text-sm text-slate-700" data-i18n-placeholder="customPromptPlaceholder" placeholder="例如：请重点围绕第三章的内容出题"></textarea>
                         </div>
 
                         <button onclick="startGeneration()" id="genBtn" disabled class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
@@ -571,6 +585,27 @@
         </div>
     </div>
 
+    <!-- 错误弹窗 -->
+    <div id="errorModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
+                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900">生成失败</h3>
+            </div>
+            <div id="errorModalContent" class="text-sm text-slate-600 mb-6 space-y-2"></div>
+            <div class="flex justify-end">
+                <button onclick="closeErrorModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition-colors">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/visitor.js"></script>
     <script src="DocGenerate.js"></script>
     <script>
         // HTML 特有的 donate banner 文本（扩展 DocGenerate.js 的 i18n）

@@ -351,6 +351,10 @@
             </div>
             
             <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                    <span>💎</span>
+                    <span data-visitor-credits>--</span>
+                </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -518,6 +522,9 @@
 
     <script>
         const API_BASE = "https://moyuxiaowu.org";
+    </script>
+    <script src="js/visitor.js"></script>
+    <script>
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
         
         const db = new Dexie(DB_NAME);
@@ -538,6 +545,32 @@
                 if (!file.bankId) {
                     file.bankId = null;
                 }
+            });
+        });
+
+        // 版本7：新增知识图谱相关表（知识导学功能）
+        db.version(7).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        });
+
+        // 版本8：sourceFiles 增加 graphId 索引，支持 tutor 溯源
+        db.version(8).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, graphId, data, createdAt, [graphId+name]',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        }).upgrade(tx => {
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (!file.graphId) file.graphId = null;
             });
         });
 
@@ -994,18 +1027,6 @@
             return text || `[PPT text extraction limited]`;
         }
 
-        async function callLLM(messages) {
-            const response = await fetch(`${API_BASE}/chat`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: messages })
-            });
-            if (!response.ok) throw new Error(`Backend request failed: ${response.status}`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            return data.choices?.[0]?.message?.content || '';
-        }
-
         // 分割函数 - 复用 generate.html 的逻辑
         function splitByPages(text, numGroups) {
             const pageRegex = /-------------【.*?_(?:page|slide)(\d+)】-----------/g;
@@ -1257,6 +1278,9 @@ Extract as many valid questions as possible from this section. Assign ids starti
                 formData.append('text', extractedText);
                 formData.append('turnstileToken', turnstileToken);
                 formData.append('lang', currentLang);
+                if (typeof Visitor !== 'undefined' && Visitor.getId()) {
+                    formData.append('visitorId', Visitor.getId());
+                }
                 
                 // 更新进度
                 document.getElementById('orgProgressBar').style.width = '30%';

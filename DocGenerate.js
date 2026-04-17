@@ -28,6 +28,32 @@ db.version(6).stores({
     });
 });
 
+// 版本7：新增知识图谱相关表（知识导学功能）
+db.version(7).stores({
+    questionBanks: '++id, name, createdAt, updatedAt',
+    practiceProgress: '++id, bankId, lastPracticeAt',
+    sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt',
+    settings: 'key',
+    knowledgeGraphs: '++id, name, createdAt, updatedAt',
+    graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+    graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+});
+
+// 版本8：sourceFiles 增加 graphId 索引，支持 tutor 溯源
+db.version(8).stores({
+    questionBanks: '++id, name, createdAt, updatedAt',
+    practiceProgress: '++id, bankId, lastPracticeAt',
+    sourceFiles: '++id, name, fileName, markerFileName, bankId, graphId, data, createdAt, [graphId+name]',
+    settings: 'key',
+    knowledgeGraphs: '++id, name, createdAt, updatedAt',
+    graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+    graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+}).upgrade(tx => {
+    return tx.table('sourceFiles').toCollection().modify(file => {
+        if (!file.graphId) file.graphId = null;
+    });
+});
+
 // 数据库打开时执行数据恢复检查
 db.open().then(async () => {
     // 检查是否有数据丢失（题库数量为0但备份存在）
@@ -71,11 +97,15 @@ const i18n = {
         dropText: '拖拽文件到此处，或点击上传',
         supportFormats: '支持 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 文件将自动提取文本生成题目',
-        configTitle: '生成配置',
+        configTitle: '出题设置',
         questionCount: '题目数量',
-        language: '生成语言',
+        language: '输出语言',
         langZH: '中文',
+        langTW: '繁體中文',
         langEN: 'English',
+        langKO: '한국어',
+        customPrompt: '个性化要求',
+        customPromptPlaceholder: '例如：请重点围绕第三章的内容出题',
         startGenerate: '开始生成',
         captchaLabel: '人机验证',
         pdfPreviewNote: 'PDF中的图表都将被读取',
@@ -134,11 +164,15 @@ const i18n = {
         dropText: '拖曳PDF檔案到此處，或點擊上傳',
         supportFormats: '支援 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 檔案將自動提取文本生成題目',
-        configTitle: '生成設定',
+        configTitle: '出題設定',
         questionCount: '題目數量',
-        language: '生成語言',
+        language: '輸出語言',
         langZH: '中文',
+        langTW: '繁體中文',
         langEN: 'English',
+        langKO: '한국어',
+        customPrompt: '個性化要求',
+        customPromptPlaceholder: '例如：請重點圍繞第三章的內容出題',
         startGenerate: '開始生成',
         captchaLabel: '人機驗證',
         pdfPreviewNote: 'PDF中的圖表都將被讀取',
@@ -197,11 +231,15 @@ const i18n = {
         dropText: 'Drop files here or click to upload',
         supportFormats: 'Supports PDF, Word(DOCX), PPT(PPTX), Excel(XLSX/XLS), TXT formats',
         textExtractionNotice: '📄 PPT/DOCX/XLSX files will be converted to text for question generation',
-        configTitle: 'Generation Config',
+        configTitle: 'Question Settings',
         questionCount: 'Question Count',
-        language: 'Language',
+        language: 'Output Language',
         langZH: 'Chinese',
+        langTW: 'Traditional Chinese',
         langEN: 'English',
+        langKO: 'Korean',
+        customPrompt: 'Personalized Request',
+        customPromptPlaceholder: 'e.g. Please focus on Chapter 3 when creating questions',
         startGenerate: 'Start Generation',
         captchaLabel: 'Human Verification',
         pdfPreviewNote: 'Charts and images in PDF will be read',
@@ -260,11 +298,15 @@ const i18n = {
         dropText: '파일을 여기로 끌어다 놓거나 클릭하여 업로드',
         supportFormats: 'PDF, Word(DOCX), PPT(PPTX), Excel(XLSX/XLS), TXT 형식 지원',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 파일은 텍스트 추출 후 문제가 생성됩니다',
-        configTitle: '생성 설정',
+        configTitle: '출제 설정',
         questionCount: '문제 수량',
-        language: '생성 언어',
+        language: '출력 언어',
         langZH: '중국어',
+        langTW: '번체 중국어',
         langEN: '영어',
+        langKO: '한국어',
+        customPrompt: '개인화 요구사항',
+        customPromptPlaceholder: '예: 3장 내용을 중심으로 문제를 출제해 주세요',
         startGenerate: '생성 시작',
         captchaLabel: '보안 인증',
         pdfPreviewNote: 'PDF의 차트와 이미지가 모두 읽힙니다',
@@ -346,6 +388,12 @@ function updateLanguage() {
             el.textContent = i18n[currentLang][key];
         }
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (i18n[currentLang] && i18n[currentLang][key]) {
+            el.placeholder = i18n[currentLang][key];
+        }
+    });
     const langDisplay = document.getElementById('currentLangDisplay');
     if (langDisplay) {
         langDisplay.textContent = currentLang === 'zh' ? '简' : 
@@ -367,11 +415,40 @@ function changeLanguage(lang) {
     if (dropdown) dropdown.classList.remove('show');
 }
 
+const GEN_LANG_LABELS = {
+    'zh': '简体中文',
+    'zh-TW': '繁體中文',
+    'en': 'English',
+    'ko': '한국어'
+};
+
+function toggleGenLangDropdown() {
+    const dropdown = document.getElementById('genLangOptions');
+    if (dropdown) dropdown.classList.toggle('show');
+}
+
+function selectGenLang(lang) {
+    const valueInput = document.getElementById('genLangValue');
+    const display = document.getElementById('genLangDisplay');
+    if (valueInput) valueInput.value = lang;
+    if (display) display.textContent = GEN_LANG_LABELS[lang] || lang;
+    const dropdown = document.getElementById('genLangOptions');
+    if (dropdown) dropdown.classList.remove('show');
+    // 更新 active 状态
+    document.querySelectorAll('#genLangOptions .lang-option').forEach(opt => {
+        opt.classList.toggle('active', opt.dataset.lang === lang);
+    });
+}
+
 window.onclick = function(event) {
     if (!event.target.closest('.lang-dropdown')) {
         const dropdown = document.getElementById('langDropdown');
         if (dropdown && !dropdown.classList.contains('hidden')) {
             dropdown.classList.add('hidden');
+        }
+        const genDropdown = document.getElementById('genLangOptions');
+        if (genDropdown && genDropdown.classList.contains('show')) {
+            genDropdown.classList.remove('show');
         }
     }
 };
@@ -406,7 +483,7 @@ class StreamingQuestionGenerator {
 
     // 新的统一生成方法 - 使用 /pdf_generate 接口
     async generateAll(file, config) {
-        const { questionCount, lang, turnstileToken } = config;
+        const { questionCount, lang, turnstileToken, customPrompt } = config;
 
         this.isGenerating = true;
         this.questions = [];
@@ -428,6 +505,10 @@ class StreamingQuestionGenerator {
         formData.append('turnstileToken', turnstileToken);
         formData.append('pageCount', this.pageCount);
         formData.append('originalFileName', this.originalFileName);
+        formData.append('customPrompt', customPrompt || '');
+        if (typeof Visitor !== 'undefined' && Visitor.getId()) {
+            formData.append('visitorId', Visitor.getId());
+        }
 
         try {
             this.updateProgressStep(2, 'active');
@@ -638,7 +719,11 @@ class StreamingQuestionGenerator {
     buildBatchPrompt(batchIndex, lang) {
         const startId = batchIndex * 20 + 1;
         const endId = startId + 19;
-        const langInstruction = lang === 'zh' ? '使用中文' : 'Use English';
+        const langInstruction =
+            lang === 'zh' ? '使用中文' :
+            lang === 'zh-TW' ? '使用繁體中文' :
+            lang === 'ko' ? '한국어를 사용하세요' :
+            'Use English';
         const hardcodedFileName = this.originalFileName || 'document';
         
         // 计算当前批次的页码范围
@@ -877,7 +962,13 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         const modal = document.getElementById('genProgress');
         if (modal) modal.classList.add('hidden');
         
-        showToast(error.message, 'error');
+        // 尝试解析 Google API 错误格式
+        const googleError = parseGoogleApiError(error.message);
+        if (googleError) {
+            showErrorModal(googleError.code, googleError.status, googleError.message);
+        } else {
+            showToast(error.message, 'error');
+        }
     }
 
     async cleanupFile() {
@@ -1265,7 +1356,8 @@ async function startGeneration() {
     }
 
     const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
-    const lang = document.querySelector('input[name="genLang"]:checked')?.value || 'zh';
+    const lang = document.getElementById('genLangValue')?.value || 'zh';
+    const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
     
     const resultPreview = document.getElementById('resultPreview');
     if (resultPreview) resultPreview.innerHTML = '';
@@ -1292,7 +1384,8 @@ async function startGeneration() {
         await streamingGenerator.generateAll(currentFiles[0], {
             questionCount: totalCount,
             lang: lang,
-            turnstileToken: turnstileToken
+            turnstileToken: turnstileToken,
+            customPrompt: customPrompt
         });
         
     } catch (err) {
@@ -1444,6 +1537,44 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function parseGoogleApiError(message) {
+    if (!message) return null;
+    try {
+        const errorIdx = message.indexOf('"error"');
+        if (errorIdx === -1) return null;
+        const bracketStart = message.lastIndexOf('[', errorIdx);
+        const bracketEnd = message.indexOf(']', errorIdx);
+        if (bracketStart !== -1 && bracketEnd !== -1 && bracketEnd > bracketStart) {
+            const jsonStr = message.substring(bracketStart, bracketEnd + 1);
+            const parsed = JSON.parse(jsonStr);
+            if (Array.isArray(parsed) && parsed[0] && parsed[0].error) {
+                return parsed[0].error;
+            }
+        }
+    } catch (e) {
+        // ignore parsing errors
+    }
+    return null;
+}
+
+function showErrorModal(code, status, message) {
+    const modal = document.getElementById('errorModal');
+    const content = document.getElementById('errorModalContent');
+    if (!modal || !content) return;
+    
+    content.innerHTML = `
+        <p><span class="font-semibold text-slate-800">错误码：</span>${escapeHtml(String(code))}</p>
+        <p><span class="font-semibold text-slate-800">状态：</span>${escapeHtml(status)}</p>
+        <p><span class="font-semibold text-slate-800">信息：</span>${escapeHtml(message)}</p>
+    `;
+    modal.classList.remove('hidden');
+}
+
+function closeErrorModal() {
+    const modal = document.getElementById('errorModal');
+    if (modal) modal.classList.add('hidden');
 }
 
 // ==================== 捐款横幅控制 ====================

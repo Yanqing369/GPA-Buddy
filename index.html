@@ -668,6 +668,41 @@
             animation-duration: 2s;
         }
 
+        /* ===== 知识网络动画（知识导学） ===== */
+        .network-animation {
+            position: relative;
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(255,255,255,0.8), 0 2px 8px rgba(56, 189, 248, 0.15);
+        }
+        .network-animation .net-node {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #0ea5e9;
+            box-shadow: 0 0 6px rgba(14, 165, 233, 0.5);
+        }
+        .network-animation .net-node-1 { top: 14px; left: 14px; animation: net-pulse-1 3s ease-in-out infinite; }
+        .network-animation .net-node-2 { top: 14px; right: 14px; animation: net-pulse-2 3s ease-in-out infinite; }
+        .network-animation .net-node-3 { bottom: 14px; left: 50%; transform: translateX(-50%); animation: net-pulse-3 3s ease-in-out infinite; }
+        .network-animation .net-line {
+            position: absolute;
+            height: 2px;
+            background: rgba(14, 165, 233, 0.4);
+            transform-origin: left center;
+        }
+        .network-animation .net-line-1 { top: 17px; left: 18px; width: 20px; transform: rotate(0deg); }
+        .network-animation .net-line-2 { top: 18px; left: 16px; width: 22px; transform: rotate(60deg); }
+        .network-animation .net-line-3 { top: 18px; right: 16px; width: 22px; transform: rotate(-60deg); }
+        @keyframes net-pulse-1 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        @keyframes net-pulse-2 { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+        @keyframes net-pulse-3 { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.3); } }
+        .group:hover .network-animation .net-node { animation-duration: 1s; }
+
         /* 语言下拉选择器 */
         .lang-dropdown {
             position: relative;
@@ -800,6 +835,10 @@
             </div>
             
             <div class="flex items-center gap-4">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                    <span>💎</span>
+                    <span data-visitor-credits>--</span>
+                </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -894,7 +933,27 @@
         </section>
 
         <!-- 功能卡片 -->
-        <section class="grid md:grid-cols-3 gap-5 mb-16">
+        <section class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
+            <!-- 知识导学卡片 - 液态玻璃 -->
+            <a href="tutor.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-sky-100/40 via-transparent to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="absolute -top-20 -right-20 w-40 h-40 bg-sky-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                
+                <div class="mb-5 relative z-10 icon-bounce">
+                    <div class="network-animation">
+                        <div class="net-node net-node-1"></div>
+                        <div class="net-node net-node-2"></div>
+                        <div class="net-node net-node-3"></div>
+                        <div class="net-line net-line-1"></div>
+                        <div class="net-line net-line-2"></div>
+                        <div class="net-line net-line-3"></div>
+                    </div>
+                </div>
+                
+                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="tutorTitle">知识导学</h3>
+                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="tutorDesc">AI 构建知识图谱，按依赖顺序逐步学习每个概念</p>
+            </a>
+
             <!-- 生成卡片 - 液态玻璃 -->
             <a href="DocGenerate.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-100/40 via-transparent to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -1060,7 +1119,9 @@
 
     <script>
         const API_BASE = "https://moyuxiaowu.org";
-        
+    </script>
+    <script src="js/visitor.js"></script>
+    <script>
         /* ==================== AUTH SYSTEM ==================== */
         let currentUser = null;
         let authToken = localStorage.getItem('auth_token');
@@ -1206,6 +1267,32 @@
             });
         });
 
+        // 版本7：新增知识图谱相关表（知识导学功能）
+        db.version(7).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        });
+
+        // 版本8：sourceFiles 增加 graphId 索引，支持 tutor 溯源
+        db.version(8).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, graphId, data, createdAt, [graphId+name]',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        }).upgrade(tx => {
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (!file.graphId) file.graphId = null;
+            });
+        });
+
         let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
 
         const i18n = {
@@ -1214,6 +1301,8 @@
                 donateBannerTextMobile: '欢迎捐款支持我们',
                 supportUs: '支持我们',
                 appName: '请出题',
+                tutorTitle: '知识导学',
+                tutorDesc: 'AI 构建知识图谱，按依赖顺序逐步学习每个概念',
                 welcomeTitle: '备考，如此简单',
                 welcomeDesc: '上传课件和笔记，自动生成习题集，期末备考更精准。',
                 generateTitle: '智能出题',
@@ -1260,6 +1349,8 @@
                 donateBannerTextMobile: '歡迎捐款支持我們',
                 supportUs: '支持我們',
                 appName: '請出題',
+                tutorTitle: '知識導學',
+                tutorDesc: 'AI 構建知識圖譜，按依賴順序逐步學習每個概念',
                 welcomeTitle: '溫書，Such Easy',
                 welcomeDesc: '上載課程文檔與筆記，AI自動生成練習題，final溫習更精準。',
                 generateTitle: '立即出題',
@@ -1306,6 +1397,8 @@
                 "donateBannerTextMobile": "Consider donating to support us.",
                 "supportUs": "Support Us",
                 "appName": "GPA4.0",
+                "tutorTitle": "Knowledge Tutor",
+                "tutorDesc": "AI builds a knowledge graph for step-by-step concept learning",
                 "welcomeTitle": "Boost Your GPA！",
                 "welcomeDesc": "Upload your slides and notes, get AI-generated practice questions instantly. Study smarter, not harder.",
                 "generateTitle": "Generate Questions",
@@ -1352,6 +1445,8 @@
                 "donateBannerTextMobile": "기부로 후원해 주세요.",
                 "supportUs": "후원하기",
                 "appName": "GPA4.0",
+                "tutorTitle": "지식 튜터",
+                "tutorDesc": "AI가 지식 그래프를 구축하여 개념을 단계별로 학습합니다",
                 "welcomeTitle": "스마트 학습 도우미",
                 "welcomeDesc": "강의 자료와 노트를 업로드하면 AI가 연습 문제를 자동으로 만들어줍니다. 이제 smarter하게 공부하세요.",
                 "generateTitle": "문제 생성",

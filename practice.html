@@ -25,6 +25,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/asciimath2tex@1/dist/asciimath2tex.umd.js"></script>
     <script src="fileViewer.js"></script>
     
     <style>
@@ -326,7 +330,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
+        <div id="practiceCard" class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
             <div id="questionContent" class="mb-8">
                 <h3 class="text-xl font-medium text-slate-900 mb-4 leading-relaxed" id="questionText" data-i18n="loadingQuestion">题目内容加载中...</h3>
                 <button onclick="openSourceViewer()" id="viewSourceBtn" class="mb-6 px-4 py-2 text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center">
@@ -443,6 +447,32 @@
                 if (!file.bankId) {
                     file.bankId = null;
                 }
+            });
+        });
+
+        // 版本7：新增知识图谱相关表（知识导学功能）
+        db.version(7).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        });
+
+        // 版本8：sourceFiles 增加 graphId 索引，支持 tutor 溯源
+        db.version(8).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, graphId, data, createdAt, [graphId+name]',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        }).upgrade(tx => {
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (!file.graphId) file.graphId = null;
             });
         });
 
@@ -668,6 +698,50 @@
         
         async function saveProgressAndExit() { await saveProgress(); window.location.href = 'manage.html'; }
 
+        let asciiMathParser = null;
+        function getAsciiMathParser() {
+            if (!asciiMathParser && typeof AsciiMathParser !== 'undefined') {
+                asciiMathParser = new AsciiMathParser();
+            }
+            return asciiMathParser;
+        }
+
+        function wrapBareLatex(text) {
+            if (!text || text.includes('$')) return text;
+            // 如果包含标准 LaTeX 命令（如 \frac, \sum 等）且没有被 $ 包裹，直接加 $...$
+            if (/\\[a-zA-Z]+/.test(text)) {
+                return `$${text}$`;
+            }
+            // 如果包含明显的 ASCII math 特征符号（下标、上标、求和、积分、希腊字母等），先用 asciimath2tex 转换
+            if (/[Σ∫∑∏∞α-ωΑ-Ω_^\/√]/.test(text) && getAsciiMathParser()) {
+                try {
+                    const tex = getAsciiMathParser().parse(text);
+                    return `$${tex}$`;
+                } catch (e) {
+                    return text;
+                }
+            }
+            return text;
+        }
+
+        function safeMarkedParse(text) {
+            if (!text) return '';
+            text = wrapBareLatex(text);
+            const mathBlocks = [];
+            function placeholder(match) {
+                mathBlocks.push(match);
+                return `<span data-math-ph="${mathBlocks.length - 1}"></span>`;
+            }
+            let protectedText = text.replace(/\$\$[\s\S]*?\$\$/g, placeholder);
+            protectedText = protectedText.replace(/\$[\s\S]*?\$/g, placeholder);
+            let html = marked.parse(protectedText);
+            mathBlocks.forEach((math, i) => {
+                const ph = `<span data-math-ph="${i}"></span>`;
+                html = html.split(ph).join(math);
+            });
+            return html;
+        }
+
         async function renderQuestion() {
             const q = practiceState.questions[practiceState.currentIndex];
             const answered = practiceState.answers[practiceState.currentIndex];
@@ -695,7 +769,7 @@
             const correct = practiceState.answers.filter((a, i) => a && a.selected === practiceState.questions[i].correctAnswer).length;
             const accuracy = Math.round((correct / totalQuestions) * 100);
             document.getElementById('accuracy').innerHTML = `${t('accuracy')}: ${accuracy}%`;
-            document.getElementById('questionText').innerHTML = `${practiceState.currentIndex + 1}. ${marked.parse(q.question || '')}`;
+            document.getElementById('questionText').innerHTML = `${practiceState.currentIndex + 1}. ${safeMarkedParse(q.question || '')}`;
             
             // 控制"查看原文"按钮的显示
             const viewSourceBtn = document.getElementById('viewSourceBtn');
@@ -732,7 +806,7 @@
                     else if (key === q.correctAnswer && answered.selected !== q.correctAnswer) btn.classList.add('option-correct');
                 }
                 
-                const markedValue = marked.parse(value || '');
+                const markedValue = safeMarkedParse(value || '');
                 btn.innerHTML = `<div class="w-8 h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && key === answered.selected ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${markedValue}</span>${answered && key === q.correctAnswer ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && key === answered.selected && key !== q.correctAnswer ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
                 if (!answered) btn.dataset.option = key;
                 optionsContainer.appendChild(btn);
@@ -741,7 +815,7 @@
             const explanationSection = document.getElementById('explanationSection');
             if (answered) {
                 explanationSection.classList.remove('hidden');
-                document.getElementById('explanationText').innerHTML = marked.parse(q.explanation || t('noExplanation'));
+                document.getElementById('explanationText').innerHTML = safeMarkedParse(q.explanation || t('noExplanation'));
                 const sourceEl = document.getElementById('sourceText');
                 if (q.source) { sourceEl.textContent = q.source; }
                 else { sourceEl.textContent = t('unknownSource'); }
@@ -771,6 +845,20 @@
                 submitBtn.disabled = !document.querySelector('#optionsList button[data-option].option-selected'); 
                 submitBtn.classList.remove('opacity-50'); 
                 submitBtn.textContent = t('submitAnswer'); 
+            }
+
+            if (window.renderMathInElement) {
+                const practiceCard = document.getElementById('practiceCard');
+                if (practiceCard) {
+                    renderMathInElement(practiceCard, {
+                        delimiters: [
+                            {left: '$$', right: '$$', display: true},
+                            {left: '$', right: '$', display: false}
+                        ],
+                        throwOnError: false,
+                        strict: false
+                    });
+                }
             }
         }
 

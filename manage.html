@@ -336,7 +336,33 @@
             });
         });
 
-        let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
+        // 版本7：新增知识图谱相关表（知识导学功能）
+        db.version(7).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, data, createdAt',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        });
+
+        // 版本8：sourceFiles 增加 graphId 索引，支持 tutor 溯源
+        db.version(8).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, graphId, data, createdAt, [graphId+name]',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        }).upgrade(tx => {
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (!file.graphId) file.graphId = null;
+            });
+        });
+
+        let currentLang = localStorage.getItem('language' || detectBrowserLanguage();
         let resetBankId = null;
 
         const i18n = {
