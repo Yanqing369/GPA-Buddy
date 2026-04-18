@@ -6,6 +6,7 @@ const Visitor = {
     id: null,
     fpType: null, // 'pro' | 'oss' | 'temp'
     credits: 0,
+    userBalance: null, // 登录后的 user balance（null 表示未登录）
     initialized: false,
 
     // 配置：请替换为你的 FingerprintJS Pro Public API Key
@@ -19,6 +20,9 @@ const Visitor = {
 
     async init() {
         if (this.initialized) return;
+        
+        // 检查 URL 中的邀请码
+        this._checkInviteParam();
 
         // 1. 尝试读取缓存（7天）
         const cached = this._getCache();
@@ -184,7 +188,12 @@ const Visitor = {
             }
             if (res.ok) {
                 const data = await res.json();
-                this.credits = data.credits ?? 0;
+                if (data.requiresLogin) {
+                    // 已绑定用户，未登录状态
+                    this.credits = null;
+                } else {
+                    this.credits = data.credits ?? 0;
+                }
                 this._updateUI();
             }
         } catch (e) {
@@ -202,8 +211,41 @@ const Visitor = {
 
     _updateUI() {
         document.querySelectorAll('[data-visitor-credits]').forEach(el => {
-            el.textContent = this.credits;
+            if (this.userBalance !== null) {
+                el.textContent = this.userBalance;
+            } else if (this.credits === null) {
+                el.textContent = '登录查看';
+            } else {
+                el.textContent = this.credits;
+            }
         });
+    },
+
+    _checkInviteParam() {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const inviter = params.get('inviter');
+        if (inviter) {
+            sessionStorage.setItem('pending_inviter', inviter);
+        }
+    },
+
+    getInviteCode() {
+        return sessionStorage.getItem('pending_inviter') || '';
+    },
+
+    clearInviteCode() {
+        sessionStorage.removeItem('pending_inviter');
+    },
+
+    setUserBalance(balance) {
+        this.userBalance = balance;
+        this._updateUI();
+    },
+
+    clearUserBalance() {
+        this.userBalance = null;
+        this._updateUI();
     },
 
     _tryAddCreditFromUrl() {

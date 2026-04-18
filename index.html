@@ -835,9 +835,15 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium relative group">
                     <span>💎</span>
                     <span data-visitor-credits>--</span>
+                    <button onclick="showCreditInfo()" class="ml-1 text-amber-500 hover:text-amber-800 focus:outline-none" title="如何获取更多积分">ℹ️</button>
+                    <div id="creditInfoPopup" class="hidden absolute top-full right-0 mt-2 w-64 p-4 bg-white rounded-xl shadow-lg border border-amber-100 text-xs text-slate-600 z-50">
+                        <p class="font-medium text-slate-800 mb-1">💡 积分说明</p>
+                        <p class="mb-1">注册即可将访客积分转入账户，并获得 <b>+20</b> 注册奖励！</p>
+                        <p>邀请好友注册，双方各得 <b>+20</b> 积分。</p>
+                    </div>
                 </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
@@ -892,6 +898,12 @@
                                 </svg>
                                 <span data-i18n="myBanks">我的题库</span>
                             </a>
+                            <button onclick="copyInviteLink()" class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                                </svg>
+                                <span>复制邀请链接</span>
+                            </button>
                             <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -1191,6 +1203,38 @@
             }
         }
         
+        // 显示积分说明弹窗
+        function showCreditInfo() {
+            const popup = document.getElementById('creditInfoPopup');
+            if (popup) {
+                popup.classList.toggle('hidden');
+                // 点击外部关闭
+                setTimeout(() => {
+                    const closeHandler = (e) => {
+                        if (!popup.contains(e.target) && !e.target.closest('[onclick="showCreditInfo()"]')) {
+                            popup.classList.add('hidden');
+                            document.removeEventListener('click', closeHandler);
+                        }
+                    };
+                    document.addEventListener('click', closeHandler);
+                }, 0);
+            }
+        }
+
+        // 复制邀请链接
+        function copyInviteLink() {
+            if (!currentUser || !currentUser.invitationCode) {
+                showToast('请先登录获取邀请链接', 'error');
+                return;
+            }
+            const link = `https://www.gpa-buddy.com/?inviter=${currentUser.invitationCode}`;
+            navigator.clipboard.writeText(link).then(() => {
+                showToast('邀请链接已复制到剪贴板！', 'success');
+            }).catch(() => {
+                showToast('复制失败，请手动复制', 'error');
+            });
+        }
+
         // 更新用户UI
         function updateUserUI() {
             const loginBtn = document.getElementById('loginBtn');
@@ -1204,7 +1248,13 @@
                 document.getElementById('userAvatar').src = currentUser.avatar || '';
                 document.getElementById('userEmail').textContent = currentUser.email;
                 document.getElementById('accountType').textContent = currentUser.accountType === 'free' ? 'Free' : currentUser.accountType;
-                document.getElementById('userBalance').textContent = i18n[currentLang].unlimited;
+                const bal = currentUser.balance;
+                if (bal) {
+                    const total = (bal.amount || 0) + (bal.freeQuotaLeft || 0);
+                    document.getElementById('userBalance').textContent = `💎 ${total}`;
+                } else {
+                    document.getElementById('userBalance').textContent = i18n[currentLang].unlimited;
+                }
             } else {
                 // 未登录
                 loginBtn.classList.remove('hidden');
@@ -1220,8 +1270,14 @@
         
         // 登录按钮点击
         function handleLogin() {
-            // 跳转到Google登录
-            window.location.href = `${API_BASE}/auth/google`;
+            // 跳转到Google登录，带上 visitorId 和 invite code
+            const visitorId = (typeof Visitor !== 'undefined') ? Visitor.getId() : '';
+            const inviteCode = (typeof Visitor !== 'undefined') ? Visitor.getInviteCode() : '';
+            const params = new URLSearchParams();
+            if (visitorId) params.set('visitorId', visitorId);
+            if (inviteCode) params.set('inviter', inviteCode);
+            const query = params.toString();
+            window.location.href = `${API_BASE}/auth/google${query ? '?' + query : ''}`;
         }
         
         // 退出登录
@@ -1229,6 +1285,7 @@
             authToken = null;
             currentUser = null;
             localStorage.removeItem('auth_token');
+            if (typeof Visitor !== 'undefined') Visitor.clearUserBalance();
             updateUserUI();
             toggleUserDropdown();
             showToast(t('logoutSuccess'), 'info');
