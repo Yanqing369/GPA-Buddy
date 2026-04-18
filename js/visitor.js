@@ -9,8 +9,8 @@ const Visitor = {
     initialized: false,
 
     // 配置：请替换为你的 FingerprintJS Pro Public API Key
-    PRO_API_KEY: 'YOUR_PRO_API_KEY',
-    PRO_REGION: 'ap', // 'ap' | 'us' | 'eu'
+    PRO_API_KEY: '9BbMO16WgqT8N6L9FGHw',
+    PRO_REGION: 'us', // 'ap' | 'us' | 'eu'
 
     getApiBase() {
         if (typeof API_BASE !== 'undefined') return API_BASE;
@@ -25,6 +25,8 @@ const Visitor = {
         if (cached && cached.visitorId) {
             this.id = cached.visitorId;
             this.fpType = cached.fpType || 'oss';
+            const source = this.fpType === 'pro' ? 'FingerprintPro' : this.fpType === 'oss' ? 'FingerprintJS OSS' : 'random temporary';
+            console.log(`[Visitor] Using cached ${source}, visitor id=${this.id}`);
             this.initialized = true;
             await this._syncBackend();
             this._tryAddCreditFromUrl();
@@ -58,6 +60,15 @@ const Visitor = {
 
         this.id = result.visitorId;
         this.fpType = result.fpType;
+
+        if (this.fpType === 'pro') {
+            console.log(`[Visitor] Using FingerprintPro, visitor id=${this.id}`);
+        } else if (this.fpType === 'oss') {
+            console.log(`[Visitor] Using FingerprintJS OSS, visitor id=${this.id}`);
+        } else if (this.fpType === 'temp') {
+            console.log(`[Visitor] Using random temporary id=${this.id}`);
+        }
+
         this._setCache(result.visitorId, result.fpType);
         this.initialized = true;
 
@@ -88,31 +99,19 @@ const Visitor = {
             return null;
         }
 
-        // 如果 window.FingerprintJS 已存在且是 Pro 加载的，直接使用
-        let FingerprintJS = window.FingerprintJS;
-        if (!FingerprintJS) {
-            try {
-                await this._loadScript(`https://fpcdn.io/v3/${this.PRO_API_KEY}`);
-                FingerprintJS = window.FingerprintJS;
-            } catch (e) {
-                console.warn('[Visitor] Failed to load Pro script:', e);
-            }
+        try {
+            const Fingerprint = await import(`https://fpjscdn.net/v4/${this.PRO_API_KEY}`);
+            const fp = await Fingerprint.start();
+            const result = await fp.get();
+            return {
+                visitorId: result.visitor_id,
+                fpType: 'pro',
+                requestId: result.event_id || null
+            };
+        } catch (e) {
+            console.warn('[Visitor] Pro fingerprint failed:', e);
+            return null;
         }
-        if (!FingerprintJS) return null;
-
-        const fp = await FingerprintJS.load({
-            apiKey: this.PRO_API_KEY,
-            region: this.PRO_REGION,
-            cache: {
-                timeToLive: 60 * 60 * 24 * 3 // 3天
-            }
-        });
-        const result = await fp.get();
-        return {
-            visitorId: result.visitorId,
-            fpType: 'pro',
-            requestId: result.requestId || null
-        };
     },
 
     async _getOssFingerprint() {
