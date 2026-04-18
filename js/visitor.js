@@ -33,6 +33,7 @@ const Visitor = {
             console.log(`[Visitor] Using cached ${source}, visitor id=${this.id}`);
             this.initialized = true;
             await this._syncBackend();
+            await this._checkAuthStatus();
             this._tryAddCreditFromUrl();
             return;
         }
@@ -77,6 +78,7 @@ const Visitor = {
         this.initialized = true;
 
         await this._syncBackend();
+        await this._checkAuthStatus();
         this._tryAddCreditFromUrl();
     },
 
@@ -198,6 +200,27 @@ const Visitor = {
             }
         } catch (e) {
             console.warn('[Visitor] Backend sync failed:', e);
+        }
+    },
+
+    async _checkAuthStatus() {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+        try {
+            const res = await fetch(`${this.getApiBase()}/auth/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const user = await res.json();
+                const bal = user.balance;
+                const total = bal ? (bal.amount || 0) + (bal.freeQuotaLeft || 0) : 0;
+                this.setUserBalance(total);
+            } else if (res.status === 401 || res.status === 403) {
+                localStorage.removeItem('auth_token');
+                this.clearUserBalance();
+            }
+        } catch (e) {
+            console.warn('[Visitor] Auth check failed:', e);
         }
     },
 

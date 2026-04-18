@@ -1286,9 +1286,11 @@ Extract as many valid questions as possible from this section. Assign ids starti
                 document.getElementById('orgProgressBar').style.width = '30%';
                 
                 // 调用统一的 /organize 接口
+                const token = localStorage.getItem('auth_token');
                 const response = await fetch(`${API_BASE}/organize`, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
                 });
                 
                 if (!response.ok) {

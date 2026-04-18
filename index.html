@@ -835,15 +835,10 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium relative group">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
                     <span>💎</span>
                     <span data-visitor-credits>--</span>
-                    <button onclick="showCreditInfo()" class="ml-1 text-amber-500 hover:text-amber-800 focus:outline-none" data-i18n="creditInfoTooltip" title="如何获取更多积分">ℹ️</button>
-                    <div id="creditInfoPopup" class="hidden absolute top-full right-0 mt-2 w-64 p-4 bg-white rounded-xl shadow-lg border border-amber-100 text-xs text-slate-600 z-50">
-                        <p class="font-medium text-slate-800 mb-1" data-i18n="creditInfoTitle">💡 积分说明</p>
-                        <p class="mb-1" data-i18n="creditInfoRegister">注册即可将访客积分转入账户，并获得 <b>+20</b> 注册奖励！</p>
-                        <p data-i18n="creditInfoInvite">邀请好友注册，双方各得 <b>+20</b> 积分。</p>
-                    </div>
+                    <button onclick="showCreditInfo()" class="ml-1 text-amber-500 hover:text-amber-800 focus:outline-none" title="ℹ️">ℹ️</button>
                 </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
@@ -1078,6 +1073,38 @@
         </div>
     </footer>
 
+    <!-- 积分说明模态框 - 液态玻璃 -->
+    <div id="creditModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-md">
+        <div class="glass-card squircle w-full max-w-md p-6 modal-enter" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-900" data-i18n="creditModalTitle">如何获得更多积分</h3>
+                <button onclick="hideCreditModal()" class="w-8 h-8 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-amber-100/50" style="background: linear-gradient(135deg, rgba(255,251,235,0.8) 0%, rgba(254,250,240,0.5) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-100 text-amber-600 text-lg">🎁</div>
+                        <p class="text-sm text-slate-700" data-i18n="creditItem1">登录可以获得20个额外积分</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-emerald-100/50" style="background: linear-gradient(135deg, rgba(236,253,245,0.8) 0%, rgba(240,253,250,0.5) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600 text-lg">🤝</div>
+                        <p class="text-sm text-slate-700" data-i18n="creditItem2">邀请新用户，新老用户各获得20积分，无上限</p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-blue-100/50" style="background: linear-gradient(135deg, rgba(239,246,255,0.8) 0%, rgba(238,242,255,0.5) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600 text-lg">💳</div>
+                        <p class="text-sm text-slate-700" data-i18n="creditItem3">内测期间没有充值功能，需要的朋友敬请期待</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 设置模态框 - 液态玻璃 -->
     <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-md">
         <div class="glass-card squircle w-full max-w-md p-6 modal-enter" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);">
@@ -1186,6 +1213,9 @@
                     currentUser = await res.json();
                     console.log('User loaded:', currentUser);
                     updateUserUI();
+                    const bal = currentUser.balance;
+                    const total = bal ? (bal.amount || 0) + (bal.freeQuotaLeft || 0) : 0;
+                    if (typeof Visitor !== 'undefined') Visitor.setUserBalance(total);
                     showToast(`${t('loginSuccess')}，${currentUser.name || currentUser.email}!`, 'success');
                 } else {
                     const errorText = await res.text();
@@ -1203,22 +1233,13 @@
             }
         }
         
-        // 显示积分说明弹窗
+        // 显示积分说明模态框
         function showCreditInfo() {
-            const popup = document.getElementById('creditInfoPopup');
-            if (popup) {
-                popup.classList.toggle('hidden');
-                // 点击外部关闭
-                setTimeout(() => {
-                    const closeHandler = (e) => {
-                        if (!popup.contains(e.target) && !e.target.closest('[onclick="showCreditInfo()"]')) {
-                            popup.classList.add('hidden');
-                            document.removeEventListener('click', closeHandler);
-                        }
-                    };
-                    document.addEventListener('click', closeHandler);
-                }, 0);
-            }
+            document.getElementById('creditModal').classList.remove('hidden');
+        }
+
+        function hideCreditModal() {
+            document.getElementById('creditModal').classList.add('hidden');
         }
 
         // 复制邀请链接
@@ -1398,10 +1419,10 @@
                 inviteLinkCopied: '邀请链接已复制到剪贴板！',
                 inviteLinkCopyFailed: '复制失败，请手动复制',
                 loginToGetInviteLink: '请先登录获取邀请链接',
-                creditInfoTitle: '💡 积分说明',
-                creditInfoRegister: '注册即可将访客积分转入账户，并获得 +20 注册奖励！',
-                creditInfoInvite: '邀请好友注册，双方各得 +20 积分。',
-                creditInfoTooltip: '如何获取更多积分',
+                creditModalTitle: '如何获得更多积分',
+                creditItem1: '登录可以获得20个额外积分',
+                creditItem2: '邀请新用户，新老用户各获得20积分，无上限',
+                creditItem3: '内测期间没有充值功能，需要的朋友敬请期待',
                 bubbleMessages: [
                     '今天也要好好复习呀~ 尽力就好！✨',
                     '学累了就休息一下，等会儿继续📚',
@@ -1455,10 +1476,10 @@
                 inviteLinkCopied: '邀請連結已複製到剪貼簿！',
                 inviteLinkCopyFailed: '複製失敗，請手動複製',
                 loginToGetInviteLink: '請先登入獲取邀請連結',
-                creditInfoTitle: '💡 積分說明',
-                creditInfoRegister: '登入即可將訪客積分轉入帳戶，並獲得 +20 註冊獎勵！',
-                creditInfoInvite: '邀請好友註冊，雙方各得 +20 積分。',
-                creditInfoTooltip: '如何獲取更多積分',
+                creditModalTitle: '如何獲得更多積分',
+                creditItem1: '登入可以獲得20個額外積分',
+                creditItem2: '邀請新用戶，新老用戶各獲得20積分，無上限',
+                creditItem3: '內測期間沒有充值功能，需要的朋友敬請期待',
                 bubbleMessages: [
                     '今日都要好好用功呀~ 盡力就好！✨',
                     '做練習累了就休息一陣，等陣再繼續📚',
@@ -1512,10 +1533,10 @@
                 "inviteLinkCopied": "Invite link copied to clipboard!",
                 "inviteLinkCopyFailed": "Copy failed, please copy manually",
                 "loginToGetInviteLink": "Please login to get invite link",
-                "creditInfoTitle": "💡 Credits Info",
-                "creditInfoRegister": "Login to transfer visitor credits to your account and get +20 signup bonus!",
-                "creditInfoInvite": "Invite friends to register, both get +20 credits.",
-                "creditInfoTooltip": "How to get more credits",
+                "creditModalTitle": "How to Get More Credits",
+                "creditItem1": "Login to get 20 extra credits",
+                "creditItem2": "Invite new users, both get 20 credits, no limit",
+                "creditItem3": "No recharge available during beta, stay tuned",
                 "bubbleMessages": [
                     "Keep up the good work today~✨",
                     "Take a break if you're tired📚",
@@ -1569,10 +1590,10 @@
                 "inviteLinkCopied": "초대 링크가 클립보드에 복사되었습니다!",
                 "inviteLinkCopyFailed": "복사 실패, 수동으로 복사해 주세요",
                 "loginToGetInviteLink": "초대 링크를 받으려면 로그인하세요",
-                "creditInfoTitle": "💡 포인트 안내",
-                "creditInfoRegister": "로그인하면 방문자 포인트를 계정으로 이전하고 +20 가입 복너스를 받습니다!",
-                "creditInfoInvite": "친구를 초대하여 가입하면双方各得 +20 포인트입니다.",
-                "creditInfoTooltip": "더 많은 포인트 받는 방법",
+                "creditModalTitle": "더 많은 포인트 받는 방법",
+                "creditItem1": "로그인하면 20포인트 추가 획득",
+                "creditItem2": "새 사용자 초대 시双方各得 20포인트, 제한 없음",
+                "creditItem3": "베타 기간 동안 충전 기능 없음, 기대해 주세요",
                 "bubbleMessages": [
                     "오늘도 열심히 해봐요~ 최선을 다해요! ✨",
                     "피곤한 순간 쉬었다 가요 ㅎㅎ 📚",
@@ -1775,6 +1796,10 @@
 
         document.getElementById('settingsModal')?.addEventListener('click', function(e) {
             if (e.target === this) hideSettings();
+        });
+
+        document.getElementById('creditModal')?.addEventListener('click', function(e) {
+            if (e.target === this) hideCreditModal();
         });
 
         // 防止浏览器恢复滚动位置，强制从顶部开始

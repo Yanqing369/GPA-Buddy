@@ -99,7 +99,12 @@ const TutorApp = {
             page: '页',
             slide: '幻灯片',
             section: '章节',
-            sheet: '工作表'
+            sheet: '工作表',
+            errVisitorBound: '该设备已绑定其他账号，请登录后使用',
+            errInsufficientCredits: '积分不足，请登录或邀请好友获取更多积分',
+            errVisitorBlocked: '访客账号已被限制',
+            errVisitorNotFound: '访客信息不存在，请刷新页面',
+            errQuotaExceeded: '额度已用完，请明日再来'
         },
         'zh-TW': {
             appName: '知識導學',
@@ -160,7 +165,12 @@ const TutorApp = {
             page: '頁',
             slide: '投影片',
             section: '章節',
-            sheet: '工作表'
+            sheet: '工作表',
+            errVisitorBound: '該設備已綁定其他帳號，請登入後使用',
+            errInsufficientCredits: '積分不足，請登入或邀請好友獲取更多積分',
+            errVisitorBlocked: '訪客帳號已被限制',
+            errVisitorNotFound: '訪客資訊不存在，請重新整理頁面',
+            errQuotaExceeded: '額度已用完，請明日再來'
         },
         en: {
             appName: 'Knowledge Tutor',
@@ -221,7 +231,12 @@ const TutorApp = {
             page: 'Page',
             slide: 'Slide',
             section: 'Section',
-            sheet: 'Sheet'
+            sheet: 'Sheet',
+            errVisitorBound: 'This device is bound to another account, please login',
+            errInsufficientCredits: 'Insufficient credits. Please login or invite friends to get more.',
+            errVisitorBlocked: 'Visitor account has been restricted.',
+            errVisitorNotFound: 'Visitor info not found, please refresh the page.',
+            errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.'
         },
         ko: {
             appName: '지식 가이드',
@@ -282,7 +297,12 @@ const TutorApp = {
             page: '페이지',
             slide: '슬라이드',
             section: '섹션',
-            sheet: '시트'
+            sheet: '시트',
+            errVisitorBound: '해당 기기가 다른 계정에 연결되어 있습니다. 로그인 후 사용하세요.',
+            errInsufficientCredits: '포인트가 부족합니다. 로그인하거나 친구를 초대하여 더 많은 포인트를 받으세요.',
+            errVisitorBlocked: '방문자 계정이 제한되었습니다.',
+            errVisitorNotFound: '방문자 정보가 없습니다. 페이지를 새로고침하세요.',
+            errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.'
         }
     },
 
@@ -295,6 +315,17 @@ const TutorApp = {
             });
         }
         return text;
+    },
+
+    translateBackendError(msg) {
+        if (!msg || typeof msg !== 'string') return msg;
+        if (msg.includes('Visitor bound to another account')) return this.t('errVisitorBound');
+        if (msg.includes('Insufficient credits')) return this.t('errInsufficientCredits');
+        if (msg.includes('Visitor blocked')) return this.t('errVisitorBlocked');
+        if (msg.includes('Visitor not found')) return this.t('errVisitorNotFound');
+        if (msg.includes('Quota exceeded')) return this.t('errQuotaExceeded');
+        if (msg.includes('Balance record not found')) return this.t('errQuotaExceeded');
+        return msg;
     },
 
     init() {
@@ -600,7 +631,7 @@ const TutorApp = {
                 this.isGenerating = false;
                 disableTutorRefreshProtection();
                 this.hideProgressModal();
-                this.showToast(msg || this.t('networkError'), 'error');
+                this.showToast(this.translateBackendError(msg) || this.t('networkError'), 'error');
             },
             onProgress: (current, total) => {
                 if (total && !nodeCount) nodeCount = total;

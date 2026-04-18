@@ -155,7 +155,12 @@ const i18n = {
         donateDialogLink: '前往捐款页面',
         converting: '转换中...',
         convertedToPDF: '已转换为PDF',
-        loadingFont: '加载字体...'
+        loadingFont: '加载字体...',
+        errVisitorBound: '该设备已绑定其他账号，请登录后使用',
+        errInsufficientCredits: '积分不足，请登录或邀请好友获取更多积分',
+        errVisitorBlocked: '访客账号已被限制',
+        errVisitorNotFound: '访客信息不存在，请刷新页面',
+        errQuotaExceeded: '额度已用完，请明日再来'
     },
     'zh-TW': {
         appName: '請出題',
@@ -222,7 +227,12 @@ const i18n = {
         donateDialogLink: '前往捐款頁面',
         converting: '轉換中...',
         convertedToPDF: '已轉換為PDF',
-        loadingFont: '加載字體...'
+        loadingFont: '加載字體...',
+        errVisitorBound: '該設備已綁定其他帳號，請登入後使用',
+        errInsufficientCredits: '積分不足，請登入或邀請好友獲取更多積分',
+        errVisitorBlocked: '訪客帳號已被限制',
+        errVisitorNotFound: '訪客資訊不存在，請重新整理頁面',
+        errQuotaExceeded: '額度已用完，請明日再來'
     },
     en: {
         appName: 'GPA4.0',
@@ -289,7 +299,12 @@ const i18n = {
         donateDialogLink: 'Go to Donation Page',
         converting: 'Converting...',
         convertedToPDF: 'Converted to PDF',
-        loadingFont: 'Loading font...'
+        loadingFont: 'Loading font...',
+        errVisitorBound: 'This device is bound to another account, please login',
+        errInsufficientCredits: 'Insufficient credits. Please login or invite friends to get more.',
+        errVisitorBlocked: 'Visitor account has been restricted.',
+        errVisitorNotFound: 'Visitor info not found, please refresh the page.',
+        errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.'
     },
     ko: {
         appName: 'GPA4.0',
@@ -356,7 +371,12 @@ const i18n = {
         donateDialogLink: '기부 페이지로 이동',
         converting: '변환 중...',
         convertedToPDF: 'PDF로 변환됨',
-        loadingFont: '폰트 로드 중...'
+        loadingFont: '폰트 로드 중...',
+        errVisitorBound: '해당 기기가 다른 계정에 연결되어 있습니다. 로그인 후 사용하세요.',
+        errInsufficientCredits: '포인트가 부족합니다. 로그인하거나 친구를 초대하여 더 많은 포인트를 받으세요.',
+        errVisitorBlocked: '방문자 계정이 제한되었습니다.',
+        errVisitorNotFound: '방문자 정보가 없습니다. 페이지를 새로고침하세요.',
+        errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.'
     }
 };
 
@@ -369,6 +389,17 @@ function t(key, ...args) {
         });
     }
     return text;
+}
+
+function translateBackendError(msg) {
+    if (!msg || typeof msg !== 'string') return msg;
+    if (msg.includes('Visitor bound to another account')) return t('errVisitorBound');
+    if (msg.includes('Insufficient credits')) return t('errInsufficientCredits');
+    if (msg.includes('Visitor blocked')) return t('errVisitorBlocked');
+    if (msg.includes('Visitor not found')) return t('errVisitorNotFound');
+    if (msg.includes('Quota exceeded')) return t('errQuotaExceeded');
+    if (msg.includes('Balance record not found')) return t('errQuotaExceeded');
+    return msg;
 }
 
 function detectBrowserLanguage() {
@@ -516,15 +547,17 @@ class StreamingQuestionGenerator {
             const controller = new AbortController();
             this.abortControllers.push(controller);
 
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`${API_BASE}/pdf_generate`, {
                 method: 'POST',
                 body: formData,
-                signal: controller.signal
+                signal: controller.signal,
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error || t('uploadError'));
+                throw new Error(translateBackendError(error.error) || t('uploadError'));
             }
 
             // 使用 SSE 读取响应
@@ -967,7 +1000,7 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         if (googleError) {
             showErrorModal(googleError.code, googleError.status, googleError.message);
         } else {
-            showToast(error.message, 'error');
+            showToast(translateBackendError(error.message), 'error');
         }
     }
 
@@ -1390,7 +1423,7 @@ async function startGeneration() {
         
     } catch (err) {
         console.error('Generation error:', err);
-        showToast(err.message, 'error');
+        showToast(translateBackendError(err.message), 'error');
         const modal = document.getElementById('genProgress');
         if (modal) modal.classList.add('hidden');
         disableRefreshProtection();

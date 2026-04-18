@@ -11,10 +11,12 @@ const TutorSSE = {
 
         try {
             const controller = new AbortController();
+            const token = localStorage.getItem('auth_token');
             const response = await fetch(`${API_BASE}/api/tutor/generate`, {
                 method: 'POST',
                 body: formData,
-                signal: controller.signal
+                signal: controller.signal,
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
             });
 
             if (!response.ok) {
