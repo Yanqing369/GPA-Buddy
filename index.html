@@ -838,11 +838,11 @@
                 <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium relative group">
                     <span>💎</span>
                     <span data-visitor-credits>--</span>
-                    <button onclick="showCreditInfo()" class="ml-1 text-amber-500 hover:text-amber-800 focus:outline-none" title="如何获取更多积分">ℹ️</button>
+                    <button onclick="showCreditInfo()" class="ml-1 text-amber-500 hover:text-amber-800 focus:outline-none" data-i18n="creditInfoTooltip" title="如何获取更多积分">ℹ️</button>
                     <div id="creditInfoPopup" class="hidden absolute top-full right-0 mt-2 w-64 p-4 bg-white rounded-xl shadow-lg border border-amber-100 text-xs text-slate-600 z-50">
-                        <p class="font-medium text-slate-800 mb-1">💡 积分说明</p>
-                        <p class="mb-1">注册即可将访客积分转入账户，并获得 <b>+20</b> 注册奖励！</p>
-                        <p>邀请好友注册，双方各得 <b>+20</b> 积分。</p>
+                        <p class="font-medium text-slate-800 mb-1" data-i18n="creditInfoTitle">💡 积分说明</p>
+                        <p class="mb-1" data-i18n="creditInfoRegister">注册即可将访客积分转入账户，并获得 <b>+20</b> 注册奖励！</p>
+                        <p data-i18n="creditInfoInvite">邀请好友注册，双方各得 <b>+20</b> 积分。</p>
                     </div>
                 </div>
                 <div class="lang-dropdown">
@@ -902,7 +902,7 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                                 </svg>
-                                <span>复制邀请链接</span>
+                                <span data-i18n="copyInviteLink">复制邀请链接</span>
                             </button>
                             <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1224,14 +1224,14 @@
         // 复制邀请链接
         function copyInviteLink() {
             if (!currentUser || !currentUser.invitationCode) {
-                showToast('请先登录获取邀请链接', 'error');
+                showToast(t('loginToGetInviteLink'), 'error');
                 return;
             }
             const link = `https://www.gpa-buddy.com/?inviter=${currentUser.invitationCode}`;
             navigator.clipboard.writeText(link).then(() => {
-                showToast('邀请链接已复制到剪贴板！', 'success');
+                showToast(t('inviteLinkCopied'), 'success');
             }).catch(() => {
-                showToast('复制失败，请手动复制', 'error');
+                showToast(t('inviteLinkCopyFailed'), 'error');
             });
         }
 
@@ -1393,6 +1393,15 @@
                 pageTitle: '请出题',
                 feedbackText: '遇到问题？联系我们',
                 toastSuccess: '操作成功',
+                creditLoginToView: '登录查看',
+                copyInviteLink: '复制邀请链接',
+                inviteLinkCopied: '邀请链接已复制到剪贴板！',
+                inviteLinkCopyFailed: '复制失败，请手动复制',
+                loginToGetInviteLink: '请先登录获取邀请链接',
+                creditInfoTitle: '💡 积分说明',
+                creditInfoRegister: '注册即可将访客积分转入账户，并获得 +20 注册奖励！',
+                creditInfoInvite: '邀请好友注册，双方各得 +20 积分。',
+                creditInfoTooltip: '如何获取更多积分',
                 bubbleMessages: [
                     '今天也要好好复习呀~ 尽力就好！✨',
                     '学累了就休息一下，等会儿继续📚',
@@ -1441,6 +1450,15 @@
                 pageTitle: '請出題',
                 feedbackText: '遇到問題？聯絡我們',
                 toastSuccess: '操作成功',
+                creditLoginToView: '登入查看',
+                copyInviteLink: '複製邀請連結',
+                inviteLinkCopied: '邀請連結已複製到剪貼簿！',
+                inviteLinkCopyFailed: '複製失敗，請手動複製',
+                loginToGetInviteLink: '請先登入獲取邀請連結',
+                creditInfoTitle: '💡 積分說明',
+                creditInfoRegister: '登入即可將訪客積分轉入帳戶，並獲得 +20 註冊獎勵！',
+                creditInfoInvite: '邀請好友註冊，雙方各得 +20 積分。',
+                creditInfoTooltip: '如何獲取更多積分',
                 bubbleMessages: [
                     '今日都要好好用功呀~ 盡力就好！✨',
                     '做練習累了就休息一陣，等陣再繼續📚',
@@ -1489,6 +1507,15 @@
                 "pageTitle": "GPA4.0",
                 "feedbackText": "Got feedback? Drop us a line",
                 "toastSuccess": "Done",
+                "creditLoginToView": "Login to view",
+                "copyInviteLink": "Copy Invite Link",
+                "inviteLinkCopied": "Invite link copied to clipboard!",
+                "inviteLinkCopyFailed": "Copy failed, please copy manually",
+                "loginToGetInviteLink": "Please login to get invite link",
+                "creditInfoTitle": "💡 Credits Info",
+                "creditInfoRegister": "Login to transfer visitor credits to your account and get +20 signup bonus!",
+                "creditInfoInvite": "Invite friends to register, both get +20 credits.",
+                "creditInfoTooltip": "How to get more credits",
                 "bubbleMessages": [
                     "Keep up the good work today~✨",
                     "Take a break if you're tired📚",
@@ -1537,6 +1564,15 @@
                 "pageTitle": "GPA4.0",
                 "feedbackText": "피드백이 있으신가요? 연락주세요",
                 "toastSuccess": "완료",
+                "creditLoginToView": "로그인 후 확인",
+                "copyInviteLink": "초대 링크 복사",
+                "inviteLinkCopied": "초대 링크가 클립보드에 복사되었습니다!",
+                "inviteLinkCopyFailed": "복사 실패, 수동으로 복사해 주세요",
+                "loginToGetInviteLink": "초대 링크를 받으려면 로그인하세요",
+                "creditInfoTitle": "💡 포인트 안내",
+                "creditInfoRegister": "로그인하면 방문자 포인트를 계정으로 이전하고 +20 가입 복너스를 받습니다!",
+                "creditInfoInvite": "친구를 초대하여 가입하면双方各得 +20 포인트입니다.",
+                "creditInfoTooltip": "더 많은 포인트 받는 방법",
                 "bubbleMessages": [
                     "오늘도 열심히 해봐요~ 최선을 다해요! ✨",
                     "피곤한 순간 쉬었다 가요 ㅎㅎ 📚",
@@ -1586,6 +1622,11 @@
             
             document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
             document.title = t('pageTitle');
+            
+            // 刷新用户相关动态文本（防止 data-i18n 覆盖余额显示）
+            updateUserUI();
+            // 刷新 visitor credits 显示（翻译"登录查看"等）
+            if (typeof Visitor !== 'undefined') Visitor._updateUI();
         }
 
         function toggleLangDropdown() {
@@ -1602,10 +1643,19 @@
         }
 
         window.onclick = function(event) {
+            // 关闭语言下拉菜单
             if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) {
                 const dropdown = document.getElementById('langDropdown');
                 if (dropdown.classList.contains('show')) {
                     dropdown.classList.remove('show');
+                }
+            }
+            // 关闭用户下拉菜单
+            const userDropdown = document.getElementById('userDropdown');
+            const userMenu = document.getElementById('userMenu');
+            if (userDropdown && !userDropdown.classList.contains('hidden')) {
+                if (!event.target.closest('#userMenu')) {
+                    userDropdown.classList.add('hidden');
                 }
             }
         }

@@ -214,7 +214,7 @@ const Visitor = {
             if (this.userBalance !== null) {
                 el.textContent = this.userBalance;
             } else if (this.credits === null) {
-                el.textContent = '登录查看';
+                el.textContent = (typeof t === 'function') ? t('creditLoginToView') : 'Login to view';
             } else {
                 el.textContent = this.credits;
             }
