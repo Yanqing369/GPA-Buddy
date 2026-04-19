@@ -14,7 +14,7 @@ const Visitor = {
     PRO_REGION: 'us', // 'ap' | 'us' | 'eu'
     // Cloudflare Proxy Integration 路径（配置完成后填入，例如 'VWmFUKL1dfIjc8gg'）
     // 留空则使用默认 CDN (fpjscdn.net)，Edge/Safari 可能被拦截
-    PRO_PROXY_PATH: '',
+    PRO_PROXY_PATH: '6Gnc7iPx4pM8O81c',
 
     getApiBase() {
         if (typeof API_BASE !== 'undefined') return API_BASE;
