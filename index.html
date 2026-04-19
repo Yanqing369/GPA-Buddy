@@ -1109,32 +1109,53 @@
                 </button>
             </div>
             <div class="space-y-3">
-                <!-- Google -->
-                <button onclick="doGoogleLogin()" class="w-full p-4 rounded-2xl transition-all spring-hover liquid-btn border border-slate-200/50 hover:border-slate-300" style="background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.5) 100%);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-slate-200">
-                            <img src="resources/google.png" alt="Google" class="w-5 h-5 object-contain">
+                <!-- 登录选项列表 -->
+                <div id="loginOptionsView">
+                    <!-- Google -->
+                    <button onclick="doGoogleLogin()" class="w-full p-4 rounded-2xl transition-all spring-hover liquid-btn border border-slate-200/50 hover:border-slate-300 mb-3" style="background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.5) 100%);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-slate-200">
+                                <img src="resources/google.png" alt="Google" class="w-5 h-5 object-contain">
+                            </div>
+                            <span class="text-sm font-medium text-slate-700" data-i18n="loginGoogle">使用 Google 登录</span>
+                            <svg class="w-4 h-4 ml-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
-                        <span class="text-sm font-medium text-slate-700" data-i18n="loginGoogle">使用 Google 登录</span>
-                        <svg class="w-4 h-4 ml-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                    </div>
-                </button>
-                <!-- WeChat -->
-                <div class="p-4 rounded-2xl border border-slate-100/50 opacity-60" style="background: linear-gradient(135deg, rgba(243,244,246,0.6) 0%, rgba(249,250,251,0.4) 100%);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 overflow-hidden">
-                            <img src="resources/wechat_logo.png" alt="WeChat" class="w-6 h-6 object-contain">
+                    </button>
+                    <!-- WeChat -->
+                    <div class="p-4 rounded-2xl border border-slate-100/50 opacity-60 mb-3" style="background: linear-gradient(135deg, rgba(243,244,246,0.6) 0%, rgba(249,250,251,0.4) 100%);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 overflow-hidden">
+                                <img src="resources/wechat_logo.png" alt="WeChat" class="w-6 h-6 object-contain">
+                            </div>
+                            <span class="text-sm text-slate-600" data-i18n="loginWechat">微信登录</span>
+                            <span class="ml-auto text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-500 whitespace-nowrap" data-i18n="loginPending">正在加紧申请资质</span>
                         </div>
-                        <span class="text-sm text-slate-600" data-i18n="loginWechat">微信登录</span>
-                        <span class="ml-auto text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-500 whitespace-nowrap" data-i18n="loginPending">正在加紧申请资质</span>
                     </div>
+                    <!-- Email -->
+                    <button onclick="showEmailLoginView()" class="w-full p-4 rounded-2xl transition-all spring-hover liquid-btn border border-blue-100/50 hover:border-blue-200" style="background: linear-gradient(135deg, rgba(239,246,255,0.6) 0%, rgba(238,242,255,0.4) 100%);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600 text-lg">✉️</div>
+                            <span class="text-sm font-medium text-slate-700" data-i18n="loginEmail">邮箱登录</span>
+                            <svg class="w-4 h-4 ml-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                    </button>
                 </div>
-                <!-- Phone -->
-                <div class="p-4 rounded-2xl border border-slate-100/50 opacity-60" style="background: linear-gradient(135deg, rgba(243,244,246,0.6) 0%, rgba(249,250,251,0.4) 100%);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600 text-lg">📱</div>
-                        <span class="text-sm text-slate-600" data-i18n="loginPhone">手机号登录</span>
-                        <span class="ml-auto text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-500 whitespace-nowrap" data-i18n="loginPending">正在加紧申请资质</span>
+
+                <!-- 邮箱登录表单（默认隐藏） -->
+                <div id="emailLoginView" class="hidden">
+                    <div class="flex items-center gap-2 mb-4">
+                        <button onclick="showLoginOptionsView()" class="w-8 h-8 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <h4 class="text-sm font-medium text-slate-700" data-i18n="loginEmail">邮箱登录</h4>
+                    </div>
+                    <div class="space-y-2">
+                        <input type="email" id="loginEmailInput" data-i18n-placeholder="emailPlaceholder" placeholder="请输入邮箱地址" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white/80 text-slate-800">
+                        <div class="flex gap-2">
+                            <input type="text" id="loginCodeInput" data-i18n-placeholder="codePlaceholder" placeholder="请输入验证码" maxlength="6" inputmode="numeric" pattern="[0-9]*" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white/80 text-slate-800">
+                            <button id="sendCodeBtn" onclick="sendEmailCode()" class="px-3 py-2 rounded-xl liquid-btn text-xs font-medium text-slate-700 whitespace-nowrap" data-i18n="sendCode">获取验证码</button>
+                        </div>
+                        <button onclick="verifyEmailCode()" class="w-full py-2.5 rounded-xl liquid-btn-emerald text-white text-sm font-semibold spring-active" data-i18n="login">登录</button>
                     </div>
                 </div>
             </div>
@@ -1336,6 +1357,18 @@
 
         function hideLoginModal() {
             document.getElementById('loginModal').classList.add('hidden');
+            // 重置为选项列表视图
+            showLoginOptionsView();
+        }
+
+        function showEmailLoginView() {
+            document.getElementById('loginOptionsView').classList.add('hidden');
+            document.getElementById('emailLoginView').classList.remove('hidden');
+        }
+
+        function showLoginOptionsView() {
+            document.getElementById('emailLoginView').classList.add('hidden');
+            document.getElementById('loginOptionsView').classList.remove('hidden');
         }
 
         function doGoogleLogin() {
@@ -1348,9 +1381,116 @@
             const query = params.toString();
             window.location.href = `${API_BASE}/auth/google${query ? '?' + query : ''}`;
         }
+
+        /* ==================== EMAIL OTP LOGIN ==================== */
+
+        let emailCountdownTimer = null;
+
+        async function sendEmailCode() {
+            const emailInput = document.getElementById('loginEmailInput');
+            const btn = document.getElementById('sendCodeBtn');
+            const email = emailInput.value.trim();
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast(t('invalidEmail'), 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE}/auth/email/send-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(t('codeSent'), 'success');
+                    startEmailCountdown(60);
+                } else {
+                    showToast(data.error || t('saveError'), 'error');
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                showToast(t('saveError'), 'error');
+                btn.disabled = false;
+            }
+        }
+
+        function startEmailCountdown(seconds) {
+            const btn = document.getElementById('sendCodeBtn');
+            let remaining = seconds;
+            btn.disabled = true;
+            btn.textContent = t('sendCodeRetry').replace('{n}', remaining);
+            if (emailCountdownTimer) clearInterval(emailCountdownTimer);
+            emailCountdownTimer = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(emailCountdownTimer);
+                    btn.disabled = false;
+                    btn.textContent = t('sendCode');
+                } else {
+                    btn.textContent = t('sendCodeRetry').replace('{n}', remaining);
+                }
+            }, 1000);
+        }
+
+        async function verifyEmailCode() {
+            const email = document.getElementById('loginEmailInput').value.trim();
+            const code = document.getElementById('loginCodeInput').value.trim();
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast(t('invalidEmail'), 'error');
+                return;
+            }
+            if (!/^\d{6}$/.test(code)) {
+                showToast(t('invalidCode'), 'error');
+                return;
+            }
+
+            const visitorId = (typeof Visitor !== 'undefined') ? Visitor.getId() : '';
+            const inviteCode = (typeof Visitor !== 'undefined') ? Visitor.getInviteCode() : '';
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/email/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, code, visitorId, inviter: inviteCode }),
+                });
+                const data = await res.json();
+                if (res.ok && data.token) {
+                    authToken = data.token;
+                    localStorage.setItem('auth_token', data.token);
+                    currentUser = data.user;
+                    updateUserUI();
+                    hideLoginModal();
+                    const bal = data.user.balance;
+                    const total = bal ? (bal.amount || 0) + (bal.freeQuotaLeft || 0) : 0;
+                    if (typeof Visitor !== 'undefined') Visitor.setUserBalance(total);
+                    showToast(`${t('loginSuccess')}，${data.user.name || data.user.email}!`, 'success');
+                    // 清空输入
+                    document.getElementById('loginEmailInput').value = '';
+                    document.getElementById('loginCodeInput').value = '';
+                    if (emailCountdownTimer) clearInterval(emailCountdownTimer);
+                    const btn = document.getElementById('sendCodeBtn');
+                    btn.disabled = false;
+                    btn.textContent = t('sendCode');
+                } else {
+                    showToast(data.error || t('saveError'), 'error');
+                }
+            } catch (err) {
+                showToast(t('saveError'), 'error');
+            }
+        }
         
         // 退出登录
         async function handleLogout() {
+            try {
+                await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
+            } catch (e) { /* ignore */ }
             authToken = null;
             currentUser = null;
             localStorage.removeItem('auth_token');
@@ -1470,8 +1610,15 @@
                 loginModalTitle: '选择登录方式',
                 loginGoogle: '使用 Google 登录',
                 loginWechat: '微信登录',
-                loginPhone: '手机号登录',
+                loginEmail: '邮箱登录',
                 loginPending: '正在加紧申请资质',
+                emailPlaceholder: '请输入邮箱地址',
+                codePlaceholder: '请输入验证码',
+                sendCode: '获取验证码',
+                sendCodeRetry: '{n}秒后重试',
+                codeSent: '验证码已发送，请查收邮件',
+                invalidEmail: '请输入有效的邮箱地址',
+                invalidCode: '验证码格式错误',
                 creditModalTitle: '如何获得更多积分',
                 creditItem1: '登录可以获得20个额外积分',
                 creditItem2: '邀请新用户，新老用户各获得20积分，无上限',
@@ -1532,8 +1679,15 @@
                 loginModalTitle: '選擇登入方式',
                 loginGoogle: '使用 Google 登入',
                 loginWechat: '微信登入',
-                loginPhone: '手機號登入',
+                loginEmail: '郵箱登入',
                 loginPending: '正在加緊申請資質',
+                emailPlaceholder: '請輸入電郵地址',
+                codePlaceholder: '請輸入驗證碼',
+                sendCode: '獲取驗證碼',
+                sendCodeRetry: '{n}秒後重試',
+                codeSent: '驗證碼已發送，請查收郵件',
+                invalidEmail: '請輸入有效的電郵地址',
+                invalidCode: '驗證碼格式錯誤',
                 creditModalTitle: '如何獲得更多積分',
                 creditItem1: '登入可以獲得20個額外積分',
                 creditItem2: '邀請新用戶，新老用戶各獲得20積分，無上限',
@@ -1594,8 +1748,15 @@
                 "loginModalTitle": "Choose Login Method",
                 "loginGoogle": "Sign in with Google",
                 "loginWechat": "WeChat Login",
-                "loginPhone": "Phone Login",
+                "loginEmail": "Email Login",
                 "loginPending": "Applying for qualification",
+                "emailPlaceholder": "Enter your email",
+                "codePlaceholder": "Enter verification code",
+                "sendCode": "Send code",
+                "sendCodeRetry": "Retry in {n}s",
+                "codeSent": "Code sent, check your email",
+                "invalidEmail": "Please enter a valid email",
+                "invalidCode": "Invalid code format",
                 "creditModalTitle": "How to Get More Credits",
                 "creditItem1": "Login to get 20 extra credits",
                 "creditItem2": "Invite new users, both get 20 credits, no limit",
@@ -1656,8 +1817,15 @@
                 "loginModalTitle": "로그인 방식 선택",
                 "loginGoogle": "Google로 로그인",
                 "loginWechat": "WeChat 로그인",
-                "loginPhone": "휰대폰 로그인",
+                "loginEmail": "이메일 로그인",
                 "loginPending": "자격 신청 중",
+                "emailPlaceholder": "이메일을 입력하세요",
+                "codePlaceholder": "인증번호를 입력하세요",
+                "sendCode": "인증번호 받기",
+                "sendCodeRetry": "{n}초 후 재시도",
+                "codeSent": "인증번호가 발송되었습니다",
+                "invalidEmail": "유효한 이메일을 입력하세요",
+                "invalidCode": "인증번호 형식이 올바르지 않습니다",
                 "creditModalTitle": "더 많은 포인트 받는 방법",
                 "creditItem1": "로그인하면 20포인트 추가 획득",
                 "creditItem2": "새 사용자 초대 시双方各得 20포인트, 제한 없음",
@@ -1698,6 +1866,13 @@
                 const key = el.getAttribute('data-i18n');
                 if (i18n[currentLang]?.[key]) {
                     el.textContent = i18n[currentLang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[currentLang]?.[key]) {
+                    el.placeholder = i18n[currentLang][key];
                 }
             });
             
