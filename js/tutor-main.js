@@ -93,6 +93,7 @@ const TutorApp = {
             modeExpert: '精研',
             customPrompt: '个性化要求',
             customPromptPlaceholder: '例如：请重点围绕第三章的内容构建图谱',
+            customPromptTooLong: '个性化要求不能超过100个字符',
             viewSource: '查看原文',
             sourceNotFound: '未找到源文件，可能已被删除',
             unknownSource: '未知来源',
@@ -159,6 +160,7 @@ const TutorApp = {
             modeExpert: '精研',
             customPrompt: '個性化要求',
             customPromptPlaceholder: '例如：請重點圍繞第三章的內容構建圖譜',
+            customPromptTooLong: '個性化要求不能超過100個字符',
             viewSource: '查看原文',
             sourceNotFound: '未找到來源檔案，可能已被刪除',
             unknownSource: '未知來源',
@@ -225,6 +227,7 @@ const TutorApp = {
             modeExpert: 'Deep Study',
             customPrompt: 'Personalized Request',
             customPromptPlaceholder: 'e.g. Please focus on Chapter 3 when building the graph',
+            customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
             viewSource: 'View Source',
             sourceNotFound: 'Source file not found, may have been deleted',
             unknownSource: 'Unknown source',
@@ -291,6 +294,7 @@ const TutorApp = {
             modeExpert: '심도연구',
             customPrompt: '개인화 요구사항',
             customPromptPlaceholder: '예: 3장 내용을 중심으로 그래프를 구성해 주세요',
+            customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
             viewSource: '원문 보기',
             sourceNotFound: '원본 파일을 찾을 수 없습니다. 삭제되었을 수 있습니다.',
             unknownSource: '출처 불명',
@@ -351,6 +355,15 @@ const TutorApp = {
                 }
             }
         });
+
+        // 自定义提示词字符计数
+        const customPromptEl = document.getElementById('customPrompt');
+        const customPromptCountEl = document.getElementById('customPromptCount');
+        if (customPromptEl && customPromptCountEl) {
+            customPromptEl.addEventListener('input', function() {
+                customPromptCountEl.textContent = this.value.length;
+            });
+        }
     },
 
     updateLanguage() {
@@ -559,6 +572,12 @@ const TutorApp = {
         const lang = document.getElementById('tutorLangValue')?.value || 'en';
         const mode = document.getElementById('tutorModeValue')?.value || 'expert';
         const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
+
+        // 自定义提示词长度限制（100 Unicode 字符）
+        if (customPrompt.length > 100) {
+            this.showToast(typeof t === 'function' ? t('customPromptTooLong') : 'Custom prompt too long (max 100 characters)', 'error');
+            return;
+        }
 
         const uploadFile = new File([this.processedPdfBytes], this.processedFileName || this.currentFile.name, { type: 'application/pdf' });
 

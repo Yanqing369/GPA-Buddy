@@ -106,6 +106,8 @@ const i18n = {
         langKO: '한국어',
         customPrompt: '个性化要求',
         customPromptPlaceholder: '例如：请重点围绕第三章的内容出题',
+        customPromptTooLong: '个性化要求不能超过100个字符',
+        partialGenerationNotice: '由于AI服务波动，本次仅生成{0}题，不扣除您的点数',
         startGenerate: '开始生成',
         captchaLabel: '人机验证',
         pdfPreviewNote: 'PDF中的图表都将被读取',
@@ -178,6 +180,8 @@ const i18n = {
         langKO: '한국어',
         customPrompt: '個性化要求',
         customPromptPlaceholder: '例如：請重點圍繞第三章的內容出題',
+        customPromptTooLong: '個性化要求不能超過100個字符',
+        partialGenerationNotice: '由於AI服務波動，本次僅生成{0}題，不扣除您的點數',
         startGenerate: '開始生成',
         captchaLabel: '人機驗證',
         pdfPreviewNote: 'PDF中的圖表都將被讀取',
@@ -250,6 +254,8 @@ const i18n = {
         langKO: 'Korean',
         customPrompt: 'Personalized Request',
         customPromptPlaceholder: 'e.g. Please focus on Chapter 3 when creating questions',
+        customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
+        partialGenerationNotice: 'Due to AI service fluctuations, only {0} questions were generated this time. No credits deducted.',
         startGenerate: 'Start Generation',
         captchaLabel: 'Human Verification',
         pdfPreviewNote: 'Charts and images in PDF will be read',
@@ -322,6 +328,8 @@ const i18n = {
         langKO: '한국어',
         customPrompt: '개인화 요구사항',
         customPromptPlaceholder: '예: 3장 내용을 중심으로 문제를 출제해 주세요',
+        customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
+        partialGenerationNotice: 'AI 서비스 변동으로 인해 이번에 {0}문제만 생성되었습니다. 포인트가 차감되지 않습니다.',
         startGenerate: '생성 시작',
         captchaLabel: '보안 인증',
         pdfPreviewNote: 'PDF의 차트와 이미지가 모두 읽힙니다',
@@ -622,6 +630,9 @@ class StreamingQuestionGenerator {
                                     }
                                     this.questions = data.data || [];
                                     generatedQuestions = this.questions;
+                                    this.partialResult = data.partial || false;
+                                    this.generatedCount = data.generatedCount || this.questions.length;
+                                    this.requestedCount = data.requestedCount || this.questions.length;
                                     console.log('[DEBUG] generatedQuestions set, length:', generatedQuestions.length);
                                     // 显示 token 消耗数量
                                     if (data.tokenCount) {
@@ -984,7 +995,13 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
                 }
             }
             
-            showToast(t('completed'), 'success');
+            // 题目数量不足提示（5秒）
+            if (this.partialResult) {
+                const partialMsg = t('partialGenerationNotice', this.generatedCount);
+                showToast(partialMsg, 'warning', 5000);
+            } else {
+                showToast(t('completed'), 'success');
+            }
         }, 500);
     }
 
@@ -1392,6 +1409,12 @@ async function startGeneration() {
     const lang = document.getElementById('genLangValue')?.value || 'zh';
     const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
     
+    // 自定义提示词长度限制（100 Unicode 字符）
+    if (customPrompt.length > 100) {
+        showToast(t('customPromptTooLong'), 'error');
+        return;
+    }
+    
     const resultPreview = document.getElementById('resultPreview');
     if (resultPreview) resultPreview.innerHTML = '';
     
@@ -1541,7 +1564,7 @@ function handleBeforeUnload(e) {
     }
 }
 
-function showToast(message, type = 'success') {
+function showToast(message, type = 'success', duration = 3000) {
     const toast = document.getElementById('toast');
     const icon = document.getElementById('toastIcon');
     const msg = document.getElementById('toastMessage');
@@ -1553,6 +1576,9 @@ function showToast(message, type = 'success') {
     if (type === 'error') {
         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
         toast.querySelector('div').className = 'bg-red-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
+    } else if (type === 'warning') {
+        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>';
+        toast.querySelector('div').className = 'bg-amber-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
     } else {
         icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
         toast.querySelector('div').className = 'bg-slate-800 text-white px-6 py-3 rounded-lg shadow-lg flex items-center';
@@ -1562,7 +1588,7 @@ function showToast(message, type = 'success') {
     
     setTimeout(() => {
         toast.classList.add('translate-y-20', 'opacity-0');
-    }, 3000);
+    }, duration);
 }
 
 function escapeHtml(text) {
