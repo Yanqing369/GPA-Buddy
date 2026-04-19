@@ -166,10 +166,12 @@ const Visitor = {
 
     _setCache(visitorId, fpType) {
         try {
+            // temp ID 只缓存 1 小时，Pro/OSS 缓存 7 天
+            const ttl = fpType === 'temp' ? 1000 * 60 * 60 : 1000 * 60 * 60 * 24 * 7;
             const data = {
                 visitorId,
                 fpType,
-                expires: Date.now() + 1000 * 60 * 60 * 24 * 7 // 7天
+                expires: Date.now() + ttl
             };
             localStorage.setItem('visitor_fp_cache', JSON.stringify(data));
             localStorage.setItem('visitor_id_fallback', visitorId);

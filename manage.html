@@ -637,7 +637,8 @@
         };
 
         function t(key) {
-            return i18n[currentLang][key] || key;
+            const lang = i18n[currentLang] ? currentLang : 'en';
+            return (i18n[lang] && i18n[lang][key]) || key;
         }
 
         function detectBrowserLanguage() {
