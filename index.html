@@ -1105,6 +1105,51 @@
         </div>
     </div>
 
+    <!-- 登录选择模态框 - 液态玻璃 -->
+    <div id="loginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-md">
+        <div class="glass-card squircle w-full max-w-md p-6 modal-enter" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-900" data-i18n="loginModalTitle">选择登录方式</h3>
+                <button onclick="hideLoginModal()" class="w-8 h-8 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <!-- Google -->
+                <button onclick="doGoogleLogin()" class="w-full p-4 rounded-2xl transition-all spring-hover liquid-btn border border-slate-200/50 hover:border-slate-300" style="background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,250,252,0.5) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white border border-slate-200">
+                            <svg class="w-5 h-5" viewBox="0 0 24 24">
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path fill="#34A853" d="M12 21c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                        </div>
+                        <span class="text-sm font-medium text-slate-700" data-i18n="loginGoogle">使用 Google 登录</span>
+                        <svg class="w-4 h-4 ml-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </div>
+                </button>
+                <!-- WeChat -->
+                <div class="p-4 rounded-2xl border border-slate-100/50 opacity-60" style="background: linear-gradient(135deg, rgba(243,244,246,0.6) 0%, rgba(249,250,251,0.4) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600 text-lg">💬</div>
+                        <span class="text-sm text-slate-600" data-i18n="loginWechat">微信登录</span>
+                        <span class="ml-auto text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-500 whitespace-nowrap" data-i18n="loginPending">正在加紧申请资质</span>
+                    </div>
+                </div>
+                <!-- Phone -->
+                <div class="p-4 rounded-2xl border border-slate-100/50 opacity-60" style="background: linear-gradient(135deg, rgba(243,244,246,0.6) 0%, rgba(249,250,251,0.4) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600 text-lg">📱</div>
+                        <span class="text-sm text-slate-600" data-i18n="loginPhone">手机号登录</span>
+                        <span class="ml-auto text-xs px-2 py-1 rounded-full bg-slate-200 text-slate-500 whitespace-nowrap" data-i18n="loginPending">正在加紧申请资质</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 设置模态框 - 液态玻璃 -->
     <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-md">
         <div class="glass-card squircle w-full max-w-md p-6 modal-enter" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);">
@@ -1291,6 +1336,18 @@
         
         // 登录按钮点击
         function handleLogin() {
+            showLoginModal();
+        }
+
+        function showLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        function doGoogleLogin() {
             // 跳转到Google登录，带上 visitorId 和 invite code
             const visitorId = (typeof Visitor !== 'undefined') ? Visitor.getId() : '';
             const inviteCode = (typeof Visitor !== 'undefined') ? Visitor.getInviteCode() : '';
@@ -1419,6 +1476,11 @@
                 inviteLinkCopied: '邀请链接已复制到剪贴板！',
                 inviteLinkCopyFailed: '复制失败，请手动复制',
                 loginToGetInviteLink: '请先登录获取邀请链接',
+                loginModalTitle: '选择登录方式',
+                loginGoogle: '使用 Google 登录',
+                loginWechat: '微信登录',
+                loginPhone: '手机号登录',
+                loginPending: '正在加紧申请资质',
                 creditModalTitle: '如何获得更多积分',
                 creditItem1: '登录可以获得20个额外积分',
                 creditItem2: '邀请新用户，新老用户各获得20积分，无上限',
@@ -1476,6 +1538,11 @@
                 inviteLinkCopied: '邀請連結已複製到剪貼簿！',
                 inviteLinkCopyFailed: '複製失敗，請手動複製',
                 loginToGetInviteLink: '請先登入獲取邀請連結',
+                loginModalTitle: '選擇登入方式',
+                loginGoogle: '使用 Google 登入',
+                loginWechat: '微信登入',
+                loginPhone: '手機號登入',
+                loginPending: '正在加緊申請資質',
                 creditModalTitle: '如何獲得更多積分',
                 creditItem1: '登入可以獲得20個額外積分',
                 creditItem2: '邀請新用戶，新老用戶各獲得20積分，無上限',
@@ -1533,6 +1600,11 @@
                 "inviteLinkCopied": "Invite link copied to clipboard!",
                 "inviteLinkCopyFailed": "Copy failed, please copy manually",
                 "loginToGetInviteLink": "Please login to get invite link",
+                "loginModalTitle": "Choose Login Method",
+                "loginGoogle": "Sign in with Google",
+                "loginWechat": "WeChat Login",
+                "loginPhone": "Phone Login",
+                "loginPending": "Applying for qualification",
                 "creditModalTitle": "How to Get More Credits",
                 "creditItem1": "Login to get 20 extra credits",
                 "creditItem2": "Invite new users, both get 20 credits, no limit",
@@ -1590,6 +1662,11 @@
                 "inviteLinkCopied": "초대 링크가 클립보드에 복사되었습니다!",
                 "inviteLinkCopyFailed": "복사 실패, 수동으로 복사해 주세요",
                 "loginToGetInviteLink": "초대 링크를 받으려면 로그인하세요",
+                "loginModalTitle": "로그인 방식 선택",
+                "loginGoogle": "Google로 로그인",
+                "loginWechat": "WeChat 로그인",
+                "loginPhone": "휰대폰 로그인",
+                "loginPending": "자격 신청 중",
                 "creditModalTitle": "더 많은 포인트 받는 방법",
                 "creditItem1": "로그인하면 20포인트 추가 획득",
                 "creditItem2": "새 사용자 초대 시双方各得 20포인트, 제한 없음",
@@ -1800,6 +1877,10 @@
 
         document.getElementById('creditModal')?.addEventListener('click', function(e) {
             if (e.target === this) hideCreditModal();
+        });
+
+        document.getElementById('loginModal')?.addEventListener('click', function(e) {
+            if (e.target === this) hideLoginModal();
         });
 
         // 防止浏览器恢复滚动位置，强制从顶部开始
