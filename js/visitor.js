@@ -12,6 +12,9 @@ const Visitor = {
     // 配置：请替换为你的 FingerprintJS Pro Public API Key
     PRO_API_KEY: '9BbMO16WgqT8N6L9FGHw',
     PRO_REGION: 'us', // 'ap' | 'us' | 'eu'
+    // Cloudflare Proxy Integration 路径（配置完成后填入，例如 'VWmFUKL1dfIjc8gg'）
+    // 留空则使用默认 CDN (fpjscdn.net)，Edge/Safari 可能被拦截
+    PRO_PROXY_PATH: '',
 
     getApiBase() {
         if (typeof API_BASE !== 'undefined') return API_BASE;
@@ -106,8 +109,20 @@ const Visitor = {
         }
 
         try {
-            const Fingerprint = await import(`https://fpjscdn.net/v4/${this.PRO_API_KEY}`);
-            const fp = await Fingerprint.start();
+            let Fingerprint, fp;
+            if (this.PRO_PROXY_PATH) {
+                // Cloudflare Proxy Integration：第一方路径，绕过 Edge/Safari 拦截
+                const baseUrl = `https://moyuxiaowu.org/${this.PRO_PROXY_PATH}`;
+                Fingerprint = await import(`${baseUrl}/web/v4/${this.PRO_API_KEY}`);
+                fp = await Fingerprint.start({
+                    endpoints: `${baseUrl}/?region=${this.PRO_REGION}`
+                });
+                console.log('[Visitor] Pro loaded via Cloudflare Proxy');
+            } else {
+                // 默认 CDN 方式（可能被 Edge 跟踪防护拦截）
+                Fingerprint = await import(`https://fpjscdn.net/v4/${this.PRO_API_KEY}`);
+                fp = await Fingerprint.start();
+            }
             const result = await fp.get();
             return {
                 visitorId: result.visitor_id,
