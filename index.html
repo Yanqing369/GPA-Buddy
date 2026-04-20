@@ -807,7 +807,7 @@
     </div>
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+    <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
@@ -831,22 +831,22 @@
                 <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
                     ✏️
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="font-bold text-base md:text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
-                    <span>💎</span>
+                <div class="flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs md:text-sm font-medium">
+                    <span class="hidden md:inline">💎</span>
                     <span data-visitor-credits>--</span>
-                    <button onclick="showCreditInfo()" class="ml-1 text-amber-500 hover:text-amber-800 focus:outline-none" title="ℹ️">ℹ️</button>
+                    <button onclick="showCreditInfo()" class="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-amber-200/60 text-amber-700 hover:bg-amber-300/80 text-xs font-bold focus:outline-none" title="如何获得更多积分">+</button>
                 </div>
                 <div class="lang-dropdown">
-                    <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                    <button onclick="toggleLangDropdown()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl liquid-btn text-xs md:text-sm font-medium text-slate-700 flex items-center">
+                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                         </svg>
-                        <span id="currentLangDisplay">简体中文</span>
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
+                        <svg class="w-4 h-4 ml-1 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
@@ -861,14 +861,14 @@
                 <!-- 用户登录/头像 -->
                 <div id="userSection" class="flex items-center gap-2">
                     <!-- 未登录状态 -->
-                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 hover:bg-emerald-50">
+                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm rounded-xl liquid-btn font-medium text-slate-700 hover:bg-emerald-50">
                         <span data-i18n="login">登录</span>
                     </button>
                     
                     <!-- 已登录状态 -->
                     <div id="userMenu" class="hidden relative">
-                        <button onclick="toggleUserDropdown()" class="flex items-center gap-2 p-2 rounded-xl liquid-btn h-10">
-                            <img id="userAvatar" src="" alt="Avatar" class="w-8 h-8 rounded-full bg-gray-200">
+                        <button onclick="toggleUserDropdown()" class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl liquid-btn text-xs md:text-sm">
+                            <img id="userAvatar" src="" alt="Avatar" class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-gray-200">
                             <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
@@ -911,19 +911,27 @@
     <main class="max-w-5xl mx-auto px-6 py-12">
         
         <!-- Hero 区域 -->
-        <section class="mb-16 text-center relative">
+        <section class="mb-4 md:mb-16 text-center relative">
             <button onclick="showSettings()" class="absolute right-0 top-0 w-10 h-10 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-700">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
             </button>
-            <h1 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight" data-i18n="welcomeTitle">智能刷题助手</h1>
-            <p class="text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed mb-8" data-i18n="welcomeDesc">
+            
+            <!-- 手机端生成次数（极简不显眼） -->
+            <div class="md:hidden text-xs text-slate-400 mb-3 tracking-wide">
+                <span data-i18n="statsText">本站已生成</span>
+                <span id="totalCountMobile" class="tabular-nums text-slate-500">...</span>
+                <span data-i18n="statsSuffix">次题库</span>
+            </div>
+            
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight" data-i18n="welcomeTitle">智能刷题助手</h1>
+            <p class="text-base md:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed mb-8" data-i18n="welcomeDesc">
                 不想漫无目的地翻资料？上传课件、笔记，AI 自动为你生成练习题
             </p>
             
-            <div class="inline-flex items-center gap-2 px-5 py-2.5 text-sm text-slate-700 liquid-btn rounded-full">
+            <div class="hidden md:inline-flex items-center gap-2 px-5 py-2.5 text-sm text-slate-700 liquid-btn rounded-full">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                 </svg>
@@ -934,13 +942,13 @@
         </section>
 
         <!-- 功能卡片 -->
-        <section class="grid md:grid-cols-2 lg:grid-cols-4 gap-5 mb-16">
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-16">
             <!-- 知识导学卡片 - 液态玻璃 -->
-            <a href="tutor.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+            <a href="tutor.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-sky-100/40 via-transparent to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-sky-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
-                <div class="mb-5 relative z-10 icon-bounce">
+                <div class="mb-3 sm:mb-5 relative z-10 icon-bounce scale-75 sm:scale-100">
                     <div class="network-animation">
                         <div class="net-node net-node-1"></div>
                         <div class="net-node net-node-2"></div>
@@ -951,16 +959,16 @@
                     </div>
                 </div>
                 
-                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="tutorTitle">知识导学</h3>
-                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="tutorDesc">AI 构建知识图谱，按依赖顺序逐步学习每个概念</p>
+                <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="tutorTitle">知识导学</h3>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="tutorDesc">AI 构建知识图谱，按依赖顺序逐步学习每个概念</span><span class="sm:hidden" data-i18n="tutorDescShort">AI 知识图谱导学</span></p>
             </a>
 
             <!-- 生成卡片 - 液态玻璃 -->
-            <a href="DocGenerate.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+            <a href="DocGenerate.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-blue-100/40 via-transparent to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
-                <div class="mb-5 relative z-10 icon-bounce">
+                <div class="mb-3 sm:mb-5 relative z-10 icon-bounce scale-75 sm:scale-100">
                     <div class="liquid-sphere">
                         <div class="blob-1"></div>
                         <div class="blob-2"></div>
@@ -969,16 +977,16 @@
                     </div>
                 </div>
                 
-                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="generateTitle">从资料生成</h3>
-                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</p>
+                <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="generateTitle">从资料生成</h3>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</span><span class="sm:hidden" data-i18n="generateDescShort">上传课件，AI 自动出题</span></p>
             </a>
 
             <!-- 整理卡片 - 液态玻璃 -->
-            <a href="organize.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+            <a href="organize.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-purple-100/40 via-transparent to-pink-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-purple-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
-                <div class="mb-5 relative z-10 icon-bounce">
+                <div class="mb-3 sm:mb-5 relative z-10 icon-bounce scale-75 sm:scale-100">
                     <div class="magic-align">
                         <div class="sparkle"></div>
                         <div class="magic-line magic-line-1"></div>
@@ -987,16 +995,16 @@
                     </div>
                 </div>
                 
-                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="organizeTitle">整理现成题库</h3>
-                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</p>
+                <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="organizeTitle">整理现成题库</h3>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</span><span class="sm:hidden" data-i18n="organizeDescShort">整理题目，生成规范题库</span></p>
             </a>
 
             <!-- 管理卡片 - 液态玻璃 -->
-            <a href="manage.html" class="group glass-card squircle p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+            <a href="manage.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-100/40 via-transparent to-teal-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-emerald-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
-                <div class="mb-5 relative z-10 icon-bounce">
+                <div class="mb-3 sm:mb-5 relative z-10 icon-bounce scale-75 sm:scale-100">
                     <div class="writing-animation">
                         <div class="paper">
                             <div class="paper-line paper-line-1"></div>
@@ -1010,8 +1018,8 @@
                     </div>
                 </div>
                 
-                <h3 class="text-xl font-semibold text-slate-900 mb-2 relative z-10" data-i18n="manageTitle">题库管理</h3>
-                <p class="text-sm text-slate-500 leading-relaxed relative z-10" data-i18n="manageDesc">查看、练习、导出或导入题库</p>
+                <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="manageTitle">题库管理</h3>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="manageDesc">查看、练习、导出或导入题库</span><span class="sm:hidden" data-i18n="manageDescShort">练习、管理题库</span></p>
             </a>
         </section>
 
@@ -1577,6 +1585,10 @@
                 organizeDesc: '整理往年试卷、试题文档，生成在线交互习题集。',
                 manageTitle: '开始练习',
                 manageDesc: '在线练习、智能解析，还能查看原课件位置。',
+                tutorDescShort: 'AI 知识图谱导学',
+                generateDescShort: '上传课件，AI 自动出题',
+                organizeDescShort: '整理题目，生成规范题库',
+                manageDescShort: '练习、管理题库',
                 recentTitle: '最近创建',
                 noRecent: '暂无最近记录',
                 settings: '设置',
@@ -1646,6 +1658,10 @@
                 organizeDesc: '整理過往試捲、試題文檔，生成互動試題集。',
                 manageTitle: '操題練習',
                 manageDesc: '線上練習、智慧解答，亦可查看原教材位置。',
+                tutorDescShort: 'AI 知識圖譜導學',
+                generateDescShort: '上載課件，AI 自動出題',
+                organizeDescShort: '整理題目，生成規範題庫',
+                manageDescShort: '練習、管理題庫',
                 recentTitle: '最近建立',
                 noRecent: '暫無最近記錄',
                 settings: '設定',
@@ -1715,11 +1731,15 @@
                 "organizeDesc": "Import previous exams and mock tests. We’ll sort them into digital practice sets.",
                 "manageTitle": "Practice Mode",
                 "manageDesc": "Practice anywhere, view explainations, and jump straight back to your notes.",
+                "tutorDescShort": "AI knowledge graph tutor",
+                "generateDescShort": "Upload slides, AI generates questions",
+                "organizeDescShort": "Organize questions into banks",
+                "manageDescShort": "Practice & manage banks",
                 "recentTitle": "Recent",
                 "noRecent": "Nothing here yet",
                 "settings": "Settings",
                 "storage": "Storage",
-                "login": "Sign In",
+                "login": "Login",
                 "logout": "Sign Out",
                 "loginSuccess": "Welcome back",
                 "logoutSuccess": "Signed out",
@@ -1740,7 +1760,7 @@
                 "pageTitle": "GPA4.0",
                 "feedbackText": "Got feedback? Drop us a line",
                 "toastSuccess": "Done",
-                "creditLoginToView": "Login to view",
+                "creditLoginToView": "LoginPlz",
                 "copyInviteLink": "Copy Invite Link",
                 "inviteLinkCopied": "Invite link copied to clipboard!",
                 "inviteLinkCopyFailed": "Copy failed, please copy manually",
@@ -1784,6 +1804,10 @@
                 "organizeDesc": "과거 시험지와 모의고사를 업로드하면 디지털 연습세트로 정리해 드립니다.",
                 "manageTitle": "연습모드",
                 "manageDesc": "어디서나 연습하고, 취약한 부분을 추적하며 원본 자료로 바로 이동하세요.",
+                "tutorDescShort": "AI 지식 그래프 튜터",
+                "generateDescShort": "강의 자료 업로드, AI 문제 생성",
+                "organizeDescShort": "문제 정리, 문제세트 생성",
+                "manageDescShort": "연습 및 문제세트 관리",
                 "recentTitle": "최근",
                 "noRecent": "아직 기록이 없습니다",
                 "settings": "설정",
@@ -1809,7 +1833,7 @@
                 "pageTitle": "GPA4.0",
                 "feedbackText": "피드백이 있으신가요? 연락주세요",
                 "toastSuccess": "완료",
-                "creditLoginToView": "로그인 후 확인",
+                "creditLoginToView": "로그",
                 "copyInviteLink": "초대 링크 복사",
                 "inviteLinkCopied": "초대 링크가 클립보드에 복사되었습니다!",
                 "inviteLinkCopyFailed": "복사 실패, 수동으로 복사해 주세요",
@@ -1997,8 +2021,10 @@
                 if (response.ok) {
                     const data = await response.json();
                     document.getElementById('totalCount').textContent = data.total || 0;
+                    document.getElementById('totalCountMobile').textContent = data.total || 0;
                 } else {
                     document.getElementById('totalCount').textContent = '?';
+                    document.getElementById('totalCountMobile').textContent = '?';
                 }
             } catch (e) {
                 document.getElementById('totalCount').textContent = '?';
