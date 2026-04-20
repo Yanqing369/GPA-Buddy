@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pageTitle">GPA4.0 - 智能刷题助手</title>
+    <link rel="icon" href="resources/logo.png" type="image/png">
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="请出题 - AI智能生成练习题。上传PDF、Word、PPT课件，自动生成选择题，支持多语言。期末复习、考试备考必备工具。">
@@ -828,10 +829,10 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
-                    ✏️
+                <div id="navLogoContainer" class="h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                    <img id="navLogo" src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
-                <span class="font-bold text-base md:text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="hidden md:inline font-bold text-base md:text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
@@ -943,6 +944,24 @@
 
         <!-- 功能卡片 -->
         <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 mb-16">
+            <!-- 生成卡片 - 液态玻璃 -->
+            <a href="DocGenerate.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-100/40 via-transparent to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+                
+                <div class="mb-3 sm:mb-5 relative z-10 icon-bounce scale-75 sm:scale-100">
+                    <div class="liquid-sphere">
+                        <div class="blob-1"></div>
+                        <div class="blob-2"></div>
+                        <div class="blob-3"></div>
+                        <div class="blob-4"></div>
+                    </div>
+                </div>
+                
+                <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="generateTitle">从资料生成</h3>
+                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</span><span class="sm:hidden" data-i18n="generateDescShort">上传课件，AI 自动出题</span></p>
+            </a>
+
             <!-- 知识导学卡片 - 液态玻璃 -->
             <a href="tutor.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-sky-100/40 via-transparent to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -961,24 +980,6 @@
                 
                 <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="tutorTitle">知识导学</h3>
                 <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="tutorDesc">AI 构建知识图谱，按依赖顺序逐步学习每个概念</span><span class="sm:hidden" data-i18n="tutorDescShort">AI 知识图谱导学</span></p>
-            </a>
-
-            <!-- 生成卡片 - 液态玻璃 -->
-            <a href="DocGenerate.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-100/40 via-transparent to-purple-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-                
-                <div class="mb-3 sm:mb-5 relative z-10 icon-bounce scale-75 sm:scale-100">
-                    <div class="liquid-sphere">
-                        <div class="blob-1"></div>
-                        <div class="blob-2"></div>
-                        <div class="blob-3"></div>
-                        <div class="blob-4"></div>
-                    </div>
-                </div>
-                
-                <h3 class="text-base sm:text-xl font-semibold text-slate-900 mb-1 sm:mb-2 relative z-10" data-i18n="generateTitle">从资料生成</h3>
-                <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="generateDesc">上传 PDF、Word、PPT 等文件，AI 帮你自动出题</span><span class="sm:hidden" data-i18n="generateDescShort">上传课件，AI 自动出题</span></p>
             </a>
 
             <!-- 整理卡片 - 液态玻璃 -->
@@ -1915,6 +1916,7 @@
             updateUserUI();
             // 刷新 visitor credits 显示（翻译"登录查看"等）
             if (typeof Visitor !== 'undefined') Visitor._updateUI();
+            updateLogo();
         }
 
         function toggleLangDropdown() {
@@ -1929,6 +1931,23 @@
             document.getElementById('langDropdown').classList.remove('show');
             loadRecent();
         }
+
+        function updateLogo() {
+            const logo = document.getElementById('navLogo');
+            if (!logo) return;
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                if (currentLang === 'zh') {
+                    logo.src = 'resources/chineselogo.png';
+                } else {
+                    logo.src = 'resources/ENlogo.png';
+                }
+            } else {
+                logo.src = 'resources/logo.png';
+            }
+        }
+
+        window.addEventListener('resize', updateLogo);
 
         window.onclick = function(event) {
             // 关闭语言下拉菜单
