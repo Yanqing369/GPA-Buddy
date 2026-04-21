@@ -270,9 +270,9 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <button onclick="saveProgressAndExit()" class="px-3 py-2 md:px-4 md:py-2 liquid-btn text-slate-700 text-sm font-medium rounded-xl flex items-center gap-2" data-i18n="saveAndExit">
+                <button onclick="saveProgressAndExit()" class="px-3 py-2 md:px-4 md:py-2 liquid-btn text-slate-700 text-sm font-medium rounded-xl flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    <span class="hidden md:inline" data-i18n="saveAndExit">保存并退出</span>
+                    <span class="hidden lg:inline" data-i18n="saveAndExit">保存并退出</span>
                 </button>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
@@ -303,7 +303,7 @@
     <div id="panelOverlay" class="fixed inset-0 bg-black/30 z-40 hidden lg:hidden" onclick="closePracticePanel()"></div>
 
     <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
-        <div id="practicePanel" class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-4 mb-6 lg:static fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] -translate-x-full lg:translate-x-0 lg:w-auto lg:max-w-none transition-transform duration-300">
+        <div id="practicePanel" class="bg-white shadow-sm border border-slate-200 p-3 sm:p-4 lg:mb-6 lg:rounded-xl lg:static fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] -translate-x-full lg:translate-x-0 lg:w-auto lg:max-w-none transition-transform duration-300">
             <!-- 移动端：两行布局 | 桌面端：一行布局 -->
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
                 <!-- 左侧：题库信息 -->
