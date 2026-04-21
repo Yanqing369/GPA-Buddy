@@ -208,7 +208,7 @@
 <body class="min-h-screen selection:bg-green-200 selection:text-green-900">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+    <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
@@ -229,10 +229,10 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
-                    ✏️
+                <div class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                    <img src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="hidden md:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
@@ -242,11 +242,11 @@
                 </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                         </svg>
-                        <span id="currentLangDisplay">简体中文</span>
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
+                        <svg class="w-4 h-4 ml-1 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
