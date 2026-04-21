@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pageTitle">练习模式 - GPA4.0</title>
+    <link rel="icon" href="resources/logo.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GPA4.0">
+    <link rel="apple-touch-icon" href="/resources/apple-touch-icon.png">
+    <meta name="theme-color" content="#10b981">
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="在线练习模式，智能解析答案，追踪学习进度，查看原课件位置。">
@@ -235,7 +242,7 @@
 <body class="min-h-screen">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+    <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
@@ -256,22 +263,25 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
-                    ✏️
+                <div class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                    <img src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="hidden md:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
-                <button onclick="saveProgressAndExit()" class="px-3 py-2 liquid-btn text-slate-700 text-sm font-medium rounded-xl" data-i18n="saveAndExit">保存</button>
-                <a href="index.html" class="px-3 py-2 liquid-btn text-slate-700 text-sm font-medium rounded-xl" data-i18n="exitPractice">退出</a>
+                <button onclick="saveProgressAndExit()" class="px-3 py-2 md:px-4 md:py-2 liquid-btn text-slate-700 text-sm font-medium rounded-xl flex items-center gap-2" data-i18n="saveAndExit">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span class="hidden md:inline" data-i18n="saveAndExit">保存</span>
+                </button>
+                <a href="index.html" class="px-3 py-2 liquid-btn text-slate-700 text-sm font-medium rounded-xl" data-i18n="exitPractice">退出练习</a>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
                         <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
                         </svg>
-                        <span id="currentLangDisplay">简体中文</span>
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
+                        <svg class="w-4 h-4 ml-1 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
@@ -286,8 +296,15 @@
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-4 mb-6">
+    <!-- 移动端面板触发按钮 -->
+    <button id="panelToggleBtn" onclick="togglePracticePanel()" class="lg:hidden fixed z-50 w-10 h-10 bg-white rounded-full shadow-lg border border-slate-200 flex items-center justify-center" style="right: 16px; bottom: 80px;">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <!-- 侧滑面板遮罩 -->
+    <div id="panelOverlay" class="fixed inset-0 bg-black/30 z-40 hidden lg:hidden" onclick="closePracticePanel()"></div>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+        <div id="practicePanel" class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-4 mb-6 lg:static fixed inset-y-0 left-0 z-50 w-72 max-w-[80vw] -translate-x-full lg:translate-x-0 lg:w-auto lg:max-w-none transition-transform duration-300">
             <!-- 移动端：两行布局 | 桌面端：一行布局 -->
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-3 lg:space-y-0">
                 <!-- 左侧：题库信息 -->
@@ -330,25 +347,28 @@
             </div>
         </div>
 
-        <div id="practiceCard" class="bg-white rounded-2xl shadow-lg border border-slate-200 p-8 mb-6">
+        <div id="practiceCard" class="bg-white rounded-2xl shadow-lg border border-slate-200 p-5 sm:p-8 mb-6">
             <div id="questionContent" class="mb-8">
-                <h3 class="text-xl font-medium text-slate-900 mb-4 leading-relaxed" id="questionText" data-i18n="loadingQuestion">题目内容加载中...</h3>
-                <button onclick="openSourceViewer()" id="viewSourceBtn" class="mb-6 px-4 py-2 text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center">
+                <div class="flex items-start gap-2 mb-3 sm:mb-4">
+                    <span class="text-base md:text-xl font-bold text-slate-900 shrink-0" id="questionNumberDisplay"></span>
+                    <h3 class="text-base md:text-xl font-medium text-slate-900 leading-relaxed" id="questionText" data-i18n="loadingQuestion">题目内容加载中...</h3>
+                </div>
+                <button onclick="openSourceViewer()" id="viewSourceBtn" class="mb-4 sm:mb-6 px-3 py-1.5 text-xs sm:text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     <span data-i18n="viewSource">查看原文</span>
                 </button>
                 <div id="optionsList" class="space-y-3"></div>
             </div>
 
-            <div id="explanationSection" class="hidden border-t border-slate-200 pt-6 mt-6">
-                <div class="bg-slate-50 rounded-lg p-4">
+            <div id="explanationSection" class="hidden border-t border-slate-200 pt-4 mt-4 sm:pt-6 sm:mt-6">
+                <div class="bg-slate-50 rounded-lg p-3 sm:p-4">
                     <div class="flex items-start">
                         <div class="flex-shrink-0 mr-3">
-                            <div id="resultIcon" class="w-8 h-8 rounded-full flex items-center justify-center"></div>
+                            <div id="resultIcon" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center"></div>
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-semibold text-slate-900 mb-1" data-i18n="answerExplanation">答案解析</h4>
-                            <p id="explanationText" class="text-slate-600 text-sm leading-relaxed mb-2"></p>
+                            <h4 class="font-semibold text-slate-900 mb-1 text-sm sm:text-base" data-i18n="answerExplanation">答案解析</h4>
+                            <p id="explanationText" class="text-slate-600 text-xs sm:text-sm leading-relaxed mb-2"></p>
                             <div class="flex items-center text-xs text-slate-400 mt-2">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                                 <span data-i18n="source">来源</span>: 
@@ -769,7 +789,8 @@
             const correct = practiceState.answers.filter((a, i) => a && a.selected === practiceState.questions[i].correctAnswer).length;
             const accuracy = Math.round((correct / totalQuestions) * 100);
             document.getElementById('accuracy').innerHTML = `${t('accuracy')}: ${accuracy}%`;
-            document.getElementById('questionText').innerHTML = `${practiceState.currentIndex + 1}. ${safeMarkedParse(q.question || '')}`;
+            document.getElementById('questionNumberDisplay').textContent = `${practiceState.currentIndex + 1}.`;
+            document.getElementById('questionText').innerHTML = safeMarkedParse(q.question || '');
             
             // 控制"查看原文"按钮的显示
             const viewSourceBtn = document.getElementById('viewSourceBtn');
@@ -798,7 +819,7 @@
             optionsContainer.innerHTML = '';
             Object.entries(q.options).forEach(([key, value]) => {
                 const btn = document.createElement('button');
-                btn.className = `w-full text-left p-4 rounded-xl border-2 transition-all flex items-center group ${answered ? 'cursor-default' : 'hover:border-indigo-300 hover:bg-indigo-50'}`;
+                btn.className = `w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all flex items-center group ${answered ? 'cursor-default' : 'hover:border-indigo-300 hover:bg-indigo-50'}`;
                 if (!answered) btn.onclick = () => selectOption(key);
                 
                 if (answered) {
@@ -807,7 +828,7 @@
                 }
                 
                 const markedValue = safeMarkedParse(value || '');
-                btn.innerHTML = `<div class="w-8 h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && key === answered.selected ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${markedValue}</span>${answered && key === q.correctAnswer ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && key === answered.selected && key !== q.correctAnswer ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
+                btn.innerHTML = `<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-3 sm:mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && key === answered.selected ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${markedValue}</span>${answered && key === q.correctAnswer ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && key === answered.selected && key !== q.correctAnswer ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
                 if (!answered) btn.dataset.option = key;
                 optionsContainer.appendChild(btn);
             });
@@ -1013,6 +1034,60 @@
                 banner.style.display = 'none';
             }
         }
+
+        function togglePracticePanel() {
+            const panel = document.getElementById('practicePanel');
+            const overlay = document.getElementById('panelOverlay');
+            if (panel.classList.contains('-translate-x-full')) {
+                panel.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+            } else {
+                panel.classList.add('-translate-x-full');
+                overlay.classList.add('hidden');
+            }
+        }
+        function closePracticePanel() {
+            const panel = document.getElementById('practicePanel');
+            const overlay = document.getElementById('panelOverlay');
+            panel.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+        (function() {
+            const btn = document.getElementById('panelToggleBtn');
+            if (!btn) return;
+            let isDown = false, startX, startY, startRight, startBottom, hasDragged;
+            function onDown(e) {
+                isDown = true;
+                hasDragged = false;
+                const t = e.touches ? e.touches[0] : e;
+                startX = t.clientX; startY = t.clientY;
+                const s = getComputedStyle(btn);
+                startRight = parseInt(s.right) || 16;
+                startBottom = parseInt(s.bottom) || 80;
+                btn.style.transition = 'none';
+            }
+            function onMove(e) {
+                if (!isDown) return;
+                const t = e.touches ? e.touches[0] : e;
+                const dx = startX - t.clientX, dy = startY - t.clientY;
+                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged = true;
+                if (hasDragged) {
+                    e.preventDefault();
+                    btn.style.right = Math.max(8, Math.min(window.innerWidth - btn.offsetWidth - 8, startRight + dx)) + 'px';
+                    btn.style.bottom = Math.max(8, Math.min(window.innerHeight - btn.offsetHeight - 8, startBottom + dy)) + 'px';
+                }
+            }
+            function onUp() { isDown = false; btn.style.transition = ''; }
+            btn.addEventListener('mousedown', onDown);
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+            btn.addEventListener('touchstart', onDown, {passive: false});
+            document.addEventListener('touchmove', onMove, {passive: false});
+            document.addEventListener('touchend', onUp);
+            btn.addEventListener('click', function(e) {
+                if (hasDragged) { e.stopPropagation(); e.preventDefault(); hasDragged = false; }
+            }, true);
+        })();
 
         // 数据恢复函数：用于恢复版本6升级时丢失的数据
         async function recoverLostData() {
