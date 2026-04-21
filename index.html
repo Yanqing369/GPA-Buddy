@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pageTitle">GPA4.0 - 智能刷题助手</title>
     <link rel="icon" href="resources/logo.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="GPA4.0">
+    <link rel="apple-touch-icon" href="resources/apple-touch-icon.png">
+    <meta name="theme-color" content="#10b981">
     
     <!-- SEO Meta Tags -->
     <meta name="description" content="请出题 - AI智能生成练习题。上传PDF、Word、PPT课件，自动生成选择题，支持多语言。期末复习、考试备考必备工具。">
@@ -14,7 +20,7 @@
     
     <!-- Open Graph / Social Media -->
     <meta property="og:title" content="请出题 - AI智能刷题助手">
-    <meta property="og:description" content="上传课件，AI自动生成练习题。支持PDF、Word、PPT格式，多语言支持。">
+    <meta property="og:description" content="上传课件，AI出题，图谱导学，刷题练习。">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://gpa4.app/">
     <meta property="og:site_name" content="请出题 GPA4.0">
@@ -829,21 +835,21 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div id="navLogoContainer" class="h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                <div id="navLogoContainer" class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
                     <img id="navLogo" src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
                 <span class="hidden md:inline font-bold text-base md:text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs md:text-sm font-medium">
+                <div class="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
                     <span class="hidden md:inline">💎</span>
                     <span data-visitor-credits>--</span>
-                    <button onclick="showCreditInfo()" class="ml-1 w-5 h-5 flex items-center justify-center rounded-full bg-amber-200/60 text-amber-700 hover:bg-amber-300/80 text-xs font-bold focus:outline-none" title="如何获得更多积分">+</button>
+                    <button onclick="showCreditInfo()" class="ml-1 w-6 h-6 flex items-center justify-center rounded-full bg-amber-200/60 text-amber-700 hover:bg-amber-300/80 text-sm font-bold focus:outline-none" title="如何获得更多积分">+</button>
                 </div>
                 <div class="lang-dropdown">
-                    <button onclick="toggleLangDropdown()" class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl liquid-btn text-xs md:text-sm font-medium text-slate-700 flex items-center">
-                        <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button onclick="toggleLangDropdown()" class="px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                         </svg>
                         <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
@@ -862,17 +868,14 @@
                 <!-- 用户登录/头像 -->
                 <div id="userSection" class="flex items-center gap-2">
                     <!-- 未登录状态 -->
-                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-3 py-1.5 text-xs md:px-4 md:py-2 md:text-sm rounded-xl liquid-btn font-medium text-slate-700 hover:bg-emerald-50">
+                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-4 py-2 text-sm rounded-xl liquid-btn font-medium text-slate-700 hover:bg-emerald-50">
                         <span data-i18n="login">登录</span>
                     </button>
                     
                     <!-- 已登录状态 -->
                     <div id="userMenu" class="hidden relative">
-                        <button onclick="toggleUserDropdown()" class="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-xl liquid-btn text-xs md:text-sm">
-                            <img id="userAvatar" src="" alt="Avatar" class="w-4 h-4 md:w-5 md:h-5 rounded-full bg-gray-200">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                        <button onclick="toggleUserDropdown()" class="flex items-center px-4 py-2 rounded-xl liquid-btn text-sm">
+                            <img id="userAvatar" src="" alt="Avatar" class="w-6 h-6 md:w-5 md:h-5 rounded-full bg-gray-200">
                         </button>
                         <div id="userDropdown" class="hidden absolute right-0 top-full mt-2 w-56 rounded-xl glass-card p-2 z-50">
                             <div class="px-3 py-2 border-b border-gray-100">
@@ -1212,6 +1215,36 @@
         </div>
     </div>
 
+    <!-- PWA 安装提示 - 液态玻璃 -->
+    <div id="pwaModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/15 backdrop-blur-md">
+        <div class="glass-card squircle w-full max-w-sm p-6 modal-enter" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900" data-i18n="pwaTitle">添加到桌面</h3>
+                <button onclick="dismissPWAModal()" class="w-8 h-8 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-500">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="text-center">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden">
+                    <img src="resources/logo.png" alt="logo" class="w-full h-full object-contain">
+                </div>
+                <p class="text-sm text-slate-600 mb-2" data-i18n="pwaDesc">将 GPA4.0 添加到手机桌面，像 App 一样快速打开</p>
+                <p class="text-xs text-slate-400 mb-6" data-i18n="pwaOffline">支持离线使用，无需每次打开浏览器</p>
+                
+                <!-- Android Chrome -->
+                <button id="pwaInstallBtn" onclick="installPWA()" class="hidden w-full py-3 rounded-xl liquid-btn-emerald text-white text-sm font-semibold spring-active mb-3" data-i18n="pwaAddToHome">添加到桌面</button>
+                
+                <!-- iOS Safari -->
+                <div id="pwaIOSGuide" class="hidden text-xs text-slate-500 mb-3 text-left bg-slate-50 rounded-xl p-3">
+                    <p class="mb-1" data-i18n="pwaIOSStep1">1. 点击 Safari 底部 <span class="inline-block px-1.5 py-0.5 bg-white rounded border border-slate-200">分享</span> 按钮</p>
+                    <p data-i18n="pwaIOSStep2">2. 选择 <span class="inline-block px-1.5 py-0.5 bg-white rounded border border-slate-200">添加到主屏幕</span></p>
+                </div>
+                
+                <button onclick="dismissPWAModal()" class="text-xs text-slate-400 hover:text-slate-600" data-i18n="pwaLater">稍后再说</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast 提示 - 液态玻璃 -->
     <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 translate-y-20 opacity-0 transition-all duration-500 z-50">
         <div class="px-6 py-3.5 rounded-2xl flex items-center gap-3 text-sm font-medium text-slate-900 shadow-lg border border-slate-200" style="background: linear-gradient(135deg, rgba(255,255,255,0.98) 0%, rgba(250,249,246,0.95) 100%);">
@@ -1226,6 +1259,14 @@
         const API_BASE = "https://moyuxiaowu.org";
     </script>
     <script src="js/visitor.js"></script>
+    <script>
+        // 注册 Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then((reg) => console.log('SW registered:', reg.scope))
+                .catch((err) => console.log('SW registration failed:', err));
+        }
+    </script>
     <script>
         /* ==================== AUTH SYSTEM ==================== */
         let currentUser = null;
@@ -1615,6 +1656,13 @@
                 pageTitle: '请出题',
                 feedbackText: '遇到问题？联系我们',
                 toastSuccess: '操作成功',
+                pwaTitle: '添加到桌面',
+                pwaDesc: '将 GPA4.0 添加到手机桌面，像 App 一样快速打开',
+                pwaOffline: '支持离线使用，无需每次打开浏览器',
+                pwaAddToHome: '添加到桌面',
+                pwaLater: '稍后再说',
+                pwaIOSStep1: '1. 点击 Safari 底部 分享 按钮',
+                pwaIOSStep2: '2. 选择 添加到主屏幕',
                 creditLoginToView: '登录查看',
                 copyInviteLink: '复制邀请链接',
                 inviteLinkCopied: '邀请链接已复制到剪贴板！',
@@ -1688,6 +1736,13 @@
                 pageTitle: '請出題',
                 feedbackText: '遇到問題？聯絡我們',
                 toastSuccess: '操作成功',
+                pwaTitle: '新增到主畫面',
+                pwaDesc: '將 GPA4.0 新增到主畫面，像 App 一樣快速開啟',
+                pwaOffline: '支援離線使用，無需每次開啟瀏覽器',
+                pwaAddToHome: '新增到主畫面',
+                pwaLater: '稍後再說',
+                pwaIOSStep1: '1. 點擊 Safari 底部 分享 按鈕',
+                pwaIOSStep2: '2. 選擇 新增到主畫面',
                 creditLoginToView: '登入查看',
                 copyInviteLink: '複製邀請連結',
                 inviteLinkCopied: '邀請連結已複製到剪貼簿！',
@@ -2050,6 +2105,59 @@
             }
         }
 
+        let deferredPrompt = null;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        
+        function checkPWAPrompt() {
+            if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
+            const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) return;
+            const dismissedAt = localStorage.getItem('pwaDismissedAt');
+            if (dismissedAt && Date.now() - parseInt(dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
+            showPWAModal();
+        }
+        
+        function showPWAModal() {
+            const modal = document.getElementById('pwaModal');
+            const installBtn = document.getElementById('pwaInstallBtn');
+            const iosGuide = document.getElementById('pwaIOSGuide');
+            const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            
+            if (isAndroid && deferredPrompt) {
+                installBtn.classList.remove('hidden');
+                iosGuide.classList.add('hidden');
+            } else if (isIOS) {
+                installBtn.classList.add('hidden');
+                iosGuide.classList.remove('hidden');
+            } else {
+                installBtn.classList.remove('hidden');
+                iosGuide.classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+        
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                    dismissPWAModal();
+                });
+            }
+        }
+        
+        function dismissPWAModal() {
+            document.getElementById('pwaModal').classList.add('hidden');
+            localStorage.setItem('pwaDismissedAt', Date.now().toString());
+        }
+        
+        setTimeout(checkPWAPrompt, 3000);
+        
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
