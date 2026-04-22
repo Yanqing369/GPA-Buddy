@@ -1228,7 +1228,7 @@
         <div class="glass-card squircle w-full max-w-sm p-6 modal-enter" style="background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%); box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 10px 20px rgba(0,0,0,0.1);">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-bold text-slate-900" data-i18n="pwaTitle">添加到桌面</h3>
-                <button onclick="dismissPWAModal()" class="w-8 h-8 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-500">
+                <button onclick="document.getElementById('pwaModal').classList.add('hidden')" class="w-8 h-8 flex items-center justify-center rounded-full liquid-btn spring-active text-slate-500">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
