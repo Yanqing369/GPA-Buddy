@@ -2160,8 +2160,8 @@
             if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
             const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (!isMobile) return;
-            const dismissedAt = localStorage.getItem('pwaDismissedAt');
-            if (dismissedAt && Date.now() - parseInt(dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
+            // const dismissedAt = localStorage.getItem('pwaDismissedAt');
+            // if (dismissedAt && Date.now() - parseInt(dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
             showPWAModal();
         }
         
