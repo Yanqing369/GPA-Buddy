@@ -112,6 +112,15 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 1);
             transform: translateY(-3px) scale(1.05);
         }
+
+        /* Turnstile 缩放 */
+        .cf-turnstile {
+            transform: scale(0.8);
+            transform-origin: center center;
+        }
+        .cf-turnstile iframe {
+            max-width: 100% !important;
+        }
         
         /* 捐款横幅 - 液态玻璃风格 */
         .donate-banner {
@@ -310,7 +319,7 @@
 <body class="min-h-screen">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative hidden md:block">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
@@ -331,10 +340,10 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
-                    ✏️
+                <div id="navLogoContainer" class="h-12 md:h-10 rounded-xl overflow-hidden flex-shrink-0 w-12 md:w-10 bg-white md:bg-transparent">
+                    <img id="navLogo" src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="hidden md:inline font-bold text-base md:text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
@@ -343,12 +352,12 @@
                     <span data-visitor-credits>--</span>
                 </div>
                 <div class="lang-dropdown">
-                    <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                    <button onclick="toggleLangDropdown()" class="px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                         </svg>
-                        <span id="currentLangDisplay">简体中文</span>
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
+                        <svg class="w-4 h-4 ml-1 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
@@ -371,11 +380,11 @@
 
         <div class="grid lg:grid-cols-2 gap-8">
             <!-- 左侧：上传和配置 -->
-            <div class="space-y-6">
+            <div class="space-y-6 px-4 sm:px-0">
                 <!-- 文件上传区 -->
-                <div id="dropZone" class="drop-zone bg-white rounded-2xl p-4 sm:p-8 text-center cursor-pointer">
-                    <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div id="dropZone" class="hidden sm:block drop-zone bg-white rounded-2xl p-4 sm:p-8 text-center cursor-pointer">
+                    <div class="w-16 h-16 sm:w-20 sm:h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 sm:w-10 sm:h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                     </div>
@@ -384,12 +393,22 @@
                     <input type="file" id="fileInput" accept=".pdf,.docx,.pptx,.xlsx,.xls,.txt" class="hidden">
                 </div>
 
+                <!-- 移动端上传按钮 -->
+                <div class="sm:hidden">
+                    <button onclick="document.getElementById('fileInput').click()" class="w-full py-3 px-4 rounded-xl liquid-btn-emerald text-white font-semibold flex items-center justify-center gap-2 spring-active">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                        </svg>
+                        <span data-i18n="uploadStudyMaterial">上传学习资料</span>
+                    </button>
+                </div>
+
                 <div id="fileList" class="hidden space-y-2"></div>
 
                 <!-- 出题设置 -->
                 <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
                     <h3 class="text-lg font-semibold mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
                         </svg>
                         <span data-i18n="configTitle">出题设置</span>
@@ -437,7 +456,7 @@
                             <p class="text-xs text-slate-400 mt-1 text-right"><span id="customPromptCount">0</span>/100</p>
                         </div>
 
-                        <button onclick="startGeneration()" id="genBtn" disabled class="w-full gradient-bg text-white font-semibold py-3 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                        <button onclick="startGeneration()" id="genBtn" disabled class="w-full liquid-btn-emerald text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                             </svg>
@@ -445,17 +464,19 @@
                         </button>
                         <div class="mt-4 p-3 border border-slate-200 rounded-lg bg-slate-50">
                             <p class="text-xs text-slate-500 mb-2" data-i18n="captchaLabel">人机验证</p>
-                            <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
+                            <div class="flex justify-center overflow-hidden">
+                                <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- 右侧：文件预览 -->
-            <div class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
+            <div class="hidden lg:block bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-semibold flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                         </svg>

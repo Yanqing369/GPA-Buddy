@@ -94,6 +94,7 @@ const i18n = {
         appName: '请出题',
         back: '返回',
         generateHeader: '从资料生成题库',
+        uploadStudyMaterial: '上传学习资料',
         dropText: '拖拽文件到此处，或点击上传',
         supportFormats: '支持 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 文件将自动提取文本生成题目',
@@ -162,12 +163,14 @@ const i18n = {
         errInsufficientCredits: '积分不足，请登录或邀请好友获取更多积分',
         errVisitorBlocked: '访客账号已被限制',
         errVisitorNotFound: '访客信息不存在，请刷新页面',
+        creditLoginToView: '登录查看',
         errQuotaExceeded: '额度已用完，请明日再来'
     },
     'zh-TW': {
         appName: '請出題',
         back: '返回',
         generateHeader: '從資料生成題庫',
+        uploadStudyMaterial: '上傳學習資料',
         dropText: '拖曳PDF檔案到此處，或點擊上傳',
         supportFormats: '支援 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 檔案將自動提取文本生成題目',
@@ -236,12 +239,14 @@ const i18n = {
         errInsufficientCredits: '積分不足，請登入或邀請好友獲取更多積分',
         errVisitorBlocked: '訪客帳號已被限制',
         errVisitorNotFound: '訪客資訊不存在，請重新整理頁面',
+        creditLoginToView: '登入查看',
         errQuotaExceeded: '額度已用完，請明日再來'
     },
     en: {
         appName: 'GPA4.0',
         back: 'Back',
         generateHeader: 'Generate from Material',
+        uploadStudyMaterial: 'Upload Study Material',
         dropText: 'Drop files here or click to upload',
         supportFormats: 'Supports PDF, Word(DOCX), PPT(PPTX), Excel(XLSX/XLS), TXT formats',
         textExtractionNotice: '📄 PPT/DOCX/XLSX files will be converted to text for question generation',
@@ -310,12 +315,14 @@ const i18n = {
         errInsufficientCredits: 'Insufficient credits. Please login or invite friends to get more.',
         errVisitorBlocked: 'Visitor account has been restricted.',
         errVisitorNotFound: 'Visitor info not found, please refresh the page.',
+        creditLoginToView: 'Login to view',
         errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.'
     },
     ko: {
         appName: 'GPA4.0',
         back: '돌아가기',
         generateHeader: '자료에서 문제은행 생성',
+        uploadStudyMaterial: '학습 자료 업로드',
         dropText: '파일을 여기로 끌어다 놓거나 클릭하여 업로드',
         supportFormats: 'PDF, Word(DOCX), PPT(PPTX), Excel(XLSX/XLS), TXT 형식 지원',
         textExtractionNotice: '📄 PPT/DOCX/XLSX 파일은 텍스트 추출 후 문제가 생성됩니다',
@@ -384,6 +391,7 @@ const i18n = {
         errInsufficientCredits: '포인트가 부족합니다. 로그인하거나 친구를 초대하여 더 많은 포인트를 받으세요.',
         errVisitorBlocked: '방문자 계정이 제한되었습니다.',
         errVisitorNotFound: '방문자 정보가 없습니다. 페이지를 새로고침하세요.',
+        creditLoginToView: '로그인하여 확인',
         errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.'
     }
 };
@@ -439,6 +447,7 @@ function updateLanguage() {
                                    currentLang === 'zh-TW' ? '繁' : 
                                    currentLang === 'ko' ? '한' : 'En';
     }
+    if (typeof Visitor !== 'undefined') Visitor._updateUI();
 }
 
 function toggleLangDropdown() {
