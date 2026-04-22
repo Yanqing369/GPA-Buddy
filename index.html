@@ -1242,13 +1242,21 @@
                 <!-- Android Chrome -->
                 <button id="pwaInstallBtn" onclick="installPWA()" class="hidden w-full py-3 rounded-xl liquid-btn-emerald text-white text-sm font-semibold spring-active mb-3" data-i18n="pwaAddToHome">添加到桌面</button>
                 
+                <!-- Android 无安装提示时 -->
+                <div id="pwaAndroidGuide" class="hidden text-xs text-slate-500 mb-3 text-left bg-slate-50 rounded-xl p-3">
+                    <p data-i18n="pwaAndroidGuide">请在浏览器菜单中选择"添加到主屏幕"</p>
+                </div>
+                
                 <!-- iOS Safari -->
                 <div id="pwaIOSGuide" class="hidden text-xs text-slate-500 mb-3 text-left bg-slate-50 rounded-xl p-3">
                     <p class="mb-1" data-i18n="pwaIOSStep1">1. 点击 Safari 底部 <span class="inline-block px-1.5 py-0.5 bg-white rounded border border-slate-200">分享</span> 按钮</p>
                     <p data-i18n="pwaIOSStep2">2. 选择 <span class="inline-block px-1.5 py-0.5 bg-white rounded border border-slate-200">添加到主屏幕</span></p>
                 </div>
                 
-                <button onclick="dismissPWAModal()" class="text-xs text-slate-400 hover:text-slate-600" data-i18n="pwaLater">稍后再说</button>
+                <div class="flex gap-3 mt-2">
+                    <button onclick="closePWAModal()" class="flex-1 py-2 rounded-xl liquid-btn text-slate-700 text-xs font-medium" data-i18n="pwaLater">稍后再说</button>
+                    <button onclick="dismissPWAModal()" class="flex-1 py-2 rounded-xl liquid-btn text-slate-700 text-xs font-medium" data-i18n="pwaDismiss">不再显示（7天）</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1671,6 +1679,8 @@
                 pwaLater: '稍后再说',
                 pwaIOSStep1: '1. 点击 Safari 底部 分享 按钮',
                 pwaIOSStep2: '2. 选择 添加到主屏幕',
+                pwaDismiss: '不再显示（7天）',
+                pwaAndroidGuide: '请在浏览器菜单中选择"添加到主屏幕"',
                 creditLoginToView: '--',
                 copyInviteLink: '复制邀请链接',
                 inviteLinkCopied: '邀请链接已复制到剪贴板！',
@@ -1751,6 +1761,8 @@
                 pwaLater: '稍後再說',
                 pwaIOSStep1: '1. 點擊 Safari 底部 分享 按鈕',
                 pwaIOSStep2: '2. 選擇 新增到主畫面',
+                pwaDismiss: '不再顯示（7天）',
+                pwaAndroidGuide: '請在瀏覽器選單中選擇"新增到主畫面"',
                 creditLoginToView: '--',
                 copyInviteLink: '複製邀請連結',
                 inviteLinkCopied: '邀請連結已複製到剪貼簿！',
@@ -1805,6 +1817,15 @@
                 "storage": "Storage",
                 "login": "Login",
                 "logout": "Sign Out",
+                "pwaTitle": "Add to Home Screen",
+                "pwaDesc": "Add GPA4.0 to your home screen for quick access like an app",
+                "pwaOffline": "Works offline, no need to open browser every time",
+                "pwaAddToHome": "Add to Home Screen",
+                "pwaLater": "Later",
+                "pwaDismiss": "Don't show again (7 days)",
+                "pwaIOSStep1": "1. Tap the Share button at the bottom of Safari",
+                "pwaIOSStep2": "2. Select Add to Home Screen",
+                "pwaAndroidGuide": "Please select "Add to home screen" from the browser menu",
                 "loginSuccess": "Welcome back",
                 "logoutSuccess": "Signed out",
                 "myBanks": "My Question Sets",
@@ -1878,6 +1899,15 @@
                 "storage": "저장공간",
                 "login": "로그인",
                 "logout": "로그아웃",
+                "pwaTitle": "홈 화면에 추가",
+                "pwaDesc": "GPA4.0을 홈 화면에 추가하여 앱처럼 빠르게 실행하세요",
+                "pwaOffline": "오프라인 사용 가능, 매번 브라우저를 열 필요가 없습니다",
+                "pwaAddToHome": "홈 화면에 추가",
+                "pwaLater": "나중에",
+                "pwaDismiss": "7일 동안 표시하지 않음",
+                "pwaIOSStep1": "1. Safari 하단의 공유 버튼을 탭하세요",
+                "pwaIOSStep2": "2. "홈 화면에 추가"를 선택하세요",
+                "pwaAndroidGuide": "브라우저 메뉴에서 "홈 화면에 추가"를 선택하세요",
                 "loginSuccess": "다시 오셔서 환영합니다",
                 "logoutSuccess": "로그아웃 되었습니다",
                 "myBanks": "내 문제세트",
@@ -2142,18 +2172,26 @@
             const modal = document.getElementById('pwaModal');
             const installBtn = document.getElementById('pwaInstallBtn');
             const iosGuide = document.getElementById('pwaIOSGuide');
+            const androidGuide = document.getElementById('pwaAndroidGuide');
             const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
             const isAndroid = /Android/i.test(navigator.userAgent);
             
             if (isAndroid && deferredPrompt) {
                 installBtn.classList.remove('hidden');
                 iosGuide.classList.add('hidden');
+                androidGuide.classList.add('hidden');
+            } else if (isAndroid && !deferredPrompt) {
+                installBtn.classList.add('hidden');
+                iosGuide.classList.add('hidden');
+                androidGuide.classList.remove('hidden');
             } else if (isIOS) {
                 installBtn.classList.add('hidden');
                 iosGuide.classList.remove('hidden');
+                androidGuide.classList.add('hidden');
             } else {
                 installBtn.classList.remove('hidden');
                 iosGuide.classList.add('hidden');
+                androidGuide.classList.add('hidden');
             }
             modal.classList.remove('hidden');
         }
@@ -2163,9 +2201,13 @@
                 deferredPrompt.prompt();
                 deferredPrompt.userChoice.then((choiceResult) => {
                     deferredPrompt = null;
-                    dismissPWAModal();
+                    closePWAModal();
                 });
             }
+        }
+        
+        function closePWAModal() {
+            document.getElementById('pwaModal').classList.add('hidden');
         }
         
         function dismissPWAModal() {
