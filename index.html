@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="pageTitle">GPA4.0 - 智能刷题助手</title>
     <link rel="icon" href="resources/logo.png" type="image/png">
-    <link rel="manifest" href="manifest.json">
+    <script>
+        (function() {
+            var lang = (navigator.language || navigator.userLanguage || 'zh').toLowerCase();
+            var map = { 'zh': 'manifest.json', 'zh-cn': 'manifest.json', 'zh-sg': 'manifest.json', 'zh-hans': 'manifest.json', 'zh-tw': 'manifest-zh-TW.json', 'zh-hk': 'manifest-zh-TW.json', 'zh-mo': 'manifest-zh-TW.json', 'zh-hant': 'manifest-zh-TW.json', 'en': 'manifest-en.json', 'ko': 'manifest-en.json' };
+            var href = map[lang] || 'manifest.json';
+            document.write('<link rel="manifest" href="' + href + '">');
+        })();
+    </script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="GPA4.0">
