@@ -16,19 +16,19 @@
     <meta name="description" content="请出题 - AI智能生成练习题。上传PDF、Word、PPT课件，自动生成选择题，支持多语言。期末复习、考试备考必备工具。">
     <meta name="keywords" content="出题,AI出题,练习题,考试复习,题库,自动生成题目,PDF出题,智能刷题,GPA4.0">
     <meta name="author" content="GPA4.0">
-    <link rel="canonical" href="https://gpa4.app/">
+    <link rel="canonical" href="https://www.gpa-buddy.com/">
     
     <!-- Open Graph / Social Media -->
     <meta property="og:title" content="请出题 - AI智能刷题助手">
     <meta property="og:description" content="上传课件，AI出题，图谱导学，刷题练习。">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://gpa4.app/">
+    <meta property="og:url" content="https://www.gpa-buddy.com/">
     <meta property="og:site_name" content="请出题 GPA4.0">
     
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="请出题 - AI智能刷题助手">
-    <meta name="twitter:description" content="上传课件，AI自动生成练习题">
+    <meta name="twitter:title" content="GPA Buddy - AI Study Assistant">
+    <meta name="twitter:description" content="Upload course materials, AI auto-generates practice questions">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
@@ -1663,7 +1663,7 @@
                 pwaLater: '稍后再说',
                 pwaIOSStep1: '1. 点击 Safari 底部 分享 按钮',
                 pwaIOSStep2: '2. 选择 添加到主屏幕',
-                creditLoginToView: '登录查看',
+                creditLoginToView: '--',
                 copyInviteLink: '复制邀请链接',
                 inviteLinkCopied: '邀请链接已复制到剪贴板！',
                 inviteLinkCopyFailed: '复制失败，请手动复制',
@@ -1743,7 +1743,7 @@
                 pwaLater: '稍後再說',
                 pwaIOSStep1: '1. 點擊 Safari 底部 分享 按鈕',
                 pwaIOSStep2: '2. 選擇 新增到主畫面',
-                creditLoginToView: '登入查看',
+                creditLoginToView: '--',
                 copyInviteLink: '複製邀請連結',
                 inviteLinkCopied: '邀請連結已複製到剪貼簿！',
                 inviteLinkCopyFailed: '複製失敗，請手動複製',
@@ -1816,7 +1816,7 @@
                 "pageTitle": "GPA4.0",
                 "feedbackText": "Got feedback? Drop us a line",
                 "toastSuccess": "Done",
-                "creditLoginToView": "LoginPlz",
+                "creditLoginToView": "--",
                 "copyInviteLink": "Copy Invite Link",
                 "inviteLinkCopied": "Invite link copied to clipboard!",
                 "inviteLinkCopyFailed": "Copy failed, please copy manually",
@@ -1889,7 +1889,7 @@
                 "pageTitle": "GPA4.0",
                 "feedbackText": "피드백이 있으신가요? 연락주세요",
                 "toastSuccess": "완료",
-                "creditLoginToView": "로그",
+                "creditLoginToView": "--",
                 "copyInviteLink": "초대 링크 복사",
                 "inviteLinkCopied": "초대 링크가 클립보드에 복사되었습니다!",
                 "inviteLinkCopyFailed": "복사 실패, 수동으로 복사해 주세요",
@@ -1941,6 +1941,14 @@
             'ko': '한'
         };
 
+
+        // Dynamic manifest based on language
+        function updateManifest() {
+            const link = document.querySelector('link[rel="manifest"]');
+            if (!link) return;
+            const map = { 'zh': 'manifest.json', 'zh-TW': 'manifest-zh-TW.json', 'en': 'manifest-en.json', 'ko': 'manifest-en.json' };
+            link.href = map[currentLang] || 'manifest.json';
+        }
         function updateLanguage() {
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
@@ -1965,6 +1973,7 @@
             });
             
             document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
+            updateManifest();
             document.title = t('pageTitle');
             
             // 刷新用户相关动态文本（防止 data-i18n 覆盖余额显示）
