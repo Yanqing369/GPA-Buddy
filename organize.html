@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -43,7 +43,7 @@
         
         body {
             font-family: 'Inter', 'Noto Sans SC', 'Noto Sans TC', 'Noto Sans KR', sans-serif;
-            background-color: var(--paper-bg);
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
@@ -321,10 +321,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
+<body class="min-h-screen overflow-x-hidden selection:bg-green-200 selection:text-green-900">
 
     <!-- 顶部捐款横幅 -->
-    <div id="donateBanner" class="donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
+    <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🌱</span>
@@ -345,24 +345,24 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-xl liquid-social-btn" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(251, 191, 36, 0.15) 100%);">
-                    ✏️
+                <div id="navLogoContainer" class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                    <img id="navLogo" src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
+                <span class="hidden md:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium min-w-[3.5rem] justify-center">
                     <span>💎</span>
                     <span data-visitor-credits>--</span>
                 </div>
                 <div class="lang-dropdown">
                     <button onclick="toggleLangDropdown()" class="p-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
-                        <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
                         </svg>
-                        <span id="currentLangDisplay">简体中文</span>
-                        <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
+                        <svg class="w-4 h-4 ml-1 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
@@ -378,7 +378,7 @@
     </nav>
 
     <main class="max-w-5xl mx-auto px-6 py-12">
-        <div class="mb-8">
+        <div class="mb-8 text-center">
             <h2 class="text-2xl font-bold text-slate-900 tracking-tight" data-i18n="organizeHeader">整理现成题库</h2>
         </div>
 
@@ -394,17 +394,30 @@
 
         <div class="grid lg:grid-cols-2 gap-6">
             <div class="space-y-6">
-                <div id="orgDropZone" class="drop-zone rounded-2xl p-8 text-center glass-card border-2 border-dashed border-slate-300 hover:border-emerald-400 transition-all cursor-pointer spring-hover">
+                <!-- 桌面端上传区 -->
+                <div id="orgDropZone" class="hidden sm:block drop-zone rounded-2xl p-8 text-center glass-card border-2 border-dashed border-slate-300 hover:border-emerald-400 transition-all cursor-pointer spring-hover">
                     <input type="file" id="orgFileInput" class="hidden" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt">
                     <div class="mb-4">
-                        <svg class="w-16 h-16 mx-auto text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-16 h-16 mx-auto text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
                     <p class="text-lg font-medium text-slate-700 mb-2" data-i18n="uploadQuestionBank">上传需要整理的题库文件</p>
                     <p class="text-sm text-slate-500" data-i18n="supportFormats">支持 PDF、Word、PPT、Excel、TXT</p>
-                    <div id="orgFileList" class="mt-4 space-y-2 text-left hidden"></div>
                 </div>
+
+                <!-- 移动端上传按钮 -->
+                <div class="sm:hidden mb-6">
+                    <button onclick="document.getElementById('orgFileInput').click()" class="w-full py-3 px-4 rounded-xl liquid-btn-emerald text-white font-semibold flex items-center justify-center gap-2 spring-active">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span data-i18n="uploadStudyMaterial">上传学习资料</span>
+                    </button>
+                </div>
+
+                <!-- 已上传文件列表（桌面端+移动端共用） -->
+                <div id="orgFileList" class="space-y-2 text-left hidden"></div>
 
                 <button onclick="startOrganization()" id="orgBtn" class="w-full bg-emerald-500 text-white font-semibold py-3 rounded-xl hover:bg-emerald-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-emerald-200 spring-active" disabled>
                     <span data-i18n="startOrganize">开始整理</span>
@@ -416,13 +429,15 @@
                 <!-- 人机验证 -->
                 <div class="bg-white/70 rounded-xl p-4 border border-slate-200">
                     <p class="text-xs text-slate-500 mb-2 text-center" data-i18n="captchaLabel">人机验证</p>
-                    <div class="flex justify-center">
-                        <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
+                    <div class="flex justify-center overflow-hidden">
+                        <div style="transform: scale(0.9); transform-origin: center center; margin: 0 -15px;">
+                            <div class="cf-turnstile" data-sitekey="0x4AAAAAACyCQq1B6IXFL27N"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card rounded-2xl p-6 h-[400px] flex flex-col">
+            <div class="hidden lg:flex glass-card rounded-2xl p-6 h-[400px] flex-col">
                 <h3 class="font-semibold text-slate-900 mb-4" data-i18n="originalContent">原始内容预览</h3>
                 <div id="orgTextPreview" class="flex-1 bg-white/50 rounded-xl p-4 overflow-y-auto text-sm text-slate-600 font-mono whitespace-pre-wrap border border-slate-100">
                     <span class="text-slate-400 italic" data-i18n="waitingUpload">等待上传文件...</span>
@@ -632,7 +647,9 @@
                 donateBannerText: '我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们',
                 donateBannerTextMobile: '欢迎捐款支持我们',
                 supportUs: '支持我们',
-                captchaLabel: '人机验证 / Human Verification'
+                captchaLabel: '人机验证 / Human Verification',
+                uploadStudyMaterial: '上传学习资料',
+                creditLoginToView: '登录查看'
             },
             'zh-TW': {
                 appName: '請出題',
@@ -674,7 +691,9 @@
                 donateBannerText: '我們是一個公益模式免費網站。如果本網站對你有幫助，歡迎捐款支持我們',
                 donateBannerTextMobile: '歡迎捐款支持我們',
                 supportUs: '支持我們',
-                captchaLabel: '人機驗證 / Human Verification'
+                captchaLabel: '人機驗證 / Human Verification',
+                uploadStudyMaterial: '上傳學習資料',
+                creditLoginToView: '登入查看'
             },
             en: {
                 appName: 'GPA4.0',
@@ -716,7 +735,9 @@
                 donateBannerText: 'We are a free, non-profit website. If this site helps you, please consider donating to support us.',
                 donateBannerTextMobile: 'Consider donating to support us.',
                 supportUs: 'Support Us',
-                captchaLabel: 'Human Verification / 人机验证'
+                captchaLabel: 'Human Verification / 人机验证',
+                uploadStudyMaterial: 'Upload Study Material',
+                creditLoginToView: 'Login to view'
             },
             ko: {
                 appName: 'GPA4.0',
@@ -757,7 +778,9 @@
                 preparing: '준비 중...',
                 processingHint: '약 2분 소요됩니다. 새로고침하거나 페이지를 닫지 마세요...',
                 completed: '완료!',
-                captchaLabel: '보안 인증 / Human Verification'
+                captchaLabel: '보안 인증 / Human Verification',
+                uploadStudyMaterial: '학습 자료 업로드',
+                creditLoginToView: '로그인하여 확인'
             }
         };
 
@@ -796,6 +819,8 @@
                 }
             });
             document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
+            if (typeof Visitor !== 'undefined') Visitor._updateUI();
+            updateLogo();
         }
 
         function toggleLangDropdown() {
@@ -818,6 +843,18 @@
                 }
             }
         }
+
+        function updateLogo() {
+            const logo = document.getElementById('navLogo');
+            if (!logo) return;
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                logo.src = currentLang === 'zh' ? 'resources/chineselogo.png' : 'resources/ENlogo.png';
+            } else {
+                logo.src = 'resources/logo.png';
+            }
+        }
+        window.addEventListener('resize', updateLogo);
 
         function enableRefreshProtection() {
             preventRefresh = true;

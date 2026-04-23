@@ -448,7 +448,25 @@ function updateLanguage() {
                                    currentLang === 'ko' ? '한' : 'En';
     }
     if (typeof Visitor !== 'undefined') Visitor._updateUI();
+    updateLogo();
 }
+
+function updateLogo() {
+    const logo = document.getElementById('navLogo');
+    if (!logo) return;
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+        if (currentLang === 'zh') {
+            logo.src = 'resources/chineselogo.png';
+        } else {
+            logo.src = 'resources/ENlogo.png';
+        }
+    } else {
+        logo.src = 'resources/logo.png';
+    }
+}
+
+window.addEventListener('resize', updateLogo);
 
 function toggleLangDropdown() {
     const dropdown = document.getElementById('langDropdown');

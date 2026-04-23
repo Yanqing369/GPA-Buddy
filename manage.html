@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -38,7 +38,7 @@
         
         body {
             font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background-color: var(--paper-bg);
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
@@ -206,7 +206,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
+<body class="min-h-screen overflow-x-hidden selection:bg-green-200 selection:text-green-900">
 
     <!-- 顶部捐款横幅 -->
     <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
@@ -230,14 +230,14 @@
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
-                <div class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
-                    <img src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
+                <div id="navLogoContainer" class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                    <img id="navLogo" src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
                 </div>
                 <span class="hidden md:inline font-bold text-lg tracking-tight text-slate-900" data-i18n="appName">刷题考试助手</span>
             </div>
             
             <div class="flex items-center gap-4">
-                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium">
+                <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-sm font-medium min-w-[3.5rem] justify-center">
                     <span>💎</span>
                     <span data-visitor-credits>--</span>
                 </div>
@@ -260,21 +260,12 @@
                 </div>
                 <!-- 用户登录/头像 -->
                 <div id="userSection" class="flex items-center gap-2">
-                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center gap-2 hover:bg-emerald-50">
-                        <svg class="w-5 h-5" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
+                    <button id="loginBtn" onclick="handleLogin()" class="hidden px-4 py-2 text-sm rounded-xl liquid-btn font-medium text-slate-700 hover:bg-emerald-50">
                         <span data-i18n="login">登录</span>
                     </button>
                     <div id="userMenu" class="hidden relative">
-                        <button onclick="toggleUserDropdown()" class="flex items-center gap-2 p-2 rounded-xl liquid-btn h-10">
-                            <img id="userAvatar" src="" alt="Avatar" class="w-8 h-8 rounded-full bg-gray-200">
-                            <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                            </svg>
+                        <button onclick="toggleUserDropdown()" class="cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-center">
+                            <img id="userAvatar" src="" alt="Avatar" class="w-9 h-9 md:w-8 md:h-8 rounded-full bg-gray-200 object-cover">
                         </button>
                         <div id="userDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50">
                             <div class="px-4 py-3 border-b border-slate-100">
@@ -292,7 +283,7 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 slide-in">
-        <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+        <div class="mb-6 flex flex-row items-center justify-between gap-3">
             <h2 class="text-xl sm:text-2xl font-bold text-slate-900" data-i18n="manageHeader">我的题库</h2>
             <div class="flex space-x-3">
                 <button onclick="importBank()" class="px-3 py-2 sm:px-4 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors flex items-center text-slate-700 font-medium shadow-sm text-sm sm:text-base">
@@ -323,7 +314,7 @@
 
         <!-- 我的云端题库 -->
         <div class="mt-12">
-            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
+            <div class="mb-6 flex flex-row items-center justify-between gap-3">
                 <h2 class="text-xl sm:text-2xl font-bold text-slate-900" data-i18n="cloudBanks">我的云端题库</h2>
             </div>
             <div id="cloudBankList" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -507,7 +498,9 @@
                 cloudDeleteSuccess: '删除成功',
                 confirmDeleteCloud: '确定要删除云端题库吗？本地副本将保留。',
                 confirmDeleteCloudAndLocal: '同时删除本地副本吗？',
-                login: '登录'
+                login: '登录',
+                uploadStudyMaterial: '上传学习资料',
+                creditLoginToView: '登录查看'
             },
             'zh-TW': {
                 appName: '請出題',
@@ -555,7 +548,9 @@
                 cloudDeleteSuccess: '刪除成功',
                 confirmDeleteCloud: '確定要刪除雲端題庫嗎？本地副本將保留。',
                 confirmDeleteCloudAndLocal: '同時刪除本地副本嗎？',
-                login: '登入'
+                login: '登入',
+                uploadStudyMaterial: '上傳學習資料',
+                creditLoginToView: '登入查看'
             },
             en: {
                 appName: 'GPA4.0',
@@ -603,7 +598,9 @@
                 cloudDeleteSuccess: 'Delete successful',
                 confirmDeleteCloud: 'Delete this cloud bank? Local copy will be kept.',
                 confirmDeleteCloudAndLocal: 'Also delete local copy?',
-                login: 'Login'
+                login: 'Login',
+                uploadStudyMaterial: 'Upload Study Material',
+                creditLoginToView: 'Login to view'
             },
             ko: {
                 appName: 'GPA4.0',
@@ -633,7 +630,9 @@
                 restartConfirmText: '이전 진행 상황이 삭제됩니다. 다시 시작하시겠습니까?',
                 donateBannerText: '우리는 비영리 묵료 웹사이트입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
                 donateBannerTextMobile: '기부로 후원해 주세요.',
-                supportUs: '후원하기'
+                supportUs: '후원하기',
+                uploadStudyMaterial: '학습 자료 업로드',
+                creditLoginToView: '로그인하여 확인'
             }
         };
 
@@ -670,6 +669,8 @@
                 currentLang === 'zh' ? '简' : 
                 currentLang === 'zh-TW' ? '繁' : 
                 currentLang === 'ko' ? '한' : 'En';
+            if (typeof Visitor !== 'undefined') Visitor._updateUI();
+            updateLogo();
         }
 
         function toggleLangDropdown() {
@@ -694,6 +695,18 @@
                 }
             }
         }
+
+        function updateLogo() {
+            const logo = document.getElementById('navLogo');
+            if (!logo) return;
+            const isMobile = window.innerWidth < 768;
+            if (isMobile) {
+                logo.src = currentLang === 'zh' ? 'resources/chineselogo.png' : 'resources/ENlogo.png';
+            } else {
+                logo.src = 'resources/logo.png';
+            }
+        }
+        window.addEventListener('resize', updateLogo);
 
         async function loadBankList() {
             const banks = await db.questionBanks.toArray();

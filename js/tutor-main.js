@@ -105,7 +105,9 @@ const TutorApp = {
             errInsufficientCredits: '积分不足，请登录或邀请好友获取更多积分',
             errVisitorBlocked: '访客账号已被限制',
             errVisitorNotFound: '访客信息不存在，请刷新页面',
-            errQuotaExceeded: '额度已用完，请明日再来'
+            errQuotaExceeded: '额度已用完，请明日再来',
+            uploadStudyMaterial: '上传学习资料',
+            creditLoginToView: '登录查看'
         },
         'zh-TW': {
             appName: '知識導學',
@@ -172,7 +174,9 @@ const TutorApp = {
             errInsufficientCredits: '積分不足，請登入或邀請好友獲取更多積分',
             errVisitorBlocked: '訪客帳號已被限制',
             errVisitorNotFound: '訪客資訊不存在，請重新整理頁面',
-            errQuotaExceeded: '額度已用完，請明日再來'
+            errQuotaExceeded: '額度已用完，請明日再來',
+            uploadStudyMaterial: '上傳學習資料',
+            creditLoginToView: '登入查看'
         },
         en: {
             appName: 'Knowledge Tutor',
@@ -334,6 +338,7 @@ const TutorApp = {
 
     init() {
         this.updateLanguage();
+        updateLogo();
         this.setupDropZone();
         this.setupEventListeners();
         TutorGraph.init('graphContainer');
@@ -364,6 +369,7 @@ const TutorApp = {
                 customPromptCountEl.textContent = this.value.length;
             });
         }
+        window.addEventListener('resize', updateLogo);
     },
 
     updateLanguage() {
@@ -384,6 +390,8 @@ const TutorApp = {
         document.querySelectorAll('.lang-option').forEach(opt => {
             opt.classList.toggle('active', opt.getAttribute('data-lang') === this.currentLang);
         });
+        if (typeof Visitor !== 'undefined') Visitor._updateUI();
+        updateLogo();
     },
 
     setupDropZone() {
@@ -455,6 +463,11 @@ const TutorApp = {
                         <span class="text-sm text-slate-700 truncate">${file.name}</span>
                         <span class="text-xs text-slate-400 ml-2 flex-shrink-0">${(file.size / 1024 / 1024).toFixed(2)}MB</span>
                     </div>
+                    <button onclick="clearFile()" class="text-red-500 hover:text-red-700 ml-2" title="清除">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
                 </div>
             `;
             fileList.classList.remove('hidden');
@@ -485,7 +498,7 @@ const TutorApp = {
     async handleOfficeFile(file) {
         const converter = new DocumentConverter();
         await converter.loadFont();
-        const pdfBlob = await converter.convert(file);
+        const pdfBlob = await converter.convert(file, { download: false });
         const pdfFileName = file.name.replace(/\.[^/.]+$/, '.pdf');
         const pdfFile = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
         await this.handlePdfFile(pdfFile);
@@ -785,6 +798,20 @@ const TutorApp = {
         if (fileList) fileList.classList.add('hidden');
     },
 
+    clearFile() {
+        this.currentFile = null;
+        this.processedPdfBytes = null;
+        this.processedFileName = '';
+        this.processedPageCount = 0;
+        this.markerFileName = '';
+        this.fileProcessError = null;
+        this.fileProcessPromise = null;
+        const fileList = document.getElementById('fileList');
+        if (fileList) fileList.classList.add('hidden');
+        const input = document.getElementById('fileInput');
+        if (input) input.value = '';
+    },
+
     async loadGraph(graphId) {
         graphId = Number(graphId);
         console.log('[TutorApp] loadGraph called with id:', graphId);
@@ -1038,3 +1065,22 @@ function detectBrowserLanguage() {
 document.addEventListener('DOMContentLoaded', () => {
     TutorApp.init();
 });
+
+function updateLogo() {
+    const logo = document.getElementById('navLogo');
+    if (!logo) return;
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+        logo.src = TutorApp.currentLang === 'zh' ? 'resources/chineselogo.png' : 'resources/ENlogo.png';
+    } else {
+        logo.src = 'resources/logo.png';
+    }
+}
+
+// Global helpers
+function t(key, ...args) {
+    return TutorApp.t(key, ...args);
+}
+window.clearFile = function() {
+    TutorApp.clearFile();
+};

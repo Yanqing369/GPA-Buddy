@@ -1172,7 +1172,7 @@
                     <div class="space-y-2">
                         <input type="email" id="loginEmailInput" data-i18n-placeholder="emailPlaceholder" placeholder="请输入邮箱地址" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white/80 text-slate-800">
                         <div class="flex gap-2">
-                            <input type="text" id="loginCodeInput" data-i18n-placeholder="codePlaceholder" placeholder="请输入验证码" maxlength="6" inputmode="numeric" pattern="[0-9]*" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white/80 text-slate-800">
+                            <input type="text" id="loginCodeInput" data-i18n-placeholder="codePlaceholder" placeholder="请输入验证码" maxlength="9" class="flex-1 px-3 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white/80 text-slate-800">
                             <button id="sendCodeBtn" onclick="sendEmailCode()" class="px-3 py-2 rounded-xl liquid-btn text-xs font-medium text-slate-700 whitespace-nowrap" data-i18n="sendCode">获取验证码</button>
                         </div>
                         <button onclick="verifyEmailCode()" class="w-full py-2.5 rounded-xl liquid-btn-emerald text-white text-sm font-semibold spring-active" data-i18n="login">登录</button>
@@ -1300,6 +1300,17 @@
                 console.log('Login success from URL, storing token');
                 authToken = token;
                 localStorage.setItem('auth_token', token);
+                // 暂存合并金额（供 loadUserInfo 成功后显示 toast）
+                const merged = parseInt(urlParams.get('merged') || '0');
+                if (merged > 0) {
+                    window.__pendingMergedAmount = merged;
+                }
+                // 暂存邀请奖励（供 loadUserInfo 成功后显示 toast）
+                const inviteBonus = parseInt(urlParams.get('inviteBonus') || '0');
+                if (inviteBonus > 0) {
+                    window.__pendingInviteBonus = inviteBonus;
+                    window.__pendingInviterName = decodeURIComponent(urlParams.get('inviterName') || '');
+                }
                 // 清除URL参数
                 window.history.replaceState({}, document.title, window.location.pathname);
                 loadUserInfo();
@@ -1338,6 +1349,18 @@
                     const total = bal ? (bal.amount || 0) + (bal.freeQuotaLeft || 0) : 0;
                     if (typeof Visitor !== 'undefined') Visitor.setUserBalance(total);
                     showToast(`${t('loginSuccess')}，${currentUser.name || currentUser.email}!`, 'success');
+                    if (window.__pendingMergedAmount) {
+                        showToast(`${t('creditsMerged')} +${window.__pendingMergedAmount}`, 'success');
+                        delete window.__pendingMergedAmount;
+                    }
+                    if (window.__pendingInviteBonus) {
+                        setTimeout(() => {
+                            const msg = t('inviteAccepted', window.__pendingInviterName, window.__pendingInviteBonus);
+                            showToast(msg, 'success');
+                            delete window.__pendingInviteBonus;
+                            delete window.__pendingInviterName;
+                        }, 1500);
+                    }
                 } else {
                     const errorText = await res.text();
                     console.error('Failed to load user info:', res.status, errorText);
@@ -1509,7 +1532,7 @@
                 showToast(t('invalidEmail'), 'error');
                 return;
             }
-            if (!/^\d{6}$/.test(code)) {
+            if (!/^[a-zA-Z0-9]{6,9}$/.test(code)) {
                 showToast(t('invalidCode'), 'error');
                 return;
             }
@@ -1535,6 +1558,15 @@
                     const total = bal ? (bal.amount || 0) + (bal.freeQuotaLeft || 0) : 0;
                     if (typeof Visitor !== 'undefined') Visitor.setUserBalance(total);
                     showToast(`${t('loginSuccess')}，${data.user.name || data.user.email}!`, 'success');
+                    if (data.mergedAmount && data.mergedAmount > 0) {
+                        showToast(`${t('creditsMerged')} +${data.mergedAmount}`, 'success');
+                    }
+                    if (data.inviteBonus && data.inviteBonus > 0) {
+                        setTimeout(() => {
+                            const msg = t('inviteAccepted', data.inviterName, data.inviteBonus);
+                            showToast(msg, 'success');
+                        }, 1500);
+                    }
                     // 清空输入
                     document.getElementById('loginEmailInput').value = '';
                     document.getElementById('loginCodeInput').value = '';
@@ -1653,6 +1685,8 @@
                 logout: '退出登录',
                 loginSuccess: '欢迎回来',
                 logoutSuccess: '已退出登录',
+                creditsMerged: '已将本地点数合并到账户余额',
+                inviteAccepted: '您接受了 {0} 的邀请，获得 +{1} 点数',
                 myBanks: '我的题库',
                 unlimited: '不限次数',
                 localStorage: '所有资料都保存在你的电脑上，不用担心泄露',
@@ -1736,6 +1770,8 @@
                 logout: '登出',
                 loginSuccess: '歡迎回來',
                 logoutSuccess: '已登出',
+                creditsMerged: '已將本機點數合併到帳戶餘額',
+                inviteAccepted: '您接受了 {0} 的邀請，獲得 +{1} 點數',
                 myBanks: '我的題庫',
                 unlimited: '不限次數',
                 localStorage: '所有資料均儲存在你的電腦內，不用擔心外洩',
@@ -1829,6 +1865,8 @@
                 "pwaAndroidStep2": "2. Select Add to Home Screen or Add to Desktop",
                 "loginSuccess": "Welcome back",
                 "logoutSuccess": "Signed out",
+                "creditsMerged": "Local credits merged to account balance",
+                "inviteAccepted": "You accepted {0}'s invitation and received +{1} credits",
                 "myBanks": "My Question Sets",
                 "unlimited": "Unlimited",
                 "localStorage": "All data is stored locally in your browser (IndexedDB)",
@@ -1912,6 +1950,8 @@
                 "pwaAndroidStep2": "2. '홈 화면에 추가' 또는 '바탕 화면에 추가'를 선택하세요",
                 "loginSuccess": "다시 오셔서 환영합니다",
                 "logoutSuccess": "로그아웃 되었습니다",
+                "creditsMerged": "로컬 포인트가 계정 잔액에 합병되었습니다",
+                "inviteAccepted": "{0}의 초대를 수락하여 +{1} 포인트를 받았습니다",
                 "myBanks": "내 문제세트",
                 "unlimited": "무제한",
                 "localStorage": "모든 데이터는 브라우저에 로컬로 저장됩니다 (IndexedDB)",
@@ -1960,8 +2000,14 @@
             }
         };
 
-        function t(key) {
-            return i18n[currentLang]?.[key] || key;
+        function t(key, ...args) {
+            let text = i18n[currentLang]?.[key] || key;
+            if (args.length > 0) {
+                args.forEach((arg, index) => {
+                    text = text.replace(`{${index}}`, arg);
+                });
+            }
+            return text;
         }
 
         function detectBrowserLanguage() {
@@ -2165,8 +2211,8 @@
             if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
             const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (!isMobile) return;
-            // const dismissedAt = localStorage.getItem('pwaDismissedAt');
-            // if (dismissedAt && Date.now() - parseInt(dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
+            const dismissedAt = localStorage.getItem('pwaDismissedAt');
+            if (dismissedAt && Date.now() - parseInt(dismissedAt) < 7 * 24 * 60 * 60 * 1000) return;
             showPWAModal();
         }
         
