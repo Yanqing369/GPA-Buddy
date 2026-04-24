@@ -1544,11 +1544,20 @@ async function saveAndPractice() {
 function enableRefreshProtection() {
     preventRefresh = true;
     window.addEventListener('beforeunload', handleBeforeUnload);
+    // 播放音频保持页面活跃
+    if (!window._genAudio) window._genAudio = new Audio('resources/audio.mp3');
+    window._genAudio.loop = true;
+    window._genAudio.play().catch(() => {});
 }
 
 function disableRefreshProtection() {
     preventRefresh = false;
     window.removeEventListener('beforeunload', handleBeforeUnload);
+    // 停止音频
+    if (window._genAudio) {
+        window._genAudio.pause();
+        window._genAudio.currentTime = 0;
+    }
 }
 
 function handleBeforeUnload(e) {

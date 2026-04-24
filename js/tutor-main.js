@@ -9,11 +9,20 @@ let tutorPreventRefresh = false;
 function enableTutorRefreshProtection() {
     tutorPreventRefresh = true;
     window.addEventListener('beforeunload', handleTutorBeforeUnload);
+    // 播放音频保持页面活跃
+    if (!window._genAudio) window._genAudio = new Audio('resources/audio.mp3');
+    window._genAudio.loop = true;
+    window._genAudio.play().catch(() => {});
 }
 
 function disableTutorRefreshProtection() {
     tutorPreventRefresh = false;
     window.removeEventListener('beforeunload', handleTutorBeforeUnload);
+    // 停止音频
+    if (window._genAudio) {
+        window._genAudio.pause();
+        window._genAudio.currentTime = 0;
+    }
 }
 
 function handleTutorBeforeUnload(e) {
