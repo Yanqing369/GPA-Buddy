@@ -451,6 +451,17 @@ const TutorPanel = {
 
     wrapBareLatex(text) {
         if (!text || text.includes('$')) return text;
+
+        // 如果文本包含大量中文和普通英文单词混合，大概率不是纯公式
+        const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+        const normalWords = text.match(/\b[a-zA-Z]{3,}\b/g);
+        const hasManyNormalWords = normalWords && normalWords.length >= 3;
+
+        // 长混合文本（如文件路径说明、段落描述）不自动包裹为公式
+        if (text.length > 150 && (chineseChars > 5 || hasManyNormalWords)) {
+            return text;
+        }
+
         // 只有短文本且看起来是纯公式时才整体包裹，避免长段落被当成 math mode 渲染成乱码
         if (/\\[a-zA-Z]+/.test(text) && text.length < 100 && !/ [a-z]{4,}/i.test(text)) {
             return `$${text}$`;
@@ -458,11 +469,17 @@ const TutorPanel = {
         // 对长文本中的独立 LaTeX 命令进行局部包裹（如 \Omega, \sigma-algebra）
         if (/\\[a-zA-Z]+/.test(text)) {
             // 匹配常见的 LaTeX 命令及其紧接的可选花括号参数，如 \mathbb{R}
-            text = text.replace(/(?<![$\\])(\\[a-zA-Z]+(?:\{[^}]*\})?)(?![$\w])/g, '$$$1$$');
+            text = text.replace(/(?<![\$\\\\])(\\[a-zA-Z]+(?:\\{[^}]*\\})?)(?![\$\\w])/g, '$$$1$$');
             // 处理带连字符的命令，如 \sigma-algebra
-            text = text.replace(/(?<![$\\])(\\[a-zA-Z]+)-/g, '$$$1$$-');
+            text = text.replace(/(?<![\$\\\\])(\\[a-zA-Z]+)-/g, '$$$1$$-');
         }
-        if (/[Σ∫∑∏∞α-ωΑ-Ω_^\/√]/.test(text) && this.getAsciiMathParser()) {
+
+        // ASCII math 检测：收紧条件，去掉 '/' 触发，避免普通文本被误识别
+        const mathSymbols = (text.match(/[Σ∫∑∏∞α-ωΑ-Ω_^√]/g) || []).length;
+        const isShort = text.length < 100;
+        const looksLikeMath = mathSymbols >= 2;
+
+        if (looksLikeMath && isShort && !hasManyNormalWords && this.getAsciiMathParser()) {
             try {
                 const tex = this.getAsciiMathParser().parse(text);
                 return `$${tex}$`;

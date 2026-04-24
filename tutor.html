@@ -40,6 +40,17 @@
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
+
+        /* KaTeX 自动换行 */
+        .katex {
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .katex-display {
+            overflow-x: auto;
+            max-width: 100%;
+            padding: 0.5em 0;
+        }
         .glass-nav {
             background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,251,235,0.85) 50%, rgba(254,252,232,0.88) 100%);
             backdrop-filter: blur(24px) saturate(200%);

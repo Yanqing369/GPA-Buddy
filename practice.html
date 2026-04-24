@@ -60,6 +60,17 @@
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
         }
+
+        /* KaTeX 自动换行 */
+        .katex {
+            white-space: normal !important;
+            word-break: break-word;
+        }
+        .katex-display {
+            overflow-x: auto;
+            max-width: 100%;
+            padding: 0.5em 0;
+        }
         
         /* iOS 风格玻璃拟态 - 液态玻璃 (Liquid Glass) */
         .glass-nav {
@@ -720,13 +731,38 @@
         }
 
         function wrapBareLatex(text) {
-            if (!text || text.includes('$')) return text;
-            // 如果包含标准 LaTeX 命令（如 \frac, \sum 等）且没有被 $ 包裹，直接加 $...$
-            if (/\\[a-zA-Z]+/.test(text)) {
-                return `$${text}$`;
+            if (!text || text.includes('\$')) return text;
+
+            // 如果文本包含大量中文和普通英文单词混合，大概率不是纯公式
+            const chineseChars = (text.match(/[\u4e00-\u9fff]/g) || []).length;
+            const normalWords = text.match(/\b[a-zA-Z]{3,}\b/g);
+            const hasManyNormalWords = normalWords && normalWords.length >= 3;
+
+            // 长混合文本（如文件路径说明、段落描述）不自动包裹为公式
+            if (text.length > 150 && (chineseChars > 5 || hasManyNormalWords)) {
+                return text;
             }
-            // 如果包含明显的 ASCII math 特征符号（下标、上标、求和、积分、希腊字母等），先用 asciimath2tex 转换
-            if (/[Σ∫∑∏∞α-ωΑ-Ω_^\/√]/.test(text) && getAsciiMathParser()) {
+
+            // 如果包含标准 LaTeX 命令（如 \\frac, \\sum 等）且没有被 \$ 包裹
+            if (/\\[a-zA-Z]+/.test(text)) {
+                // 只有短文本且看起来是纯公式时才整体包裹
+                if (text.length < 100 && !/ [a-z]{4,}/i.test(text)) {
+                    return `$${text}$`;
+                }
+                // 对长文本中的独立 LaTeX 命令进行局部包裹（如 \\Omega, \\mathbb{R}）
+                text = text.replace(/(?<![\$\\])(\\[a-zA-Z]+(?:\{[^}]*\})?)(?![\$\w])/g, '$$$1$$');
+                text = text.replace(/(?<![\$\\])(\\[a-zA-Z]+)-/g, '$$$1$$-');
+            }
+
+            // ASCII math 检测：收紧条件，避免普通文本被误识别
+            // 1. 去掉 '/' 作为独立触发条件（文件路径等普通文本常含 /）
+            // 2. 要求有明确的数学符号（Σ∫∑∏∞α-ωΑ-Ω_^√）
+            // 3. 短文本优先，避免长段落被整体转换
+            const mathSymbols = (text.match(/[Σ∫∑∏∞α-ωΑ-Ω_^√]/g) || []).length;
+            const isShort = text.length < 100;
+            const looksLikeMath = mathSymbols >= 2;
+
+            if (looksLikeMath && isShort && !hasManyNormalWords && getAsciiMathParser()) {
                 try {
                     const tex = getAsciiMathParser().parse(text);
                     return `$${tex}$`;
@@ -734,6 +770,7 @@
                     return text;
                 }
             }
+
             return text;
         }
 
