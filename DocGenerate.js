@@ -1530,7 +1530,8 @@ async function saveAndPractice() {
         
         showToast(t('saveSuccess'), 'success');
         
-        // Donation dialog removed
+        // 跳转到练习页面
+        window.location.href = `practice.html?id=${id}`;
     } catch (err) {
         console.error('Save error:', err);
         showToast('Save failed: ' + err.message, 'error');
