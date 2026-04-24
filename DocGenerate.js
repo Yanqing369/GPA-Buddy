@@ -150,7 +150,7 @@ const i18n = {
         totalQuestionsHint: '以上仅显示前20题预览，共生成 {0} 题',
         generateCostText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，欢迎捐款支持',
         donate: '捐款',
-        donateBannerText: '生成一次题库的成本约为 0.5 元，如果本网站对你有帮助，可以捐款支持我们',
+        donateBannerText: '测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利',
         supportUs: '支持我们',
         donateDialogTitle: '支持我们',
         donateDialogMessage: '如果你觉得本网站有用，欢迎捐款支持，帮我们活到下学期',
@@ -226,7 +226,7 @@ const i18n = {
         totalQuestionsHint: '以上僅顯示前20題預覽，共生成 {0} 題',
         generateCostText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，歡迎捐款支持',
         donate: '捐款',
-        donateBannerText: '生成一次題庫的成本約為 0.5 港幣，如果本網站對你有幫助，可以捐款支持我們',
+        donateBannerText: '測試期間（2026年9월 1일 이전）所有功能免費開放，祝大家考試順利',
         supportUs: '支持我們',
         donateDialogTitle: '支持我們',
         donateDialogMessage: '如果你覺得本網站有用，歡迎捐款支持，幫我們活到下學期',
@@ -302,7 +302,7 @@ const i18n = {
         totalQuestionsHint: 'Showing first 20 questions preview, {0} questions generated in total',
         generateCostText: 'Each question bank generation costs about 0.5 HKD. If this site helps you, please consider donating.',
         donate: 'Donate',
-        donateBannerText: 'Each generation costs 0.5 HKD. If this site helps you, please consider donating to support us.',
+        donateBannerText: 'All features are free during the beta period (before Sep 1, 2026). Good luck on your exams!',
         supportUs: 'Support Us',
         donateDialogTitle: 'Support Us',
         donateDialogMessage: 'If you find this site helpful, please consider donating to help us survive until next semester.',
@@ -378,7 +378,7 @@ const i18n = {
         totalQuestionsHint: '처음 20문제 미리보기, 총 {0}문제 생성됨',
         generateCostText: '문제은행 생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부를 고려해 주세요.',
         donate: '기부',
-        donateBannerText: '생성 1회 비용은 약 0.5 HKD입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
+        donateBannerText: '테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 시험 잘 보세요!',
         supportUs: '후원하기',
         donateDialogTitle: '후원하기',
         donateDialogMessage: '이 사이트가 도움이 되셨다면 기부로 후원해 주세요. 다음 학기까지 운영할 수 있도록 도와주세요.',
@@ -1530,47 +1530,14 @@ async function saveAndPractice() {
         
         showToast(t('saveSuccess'), 'success');
         
-        // 显示捐款提示对话框
-        showDonateDialog(id);
+        // Donation dialog removed
     } catch (err) {
         console.error('Save error:', err);
         showToast('Save failed: ' + err.message, 'error');
     }
 }
 
-// 显示捐款提示对话框
-function showDonateDialog(bankId) {
-    // 创建对话框元素
-    const dialog = document.createElement('div');
-    dialog.id = 'donateDialog';
-    dialog.className = 'fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50';
-    dialog.innerHTML = `
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-6 transform transition-all scale-100 animate-fade-in">
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                    </svg>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800 mb-2">${t('donateDialogTitle')}</h3>
-                <p class="text-slate-600 text-base leading-relaxed">${t('donateDialogMessage')}</p>
-            </div>
-            <div class="flex flex-col gap-3">
-                <button id="donateDialogBtn" class="w-full px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-xl transition-all shadow-md hover:shadow-lg">
-                    ${t('donateDialogButton')}
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.body.appendChild(dialog);
-    
-    // 绑定按钮事件
-    document.getElementById('donateDialogBtn').addEventListener('click', function() {
-        document.body.removeChild(dialog);
-        window.location.href = `practice.html?id=${bankId}`;
-    });
-}
+
 
 // ==================== 工具函数 ====================
 function enableRefreshProtection() {

@@ -821,15 +821,12 @@
         <button onclick="location.reload()" class="ml-3 px-4 py-1.5 liquid-btn-red text-red-600 rounded-full text-xs font-bold" data-i18n="refreshPage">刷新页面</button>
     </div>
 
-    <!-- 顶部捐款横幅 -->
+    <!-- 顶部测试期间横幅 -->
     <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-                <span class="hidden sm:inline text-xl">🌱</span>
-                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">欢迎捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="px-4 py-1.5 liquid-btn-emerald text-white text-xs font-bold rounded-full flex-shrink-0 spring-active">
-                    <span data-i18n="supportUs">支持我们</span>
-                </a>
+                <span class="hidden sm:inline text-xl">🎉</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">测试期间所有功能免费开放</span>
             </div>
         </div>
         <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 liquid-btn spring-active z-10 rounded-full p-1.5 text-slate-500 hover:text-slate-700">
@@ -1659,8 +1656,8 @@
 
         const i18n = {
             zh: {
-                donateBannerText: '我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们',
-                donateBannerTextMobile: '欢迎捐款支持我们',
+                donateBannerText: '测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利',
+                donateBannerTextMobile: '测试期间所有功能免费开放',
                 supportUs: '支持我们',
                 appName: '请出题',
                 tutorTitle: '知识导学',
@@ -1744,8 +1741,8 @@
                 ]
             },
             'zh-TW': {
-                donateBannerText: '我們是一個公益模式免費網站。如果本網站對你有幫助，歡迎捐款支持我們',
-                donateBannerTextMobile: '歡迎捐款支持我們',
+                donateBannerText: '測試期間（2026年9月1日前）所有功能免費開放，祝大家考試順利',
+                donateBannerTextMobile: '測試期間所有功能免費開放',
                 supportUs: '支持我們',
                 appName: '請出題',
                 tutorTitle: '知識導學',
@@ -1829,8 +1826,8 @@
                 ]
             },
             en: {
-                "donateBannerText": "We are a free, non-profit website. If this site helps you, please consider donating to support us.",
-                "donateBannerTextMobile": "Consider donating to support us.",
+                "donateBannerText": "All features are free during the beta period (before Sep 1, 2026). Good luck on your exams!",
+                "donateBannerTextMobile": "All features free during beta",
                 "supportUs": "Support Us",
                 "appName": "GPA4.0",
                 "tutorTitle": "Knowledge Tutor",
@@ -1914,8 +1911,8 @@
                 ]
             },
             ko: {
-                "donateBannerText": "우리는 비영리 묵료 웹사이트입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.",
-                "donateBannerTextMobile": "기부로 후원해 주세요.",
+                "donateBannerText": "테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 시험 잘 보세요!",
+                "donateBannerTextMobile": "테스트 기간 모든 기능 묵료",
                 "supportUs": "후원하기",
                 "appName": "GPA4.0",
                 "tutorTitle": "지식 튜터",

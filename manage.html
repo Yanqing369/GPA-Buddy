@@ -208,15 +208,12 @@
 </head>
 <body class="min-h-screen overflow-x-hidden selection:bg-green-200 selection:text-green-900">
 
-    <!-- 顶部捐款横幅 -->
+    <!-- 顶部测试期间横幅 -->
     <div id="donateBanner" class="hidden md:block donate-banner text-emerald-800 py-3 px-4 shadow-sm relative">
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-                <span class="hidden sm:inline text-xl">🌱</span>
-                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">欢迎捐款支持我们</span>
-                <a href="donate.html" target="_blank" class="px-4 py-1.5 liquid-btn-emerald text-white text-xs font-bold rounded-full flex-shrink-0 spring-active">
-                    <span data-i18n="supportUs">支持我们</span>
-                </a>
+                <span class="hidden sm:inline text-xl">🎉</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">测试期间所有功能免费开放</span>
             </div>
         </div>
         <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 liquid-btn spring-active z-10 rounded-full p-1.5 text-slate-500 hover:text-slate-700">
@@ -478,8 +475,8 @@
                 toastSuccess: '操作成功',
                 restartConfirmTitle: '重新开始练习？',
                 restartConfirmText: '之前的练习进度将被清除，确定要重新开始吗？',
-                donateBannerText: '我们是一个公益模式免费网站。如果本网站对你有帮助，欢迎捐款支持我们',
-                donateBannerTextMobile: '欢迎捐款支持我们',
+                donateBannerText: '测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利',
+                donateBannerTextMobile: '测试期间所有功能免费开放',
                 supportUs: '支持我们',
                 uploadToCloud: '上传到云端',
                 cloudBanks: '我的云端题库',
@@ -528,8 +525,8 @@
                 toastSuccess: '操作成功',
                 restartConfirmTitle: '重新開始練習？',
                 restartConfirmText: '之前的練習進度將被清除，確定要重新開始嗎？',
-                donateBannerText: '我們是一個公益模式免費網站。如果本網站對你有幫助，歡迎捐款支持我們',
-                donateBannerTextMobile: '歡迎捐款支持我們',
+                donateBannerText: '測試期間（2026年9月1日前）所有功能免費開放，祝大家考試順利',
+                donateBannerTextMobile: '測試期間所有功能免費開放',
                 supportUs: '支持我們',
                 uploadToCloud: '上傳到雲端',
                 cloudBanks: '我的雲端題庫',
@@ -578,8 +575,8 @@
                 toastSuccess: 'Operation successful',
                 restartConfirmTitle: 'Restart Practice?',
                 restartConfirmText: 'Previous progress will be cleared. Are you sure you want to restart?',
-                donateBannerText: 'We are a free, non-profit website. If this site helps you, please consider donating to support us.',
-                donateBannerTextMobile: 'Consider donating to support us.',
+                donateBannerText: 'All features are free during the beta period (before Sep 1, 2026). Good luck on your exams!',
+                donateBannerTextMobile: 'All features free during beta',
                 supportUs: 'Support Us',
                 uploadToCloud: 'Upload to Cloud',
                 cloudBanks: 'My Cloud Banks',
@@ -628,8 +625,8 @@
                 toastSuccess: '작업 성공',
                 restartConfirmTitle: '연습을 다시 시작하시겠습니까?',
                 restartConfirmText: '이전 진행 상황이 삭제됩니다. 다시 시작하시겠습니까?',
-                donateBannerText: '우리는 비영리 묵료 웹사이트입니다. 이 사이트가 도움이 된다면 기부로 후원해 주세요.',
-                donateBannerTextMobile: '기부로 후원해 주세요.',
+                donateBannerText: '테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 시험 잘 보세요!',
+                donateBannerTextMobile: '테스트 기간 모든 기능 묵료',
                 supportUs: '후원하기',
                 uploadStudyMaterial: '학습 자료 업로드',
                 creditLoginToView: '로그인하여 확인'
@@ -1195,14 +1192,6 @@
         function closeDonateBanner() {
             const banner = document.getElementById('donateBanner');
             if (banner) {
-                banner.style.display = 'none';
-                localStorage.setItem('donateBannerClosed', 'true');
-            }
-        }
-
-        function checkDonateBanner() {
-            const banner = document.getElementById('donateBanner');
-            if (banner && localStorage.getItem('donateBannerClosed') === 'true') {
                 banner.style.display = 'none';
             }
         }
