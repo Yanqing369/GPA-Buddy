@@ -50,46 +50,122 @@ const fileViewer = (function() {
         };
     }
 
-    // =================== PDF 渲染（使用 iframe 原生引擎） ===================
+    // =================== PDF 渲染（使用 pdf.js canvas，支持中文 CMap） ===================
     async function renderPDF(container, controls) {
         const pdfData = new Uint8Array(currentSourceFile.data);
         const targetPage = currentSourceFile.page || 1;
         
-        // 创建 iframe 显示 PDF，使用 #page= 参数指定页面
-        const blob = new Blob([pdfData], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        const pageUrl = `${url}#page=${targetPage}`;
+        // 使用 pdf.js 加载 PDF，配置 CMap 以支持中文 CID 字体
+        const loadingTask = pdfjsLib.getDocument({
+            data: pdfData,
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true,
+            standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/standard_fonts/',
+        });
         
-        // 创建 iframe 容器
-        const iframeContainer = document.createElement('div');
-        iframeContainer.className = 'pdf-iframe-container';
-        iframeContainer.style.width = '100%';
-        iframeContainer.style.height = '70vh';
-        iframeContainer.style.overflow = 'hidden';
-        iframeContainer.style.borderRadius = '8px';
-        iframeContainer.style.border = targetPage > 1 ? '4px solid #f59e0b' : 'none';
+        const pdf = await loadingTask.promise;
+        const totalPages = pdf.numPages;
+        let currentPage = Math.min(Math.max(1, targetPage), totalPages);
         
-        // 创建 iframe
-        const iframe = document.createElement('iframe');
-        iframe.src = pageUrl;
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
-        iframe.style.border = 'none';
+        // 创建 canvas 容器
+        const canvas = document.createElement('canvas');
+        canvas.style.display = 'block';
+        canvas.style.margin = '0 auto';
+        canvas.style.maxWidth = '100%';
         
-        iframeContainer.appendChild(iframe);
-        container.appendChild(iframeContainer);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'pdf-canvas-wrapper bg-white rounded-lg overflow-auto flex justify-center';
+        wrapper.style.maxHeight = '70vh';
+        wrapper.style.borderRadius = '8px';
+        wrapper.appendChild(canvas);
+        container.appendChild(wrapper);
         
-        // 显示页码信息
+        // 页码信息
         const pageInfo = document.createElement('div');
+        pageInfo.id = 'pdfPageInfo';
         pageInfo.className = 'text-center text-sm text-slate-500 mt-3';
-        pageInfo.textContent = `第 ${targetPage} 页`;
         container.appendChild(pageInfo);
         
-        // 清理 URL（iframe 加载完成后）
-        iframe.onload = () => setTimeout(() => URL.revokeObjectURL(url), 1000);
+        // 渲染单页函数
+        async function renderPage(pageNum) {
+            const page = await pdf.getPage(pageNum);
+            
+            // 根据容器宽度计算合适的缩放比例（移动端自适应）
+            const wrapperWidth = wrapper.clientWidth || 600;
+            const rawViewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(1.5, (wrapperWidth - 32) / rawViewport.width);
+            const viewport = page.getViewport({ scale });
+            
+            // 处理设备像素比，保证 Retina 屏幕清晰度
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = viewport.width * dpr;
+            canvas.height = viewport.height * dpr;
+            canvas.style.width = viewport.width + 'px';
+            canvas.style.height = viewport.height + 'px';
+            
+            const context = canvas.getContext('2d');
+            context.scale(dpr, dpr);
+            
+            await page.render({
+                canvasContext: context,
+                viewport: viewport
+            }).promise;
+            
+            pageInfo.textContent = `${t('page') || '页'} ${pageNum} / ${totalPages}`;
+            
+            // 目标页高亮边框
+            if (pageNum === targetPage && targetPage > 1) {
+                wrapper.style.border = '4px solid #f59e0b';
+            } else {
+                wrapper.style.border = 'none';
+            }
+        }
         
-        // 清空控制按钮（iframe 自带 PDF 工具栏）
-        controls.innerHTML = '';
+        await renderPage(currentPage);
+        
+        // 添加翻页控件
+        if (totalPages > 1) {
+            controls.innerHTML = `
+                <div class="flex items-center justify-center space-x-4">
+                    <button id="pdfPrevBtn" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <span id="pdfPageNumDisplay" class="font-medium text-slate-700 text-sm">${currentPage} / ${totalPages}</span>
+                    <button id="pdfNextBtn" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                </div>
+            `;
+            
+            const prevBtn = document.getElementById('pdfPrevBtn');
+            const nextBtn = document.getElementById('pdfNextBtn');
+            const pageDisplay = document.getElementById('pdfPageNumDisplay');
+            
+            prevBtn.onclick = async () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    await renderPage(currentPage);
+                    pageDisplay.textContent = `${currentPage} / ${totalPages}`;
+                    prevBtn.disabled = currentPage <= 1;
+                    nextBtn.disabled = currentPage >= totalPages;
+                }
+            };
+            
+            nextBtn.onclick = async () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    await renderPage(currentPage);
+                    pageDisplay.textContent = `${currentPage} / ${totalPages}`;
+                    prevBtn.disabled = currentPage <= 1;
+                    nextBtn.disabled = currentPage >= totalPages;
+                }
+            };
+            
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = currentPage >= totalPages;
+        } else {
+            controls.innerHTML = '';
+        }
     }
 
     // =================== 文本文件渲染 ===================
