@@ -114,7 +114,7 @@ const TutorDB = {
     },
 
     // ==================== 源文件 ====================
-    async saveSourceFile(graphId, name, fileName, markerFileName, data, type = 'application/pdf') {
+    async saveSourceFile(graphId, name, fileName, markerFileName, data, type = 'application/pdf', isConverted = false) {
         await tutorDb.sourceFiles.where('name').equals(name).and(f => f.graphId === graphId).delete();
         if (graphId !== null) {
             await tutorDb.sourceFiles.where('name').equals(name).and(f => f.graphId === null).delete();
@@ -127,6 +127,7 @@ const TutorDB = {
             graphId,
             data,
             type,
+            isConverted,
             createdAt: new Date().toISOString()
         });
     },

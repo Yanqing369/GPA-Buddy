@@ -252,7 +252,7 @@ const TutorApp = {
             errInsufficientCredits: 'Insufficient credits. Please login or invite friends to get more.',
             errVisitorBlocked: 'Visitor account has been restricted.',
             errVisitorNotFound: 'Visitor info not found, please refresh the page.',
-            errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.'
+            errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.', mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it',
         },
         ko: {
             appName: '지식 가이드',
@@ -319,7 +319,7 @@ const TutorApp = {
             errInsufficientCredits: '포인트가 부족합니다. 로그인하거나 친구를 초대하여 더 많은 포인트를 받으세요.',
             errVisitorBlocked: '방문자 계정이 제한되었습니다.',
             errVisitorNotFound: '방문자 정보가 없습니다. 페이지를 새로고침하세요.',
-            errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.'
+            errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.', mobileConvertedTitle: '모바일 미리보기 지원 안 함', mobileConvertedDesc: '이 파일은 다른 형식에서 변환되었습니다. 모바일에서는 원본 PDF만 지원됩니다. 컴퓨터에서 다시 생성해 주세요.', mobileConvertedBtn: '확인',
         }
     },
 
@@ -510,11 +510,11 @@ const TutorApp = {
         const pdfBlob = await converter.convert(file, { download: false });
         const pdfFileName = file.name.replace(/\.[^/.]+$/, '.pdf');
         const pdfFile = new File([pdfBlob], pdfFileName, { type: 'application/pdf' });
-        await this.handlePdfFile(pdfFile);
+        await this.handlePdfFile(pdfFile, true);
     },
 
-    async handlePdfFile(file) {
-        await this.processPdfWithPageMarkers(file);
+    async handlePdfFile(file, isConverted = false) {
+        await this.processPdfWithPageMarkers(file, isConverted);
     },
 
     generateRandomFileName() {
@@ -526,7 +526,7 @@ const TutorApp = {
         return result;
     },
 
-    async processPdfWithPageMarkers(file) {
+    async processPdfWithPageMarkers(file, isConverted = false) {
         const arrayBuffer = await file.arrayBuffer();
         const { PDFDocument, rgb, StandardFonts } = PDFLib;
         const pdfDoc = await PDFDocument.load(arrayBuffer);
@@ -556,7 +556,7 @@ const TutorApp = {
         this.markerFileName = markerFileName;
 
         // 先保存到数据库，待 graphId 生成后再更新关联
-        await TutorDB.saveSourceFile(null, file.name, originalFileName, markerFileName, this.processedPdfBytes, 'application/pdf');
+        await TutorDB.saveSourceFile(null, file.name, originalFileName, markerFileName, this.processedPdfBytes, 'application/pdf', isConverted);
     },
 
     async startGeneration() {

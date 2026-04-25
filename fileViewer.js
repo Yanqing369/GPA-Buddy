@@ -30,6 +30,7 @@ const fileViewer = (function() {
             type: fileRecord.type,
             page: sourceInfo.location,
             locationType: sourceInfo.locationType,
+            isConverted: fileRecord.isConverted || false,
             zip: null,
             totalSlides: 0,
             slideFiles: [],
@@ -50,12 +51,77 @@ const fileViewer = (function() {
         };
     }
 
-    // =================== PDF 渲染（使用 pdf.js canvas，支持中文 CMap） ===================
+    // =================== PDF 渲染路由 ===================
     async function renderPDF(container, controls) {
+        if (currentSourceFile.isConverted) {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                renderMobileConvertedNotice(container);
+                controls.innerHTML = '';
+                return;
+            }
+            renderPDFIframe(container, controls);
+            return;
+        }
+        await renderPDFCanvas(container, controls);
+    }
+
+    // 电脑端：iframe 原生渲染（转换来的 PDF 兼容性好）
+    function renderPDFIframe(container, controls) {
+        const pdfData = new Uint8Array(currentSourceFile.data);
+        const targetPage = currentSourceFile.page || 1;
+        const blob = new Blob([pdfData], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        const pageUrl = `${url}#page=${targetPage}`;
+        
+        const iframeContainer = document.createElement('div');
+        iframeContainer.className = 'pdf-iframe-container';
+        iframeContainer.style.width = '100%';
+        iframeContainer.style.height = '70vh';
+        iframeContainer.style.overflow = 'hidden';
+        iframeContainer.style.borderRadius = '8px';
+        iframeContainer.style.border = targetPage > 1 ? '4px solid #f59e0b' : 'none';
+        
+        const iframe = document.createElement('iframe');
+        iframe.src = pageUrl;
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        iframe.style.border = 'none';
+        
+        iframeContainer.appendChild(iframe);
+        container.appendChild(iframeContainer);
+        
+        const pageInfo = document.createElement('div');
+        pageInfo.className = 'text-center text-sm text-slate-500 mt-3';
+        pageInfo.textContent = `${t('page') || '页'} ${targetPage}`;
+        container.appendChild(pageInfo);
+        
+        iframe.onload = () => setTimeout(() => URL.revokeObjectURL(url), 1000);
+        controls.innerHTML = '';
+    }
+
+    // 手机端：转换来的 PDF 提示弹窗
+    function renderMobileConvertedNotice(container) {
+        container.innerHTML = `
+            <div class="bg-white rounded-xl p-6 max-w-sm mx-auto text-center shadow mt-8">
+                <div class="text-4xl mb-3">📱</div>
+                <h3 class="font-bold text-slate-900 mb-2">${t('mobileConvertedTitle') || '手机端暂不支持查看此文件'}</h3>
+                <p class="text-sm text-slate-500 mb-4">${t('mobileConvertedDesc') || '此文件由其他格式转换而来，手机端只支持查看原生 PDF。请在电脑上重新出题查看。'}</p>
+                <button onclick="window.fileViewer.closeMobileNotice()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors">${t('mobileConvertedBtn') || '知道了'}</button>
+            </div>
+        `;
+    }
+
+    function closeMobileNotice() {
+        document.getElementById('sourceViewerModal')?.classList.add('hidden');
+        clear();
+    }
+
+    // 原生 PDF：pdf.js canvas 渲染
+    async function renderPDFCanvas(container, controls) {
         const pdfData = new Uint8Array(currentSourceFile.data);
         const targetPage = currentSourceFile.page || 1;
         
-        // 使用 pdf.js 加载 PDF，配置 CMap 以支持中文 CID 字体
         const loadingTask = pdfjsLib.getDocument({
             data: pdfData,
             cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
@@ -67,7 +133,6 @@ const fileViewer = (function() {
         const totalPages = pdf.numPages;
         let currentPage = Math.min(Math.max(1, targetPage), totalPages);
         
-        // 创建 canvas 容器
         const canvas = document.createElement('canvas');
         canvas.style.display = 'block';
         canvas.style.margin = '0 auto';
@@ -80,23 +145,18 @@ const fileViewer = (function() {
         wrapper.appendChild(canvas);
         container.appendChild(wrapper);
         
-        // 页码信息
         const pageInfo = document.createElement('div');
         pageInfo.id = 'pdfPageInfo';
         pageInfo.className = 'text-center text-sm text-slate-500 mt-3';
         container.appendChild(pageInfo);
         
-        // 渲染单页函数
         async function renderPage(pageNum) {
             const page = await pdf.getPage(pageNum);
-            
-            // 根据容器宽度计算合适的缩放比例（移动端自适应）
             const wrapperWidth = wrapper.clientWidth || 600;
             const rawViewport = page.getViewport({ scale: 1 });
             const scale = Math.min(1.5, (wrapperWidth - 32) / rawViewport.width);
             const viewport = page.getViewport({ scale });
             
-            // 处理设备像素比，保证 Retina 屏幕清晰度
             const dpr = window.devicePixelRatio || 1;
             canvas.width = viewport.width * dpr;
             canvas.height = viewport.height * dpr;
@@ -113,7 +173,6 @@ const fileViewer = (function() {
             
             pageInfo.textContent = `${t('page') || '页'} ${pageNum} / ${totalPages}`;
             
-            // 目标页高亮边框
             if (pageNum === targetPage && targetPage > 1) {
                 wrapper.style.border = '4px solid #f59e0b';
             } else {
@@ -123,7 +182,6 @@ const fileViewer = (function() {
         
         await renderPage(currentPage);
         
-        // 添加翻页控件
         if (totalPages > 1) {
             controls.innerHTML = `
                 <div class="flex items-center justify-center space-x-4">
@@ -494,6 +552,7 @@ const fileViewer = (function() {
         render,
         download,
         close,
+        closeMobileNotice,
         switchExcelSheet,
         changeSlide
     };

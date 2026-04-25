@@ -1220,7 +1220,7 @@ async function handleOfficeFile(file) {
         
         // 像处理普通 PDF 一样处理：添加页码标记并保存
         // 使用 iframe 原生渲染，即使 ToUnicode CMap 被破坏也能正确显示
-        await processPdfWithPageMarkers(pdfFile);
+        await processPdfWithPageMarkers(pdfFile, true);
         
         const genBtn = document.getElementById('genBtn');
         if (genBtn) genBtn.disabled = false;
@@ -1289,7 +1289,7 @@ function generateRandomFileName() {
     return result;
 }
 
-async function processPdfWithPageMarkers(file) {
+async function processPdfWithPageMarkers(file, isConverted = false) {
     const preview = document.getElementById('pdfPreview');
     if (!preview) return;
     
@@ -1341,6 +1341,7 @@ async function processPdfWithPageMarkers(file) {
         bankId: null,
         data: processedPdfBytes,
         type: 'application/pdf',
+        isConverted,
         createdAt: new Date().toISOString()
     });
     
