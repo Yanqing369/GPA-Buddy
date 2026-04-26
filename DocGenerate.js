@@ -114,10 +114,7 @@ const i18n = {
         errorCode: '错误码',
         errorStatus: '状态',
         errorMessage: '信息',
-        useFallbackModel: '使用备用模型生成',
-        turnstileRequiredTitle: '请完成人机验证',
-        turnstileRequiredDesc: '备用模型生成需要重新完成人机验证，请在页面上完成验证后点击继续。',
-        continue: '继续',
+        switchToTextModel: '切换到纯文本模型',
         customPromptTooLong: '个性化要求不能超过100个字符',
         partialGenerationNotice: '由于AI服务波动，本次仅生成{0}题，不扣除您的点数',
         startGenerate: '开始生成',
@@ -201,10 +198,7 @@ const i18n = {
         errorCode: '錯誤碼',
         errorStatus: '狀態',
         errorMessage: '訊息',
-        useFallbackModel: '使用備用模型生成',
-        turnstileRequiredTitle: '請完成人機驗證',
-        turnstileRequiredDesc: '備用模型生成需要重新完成人機驗證，請在頁面上完成驗證後點擊繼續。',
-        continue: '繼續',
+        switchToTextModel: '切換到純文字模型',
         customPromptTooLong: '個性化要求不能超過100個字符',
         partialGenerationNotice: '由於AI服務波動，本次僅生成{0}題，不扣除您的點數',
         startGenerate: '開始生成',
@@ -288,10 +282,7 @@ const i18n = {
         errorCode: 'Error Code',
         errorStatus: 'Status',
         errorMessage: 'Message',
-        useFallbackModel: 'Use Backup Model',
-        turnstileRequiredTitle: 'Please Complete Human Verification',
-        turnstileRequiredDesc: 'Backup model generation requires re-verification. Please complete the verification on the page and click continue.',
-        continue: 'Continue',
+        switchToTextModel: 'Switch to Text Model',
         customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
         partialGenerationNotice: 'Due to AI service fluctuations, only {0} questions were generated this time. No credits deducted.',
         startGenerate: 'Start Generation',
@@ -375,10 +366,7 @@ const i18n = {
         errorCode: '오류 코드',
         errorStatus: '상태',
         errorMessage: '메시지',
-        useFallbackModel: '백업 모델 사용',
-        turnstileRequiredTitle: '보안 인증 완료',
-        turnstileRequiredDesc: '백업 모델 생성을 위해 보안 인증을 다시 완료해야 합니다. 페이지에서 인증을 완료한 후 계속을 클릭하세요.',
-        continue: '계속',
+        switchToTextModel: '텍스트 모델로 전환',
         customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
         partialGenerationNotice: 'AI 서비스 변동으로 인해 이번에 {0}문제만 생성되었습니다. 포인트가 차감되지 않습니다.',
         startGenerate: '생성 시작',
@@ -1832,67 +1820,14 @@ function parseGoogleApiError(message) {
 }
 
 
-async function _doFallback(turnstileToken) {
-    const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
-    const lang = document.getElementById('genLangValue')?.value || 'zh';
-    const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
+async function startFallbackGeneration() {
+    closeErrorModal();
     
     // 切换到纯文本模式
     selectGenMode('text');
     
-    streamingGenerator.showProgressModal(totalCount);
-    streamingGenerator.updateProgressStep(1, 'completed');
-    streamingGenerator.updateProgressStep(2, 'active');
-    
-    try {
-        await streamingGenerator.generateAllWithDeepSeek(currentFiles[0], {
-            questionCount: totalCount,
-            lang: lang,
-            turnstileToken: turnstileToken,
-            customPrompt: customPrompt
-        });
-    } catch (err) {
-        console.error('Fallback generation error:', err);
-        streamingGenerator.handleError(err);
-    }
-}
-
-function showTurnstileModal() {
-    const modal = document.getElementById('turnstileModal');
-    if (modal) modal.classList.remove('hidden');
-}
-
-function closeTurnstileModal() {
-    const modal = document.getElementById('turnstileModal');
-    if (modal) modal.classList.add('hidden');
-}
-
-async function continueFallbackAfterTurnstile() {
-    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
-    if (!turnstileToken) {
-        showToast(t('turnstileRequiredDesc'), 'error');
-        return;
-    }
-    closeTurnstileModal();
-    await _doFallback(turnstileToken);
-}
-
-async function startFallbackGeneration() {
-    closeErrorModal();
-    
-    if (!currentFiles || currentFiles.length === 0) {
-        showToast(t('fillRequired'), 'error');
-        return;
-    }
-    
-    let turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
-    if (!turnstileToken) {
-        if (typeof turnstile !== 'undefined') turnstile.reset();
-        showTurnstileModal();
-        return;
-    }
-    
-    await _doFallback(turnstileToken);
+    // 重置 Turnstile，让用户重新验证后手动点击生成
+    if (typeof turnstile !== 'undefined') turnstile.reset();
 }
 
 function showErrorModal(code, status, message, source = null) {
@@ -1910,7 +1845,7 @@ function showErrorModal(code, status, message, source = null) {
     let buttonsHtml = `<button onclick="closeErrorModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition-colors">${t('confirm')}</button>`;
     if (source === 'vertex') {
         buttonsHtml = `
-            <button onclick="startFallbackGeneration()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">${t('useFallbackModel')}</button>
+            <button onclick="startFallbackGeneration()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">${t('switchToTextModel')}</button>
             ${buttonsHtml}
         `;
     }
@@ -1946,7 +1881,6 @@ window.handlePdfFile = handlePdfFile;
 window.i18n = i18n;
 window.currentLang = currentLang;
 window.startFallbackGeneration = startFallbackGeneration;
-window.continueFallbackAfterTurnstile = continueFallbackAfterTurnstile;
 
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {

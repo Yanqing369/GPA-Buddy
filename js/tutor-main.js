@@ -124,10 +124,7 @@ const TutorApp = {
             errorCode: '错误码',
             errorStatus: '状态',
             errorMessage: '信息',
-            useFallbackModel: '使用备用模型生成',
-            turnstileRequiredTitle: '请完成人机验证',
-            turnstileRequiredDesc: '备用模型生成需要重新完成人机验证，请在页面上完成验证后点击继续。',
-            continue: '继续'
+            switchToTextModel: '切换到纯文本模型'
         },
         'zh-TW': {
             appName: '知識導學',
@@ -202,10 +199,7 @@ const TutorApp = {
             errorCode: '錯誤碼',
             errorStatus: '狀態',
             errorMessage: '訊息',
-            useFallbackModel: '使用備用模型生成',
-            turnstileRequiredTitle: '請完成人機驗證',
-            turnstileRequiredDesc: '備用模型生成需要重新完成人機驗證，請在頁面上完成驗證後點擊繼續。',
-            continue: '繼續'
+            switchToTextModel: '切換到純文字模型'
         },
         en: {
             appName: 'Knowledge Tutor',
@@ -1055,7 +1049,7 @@ const TutorApp = {
         let buttonsHtml = `<button onclick="TutorApp.closeErrorModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition-colors">${this.t('confirm')}</button>`;
         if (source === 'vertex') {
             buttonsHtml = `
-                <button onclick="TutorApp.startFallbackGeneration()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">${this.t('useFallbackModel')}</button>
+                <button onclick="TutorApp.startFallbackGeneration()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">${this.t('switchToTextModel')}</button>
                 ${buttonsHtml}
             `;
         }
@@ -1068,105 +1062,14 @@ const TutorApp = {
         if (modal) modal.classList.add('hidden');
     },
 
-    async _doFallback(turnstileToken) {
-        const lang = document.getElementById('tutorLangValue')?.value || 'en';
-        const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
-        
-        this.isGenerating = true;
-        enableTutorRefreshProtection();
-        this.showProgressModal();
-        
-        const streamCallbacks = {
-            onSkeleton: (data) => {
-                this.updateProgressStep(1, 'completed');
-                this.updateProgressStep(2, 'active');
-                this.renderMiniSkeleton(data);
-                this.createGraphFromSkeleton(data).then(async id => {
-                    this.currentGraphId = id;
-                    this.skeleton = data;
-                    if (this.processedPdfBytes && this.processedFileName) {
-                        const originalFileName = this.processedFileName.replace(/\.pdf$/i, '');
-                        await TutorDB.saveSourceFile(id, this.processedFileName, originalFileName, this.markerFileName, this.processedPdfBytes, 'application/pdf');
-                    }
-                });
-            },
-            onNodeStart: (nodeId, name) => {},
-            onNodeDone: (nodeId, content) => {
-                if (this.currentGraphId) {
-                    TutorDB.saveNodeContent(this.currentGraphId, nodeId, content);
-                }
-                this.lightUpMiniNode(nodeId);
-            },
-            onComplete: () => {
-                this.isGenerating = false;
-                disableTutorRefreshProtection();
-                this.hideProgressModal();
-                if (this.currentGraphId) {
-                    this.showGraphView();
-                    this.loadGraph(this.currentGraphId);
-                    this.showToast(this.t('completed'), 'success');
-                } else {
-                    this.showToast(this.t('networkError'), 'error');
-                }
-            },
-            onError: (msg) => {
-                this.isGenerating = false;
-                disableTutorRefreshProtection();
-                this.hideProgressModal();
-                this.showToast(this.translateBackendError(msg) || this.t('networkError'), 'error');
-            }
-        };
-        
-        try {
-            await this.generateWithDeepSeek(lang, customPrompt, turnstileToken, streamCallbacks);
-        } catch (err) {
-            console.error('Fallback generation error:', err);
-            this.isGenerating = false;
-            disableTutorRefreshProtection();
-            this.hideProgressModal();
-            this.showToast(this.translateBackendError(err.message) || this.t('networkError'), 'error');
-        }
-    },
-
-    showTurnstileModal() {
-        const modal = document.getElementById('turnstileModal');
-        if (modal) modal.classList.remove('hidden');
-    },
-
-    closeTurnstileModal() {
-        const modal = document.getElementById('turnstileModal');
-        if (modal) modal.classList.add('hidden');
-    },
-
-    async continueFallbackAfterTurnstile() {
-        const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
-        if (!turnstileToken) {
-            this.showToast(this.t('turnstileRequiredDesc'), 'error');
-            return;
-        }
-        this.closeTurnstileModal();
-        await this._doFallback(turnstileToken);
-    },
-
     async startFallbackGeneration() {
         this.closeErrorModal();
-        
-        if (!this.currentFile) {
-            this.showToast(this.t('uploadTitle'), 'error');
-            return;
-        }
         
         // 切换到纯文本模式
         this.selectTutorMode('text');
         
-        let turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
-        if (!turnstileToken) {
-            if (typeof turnstile !== 'undefined') turnstile.reset();
-            this.showTurnstileModal();
-            return;
-        }
-        
-        await this._doFallback(turnstileToken);
+        // 重置 Turnstile，让用户重新验证后手动点击生成
+        if (typeof turnstile !== 'undefined') turnstile.reset();
     },
 
     showToast(message, type = 'info') {
