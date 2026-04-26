@@ -118,7 +118,13 @@ const TutorApp = {
             errVisitorNotFound: '访客信息不存在，请刷新页面',
             errQuotaExceeded: '额度已用完，请明日再来',
             uploadStudyMaterial: '上传学习资料',
-            creditLoginToView: '登录查看'
+            creditLoginToView: '登录查看',
+            generationFailed: '生成失败',
+            confirm: '确定',
+            errorCode: '错误码',
+            errorStatus: '状态',
+            errorMessage: '信息',
+            useFallbackModel: '使用备用模型生成'
         },
         'zh-TW': {
             appName: '知識導學',
@@ -187,7 +193,13 @@ const TutorApp = {
             errVisitorNotFound: '訪客資訊不存在，請重新整理頁面',
             errQuotaExceeded: '額度已用完，請明日再來',
             uploadStudyMaterial: '上傳學習資料',
-            creditLoginToView: '登入查看'
+            creditLoginToView: '登入查看',
+            generationFailed: '生成失敗',
+            confirm: '確定',
+            errorCode: '錯誤碼',
+            errorStatus: '狀態',
+            errorMessage: '訊息',
+            useFallbackModel: '使用備用模型生成'
         },
         en: {
             appName: 'Knowledge Tutor',
@@ -660,11 +672,11 @@ const TutorApp = {
                     this.showToast(this.t('networkError'), 'error');
                 }
             },
-            onError: (msg) => {
+            onError: (msg, source) => {
                 this.isGenerating = false;
                 disableTutorRefreshProtection();
                 this.hideProgressModal();
-                this.showToast(this.translateBackendError(msg) || this.t('networkError'), 'error');
+                this.showErrorModal(msg, source);
             },
             onProgress: (current, total) => {
                 if (total && !nodeCount) nodeCount = total;
@@ -1024,6 +1036,101 @@ const TutorApp = {
             this.showUploadView();
         }
         this.loadRecentGraphs();
+    },
+
+    showErrorModal(message, source = null) {
+        const modal = document.getElementById('errorModal');
+        const content = document.getElementById('errorModalContent');
+        const actions = document.getElementById('errorModalActions');
+        if (!modal || !content || !actions) return;
+        
+        content.innerHTML = `<p class="text-slate-700">${escapeHtml(message)}</p>`;
+        
+        let buttonsHtml = `<button onclick="TutorApp.closeErrorModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition-colors">${this.t('confirm')}</button>`;
+        if (source === 'vertex') {
+            buttonsHtml = `
+                <button onclick="TutorApp.startFallbackGeneration()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">${this.t('useFallbackModel')}</button>
+                ${buttonsHtml}
+            `;
+        }
+        actions.innerHTML = buttonsHtml;
+        modal.classList.remove('hidden');
+    },
+
+    closeErrorModal() {
+        const modal = document.getElementById('errorModal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    async startFallbackGeneration() {
+        this.closeErrorModal();
+        
+        if (!this.currentFile) {
+            this.showToast(this.t('uploadTitle'), 'error');
+            return;
+        }
+        
+        const lang = document.getElementById('tutorLangValue')?.value || 'en';
+        const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
+        const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
+        
+        // 切换到纯文本模式
+        this.selectTutorMode('text');
+        
+        this.isGenerating = true;
+        enableTutorRefreshProtection();
+        this.showProgressModal();
+        
+        const streamCallbacks = {
+            onSkeleton: (data) => {
+                this.updateProgressStep(1, 'completed');
+                this.updateProgressStep(2, 'active');
+                this.renderMiniSkeleton(data);
+                this.createGraphFromSkeleton(data).then(async id => {
+                    this.currentGraphId = id;
+                    this.skeleton = data;
+                    if (this.processedPdfBytes && this.processedFileName) {
+                        const originalFileName = this.processedFileName.replace(/\.pdf$/i, '');
+                        await TutorDB.saveSourceFile(id, this.processedFileName, originalFileName, this.markerFileName, this.processedPdfBytes, 'application/pdf');
+                    }
+                });
+            },
+            onNodeStart: (nodeId, name) => {},
+            onNodeDone: (nodeId, content) => {
+                if (this.currentGraphId) {
+                    TutorDB.saveNodeContent(this.currentGraphId, nodeId, content);
+                }
+                this.lightUpMiniNode(nodeId);
+            },
+            onComplete: () => {
+                this.isGenerating = false;
+                disableTutorRefreshProtection();
+                this.hideProgressModal();
+                if (this.currentGraphId) {
+                    this.showGraphView();
+                    this.loadGraph(this.currentGraphId);
+                    this.showToast(this.t('completed'), 'success');
+                } else {
+                    this.showToast(this.t('networkError'), 'error');
+                }
+            },
+            onError: (msg) => {
+                this.isGenerating = false;
+                disableTutorRefreshProtection();
+                this.hideProgressModal();
+                this.showToast(this.translateBackendError(msg) || this.t('networkError'), 'error');
+            }
+        };
+        
+        try {
+            await this.generateWithDeepSeek(lang, customPrompt, turnstileToken, streamCallbacks);
+        } catch (err) {
+            console.error('Fallback generation error:', err);
+            this.isGenerating = false;
+            disableTutorRefreshProtection();
+            this.hideProgressModal();
+            this.showToast(this.translateBackendError(err.message) || this.t('networkError'), 'error');
+        }
     },
 
     showToast(message, type = 'info') {

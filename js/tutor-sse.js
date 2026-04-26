@@ -83,7 +83,7 @@ const TutorSSE = {
                     if (callbacks.onComplete) callbacks.onComplete();
                     break;
                 case 'error':
-                    if (callbacks.onError) callbacks.onError(data.message);
+                    if (callbacks.onError) callbacks.onError(data.message, data.source);
                     break;
                 case 'progress':
                     if (callbacks.onProgress) callbacks.onProgress(data.current, data.total);

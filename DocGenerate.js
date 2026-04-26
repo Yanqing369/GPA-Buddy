@@ -110,6 +110,11 @@ const i18n = {
         generateMode: '生成模式',
         modeMultimodal: '图文',
         modeText: '纯文本',
+        confirm: '确定',
+        errorCode: '错误码',
+        errorStatus: '状态',
+        errorMessage: '信息',
+        useFallbackModel: '使用备用模型生成',
         customPromptTooLong: '个性化要求不能超过100个字符',
         partialGenerationNotice: '由于AI服务波动，本次仅生成{0}题，不扣除您的点数',
         startGenerate: '开始生成',
@@ -189,6 +194,11 @@ const i18n = {
         generateMode: '生成模式',
         modeMultimodal: '圖文',
         modeText: '純文字',
+        confirm: '確定',
+        errorCode: '錯誤碼',
+        errorStatus: '狀態',
+        errorMessage: '訊息',
+        useFallbackModel: '使用備用模型生成',
         customPromptTooLong: '個性化要求不能超過100個字符',
         partialGenerationNotice: '由於AI服務波動，本次僅生成{0}題，不扣除您的點數',
         startGenerate: '開始生成',
@@ -268,6 +278,11 @@ const i18n = {
         generateMode: 'Generation Mode',
         modeMultimodal: 'Multimodal',
         modeText: 'Text Only',
+        confirm: 'OK',
+        errorCode: 'Error Code',
+        errorStatus: 'Status',
+        errorMessage: 'Message',
+        useFallbackModel: 'Use Backup Model',
         customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
         partialGenerationNotice: 'Due to AI service fluctuations, only {0} questions were generated this time. No credits deducted.',
         startGenerate: 'Start Generation',
@@ -347,6 +362,11 @@ const i18n = {
         generateMode: '생성 모드',
         modeMultimodal: '멀티모달',
         modeText: '텍스트 전용',
+        confirm: '확인',
+        errorCode: '오류 코드',
+        errorStatus: '상태',
+        errorMessage: '메시지',
+        useFallbackModel: '백업 모델 사용',
         customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
         partialGenerationNotice: 'AI 서비스 변동으로 인해 이번에 {0}문제만 생성되었습니다. 포인트가 차감되지 않습니다.',
         startGenerate: '생성 시작',
@@ -694,7 +714,7 @@ class StreamingQuestionGenerator {
 
                                 case 'error':
                                     console.error('[DEBUG] Received error:', data.message);
-                                    this.handleError(new Error(data.message));
+                                    this.handleError(new Error(data.message), data.source);
                                     return;
                             }
                         } catch (e) {
@@ -866,7 +886,7 @@ class StreamingQuestionGenerator {
                                     break;
                                 case 'error':
                                     console.error('[DEBUG] Received error:', data.message);
-                                    this.handleError(new Error(data.message));
+                                    this.handleError(new Error(data.message), data.source);
                                     return;
                             }
                         } catch (e) {
@@ -1198,7 +1218,7 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         }, 500);
     }
 
-    handleError(error) {
+    handleError(error, source = null) {
         console.error('Generation error:', error);
         this.abortControllers.forEach(ctrl => ctrl.abort());
         
@@ -1208,7 +1228,7 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         // 尝试解析 Google API 错误格式
         const googleError = parseGoogleApiError(error.message);
         if (googleError) {
-            showErrorModal(googleError.code, googleError.status, googleError.message);
+            showErrorModal(googleError.code, googleError.status, googleError.message, source);
         } else {
             showToast(translateBackendError(error.message), 'error');
         }
@@ -1799,16 +1819,60 @@ function parseGoogleApiError(message) {
     return null;
 }
 
-function showErrorModal(code, status, message) {
+
+async function startFallbackGeneration() {
+    closeErrorModal();
+    
+    if (!currentFiles || currentFiles.length === 0) {
+        showToast(t('fillRequired'), 'error');
+        return;
+    }
+    
+    const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
+    const lang = document.getElementById('genLangValue')?.value || 'zh';
+    const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
+    
+    // 切换到纯文本模式
+    selectGenMode('text');
+    
+    streamingGenerator.showProgressModal(totalCount);
+    streamingGenerator.updateProgressStep(1, 'completed');
+    streamingGenerator.updateProgressStep(2, 'active');
+    
+    try {
+        await streamingGenerator.generateAllWithDeepSeek(currentFiles[0], {
+            questionCount: totalCount,
+            lang: lang,
+            turnstileToken: turnstileToken,
+            customPrompt: customPrompt
+        });
+    } catch (err) {
+        console.error('Fallback generation error:', err);
+        streamingGenerator.handleError(err);
+    }
+}
+
+function showErrorModal(code, status, message, source = null) {
     const modal = document.getElementById('errorModal');
     const content = document.getElementById('errorModalContent');
-    if (!modal || !content) return;
+    const actions = document.getElementById('errorModalActions');
+    if (!modal || !content || !actions) return;
     
     content.innerHTML = `
-        <p><span class="font-semibold text-slate-800">错误码：</span>${escapeHtml(String(code))}</p>
-        <p><span class="font-semibold text-slate-800">状态：</span>${escapeHtml(status)}</p>
-        <p><span class="font-semibold text-slate-800">信息：</span>${escapeHtml(message)}</p>
+        <p><span class="font-semibold text-slate-800">${t('errorCode')}：</span>${escapeHtml(String(code))}</p>
+        <p><span class="font-semibold text-slate-800">${t('errorStatus')}：</span>${escapeHtml(status)}</p>
+        <p><span class="font-semibold text-slate-800">${t('errorMessage')}：</span>${escapeHtml(message)}</p>
     `;
+    
+    let buttonsHtml = `<button onclick="closeErrorModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition-colors">${t('confirm')}</button>`;
+    if (source === 'vertex') {
+        buttonsHtml = `
+            <button onclick="startFallbackGeneration()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">${t('useFallbackModel')}</button>
+            ${buttonsHtml}
+        `;
+    }
+    actions.innerHTML = buttonsHtml;
     modal.classList.remove('hidden');
 }
 
@@ -1839,6 +1903,7 @@ window.handleOfficeFile = handleOfficeFile;
 window.handlePdfFile = handlePdfFile;
 window.i18n = i18n;
 window.currentLang = currentLang;
+window.startFallbackGeneration = startFallbackGeneration;
 
 // ==================== 初始化 ====================
 document.addEventListener('DOMContentLoaded', () => {
