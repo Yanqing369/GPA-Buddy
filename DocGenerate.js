@@ -1823,7 +1823,8 @@ function parseGoogleApiError(message) {
 async function startFallbackGeneration() {
     closeErrorModal();
     
-    // 切换到纯文本模式
+    // 先解锁纯文本按钮，再自动切换到它
+    unlockGenTextMode();
     selectGenMode('text');
     
     // 重置 Turnstile，让用户重新验证后手动点击生成

@@ -1065,7 +1065,8 @@ const TutorApp = {
     async startFallbackGeneration() {
         this.closeErrorModal();
         
-        // 切换到纯文本模式
+        // 先解锁纯文本按钮，再自动切换到它
+        unlockTutorTextMode();
         this.selectTutorMode('text');
         
         // 重置 Turnstile，让用户重新验证后手动点击生成
@@ -1132,7 +1133,17 @@ function selectTutorMode(mode) {
 
     fastBtn.className = mode === 'fast' ? activeClass : inactiveClass;
     expertBtn.className = mode === 'expert' ? activeClass : inactiveClass;
+    // 纯文本按钮未解锁时不允许手动切换
+    if (textBtn.disabled) return;
     textBtn.className = mode === 'text' ? activeClass : inactiveClass;
+}
+
+function unlockTutorTextMode() {
+    const textBtn = document.getElementById('btnModeText');
+    if (!textBtn) return;
+    textBtn.disabled = false;
+    textBtn.removeAttribute('title');
+    textBtn.onclick = function() { selectTutorMode('text'); };
 }
 
 // 初始化 tutor 语言下拉高亮

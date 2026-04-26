@@ -457,7 +457,7 @@
                                     <span>🖼️</span>
                                     <span data-i18n="modeMultimodal">图文</span>
                                 </button>
-                                <button type="button" onclick="selectGenMode('text')" id="btnGenText" class="flex-1 px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition-all flex items-center justify-center gap-1.5">
+                                <button type="button" id="btnGenText" disabled class="flex-1 px-4 py-1.5 rounded-lg text-sm font-medium text-slate-400 opacity-50 cursor-not-allowed transition-all flex items-center justify-center gap-1.5" title="Vertex 出错后可解锁">
                                     <span>📝</span>
                                     <span data-i18n="modeText">纯文本</span>
                                 </button>
@@ -683,7 +683,17 @@
             const activeClass = 'flex-1 px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-indigo-400 to-blue-500 shadow-sm transition-all flex items-center justify-center gap-1.5';
             const inactiveClass = 'flex-1 px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition-all flex items-center justify-center gap-1.5';
             multiBtn.className = mode === 'multimodal' ? activeClass : inactiveClass;
+            // 纯文本按钮未解锁时不允许手动切换
+            if (textBtn && textBtn.disabled) return;
             textBtn.className = mode === 'text' ? activeClass : inactiveClass;
+        }
+
+        function unlockGenTextMode() {
+            const textBtn = document.getElementById('btnGenText');
+            if (!textBtn) return;
+            textBtn.disabled = false;
+            textBtn.removeAttribute('title');
+            textBtn.onclick = function() { selectGenMode('text'); };
         }
 
         // 扩展 i18n
