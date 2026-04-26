@@ -325,7 +325,7 @@
         <div class="max-w-5xl mx-auto flex items-center justify-center">
             <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
                 <span class="hidden sm:inline text-xl">🎉</span>
-                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">测试期间所有功能免费开放</span>
+                <span class="hidden sm:inline text-sm font-medium px-2 sm:px-0" data-i18n="donateBannerText">测试期间（2026年9月1日前）所有功能免费开放，之后可能收取成本费用用于持续运营，祝大家考试顺利</span><span class="sm:hidden text-sm font-medium px-2" data-i18n="donateBannerTextMobile">测试期间免费开放，之后可能收取成本费用</span>
             </div>
         </div>
         <button onclick="closeDonateBanner()" class="absolute right-4 top-1/2 transform -translate-y-1/2 liquid-btn spring-active z-10 rounded-full p-1.5 text-slate-500 hover:text-slate-700">
@@ -651,20 +651,20 @@
     <script>
         // HTML 特有的 donate banner 文本（扩展 DocGenerate.js 的 i18n）
         if (typeof i18n !== 'undefined') {
-            i18n.zh.donateBannerText = '测试期间（2026年9月1日前）所有功能免费开放，祝大家考试顺利';
-            i18n.zh.donateBannerTextMobile = '测试期间所有功能免费开放';
+            i18n.zh.donateBannerText = '测试期间（2026年9月1日前）所有功能免费开放，之后可能收取成本费用用于持续运营，祝大家考试顺利';
+            i18n.zh.donateBannerTextMobile = '测试期间免费开放，之后可能收取成本费用';
             i18n.zh.supportUs = '支持我们';
             
-            i18n['zh-TW'].donateBannerText = '測試期間（2026年9月1日前）所有功能免費開放，祝大家考試順利';
-            i18n['zh-TW'].donateBannerTextMobile = '測試期間所有功能免費開放';
+            i18n['zh-TW'].donateBannerText = '測試期間（2026年9月1日前）所有功能免費開放，之後可能收取成本費用用於持續運營，祝大家考試順利';
+            i18n['zh-TW'].donateBannerTextMobile = '測試期間免費開放，之後可能收取成本費用';
             i18n['zh-TW'].supportUs = '支持我們';
             
-            i18n.en.donateBannerText = 'All features are free during the beta period (before Sep 1, 2026). Good luck on your exams!';
-            i18n.en.donateBannerTextMobile = 'All features free during beta';
+            i18n.en.donateBannerText = 'All features are free during the beta period (before Sep 1, 2026). A nominal fee may apply afterwards to sustain operations. Good luck on your exams!';
+            i18n.en.donateBannerTextMobile = 'Free during beta, nominal fee may apply later';
             i18n.en.supportUs = 'Support Us';
             
-            i18n.ko.donateBannerText = '테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 시험 잘 보세요!';
-            i18n.ko.donateBannerTextMobile = '테스트 기간 모든 기능 묵료';
+            i18n.ko.donateBannerText = '테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 이후 지속적인 운영을 위해 비용이 발생할 수 있습니다. 시험 잘 보세요!';
+            i18n.ko.donateBannerTextMobile = '테스트 기간 묵료, 이후 비용 발생 가능';
             i18n.ko.supportUs = '후원하기';
         }
 
