@@ -770,6 +770,7 @@ class StreamingQuestionGenerator {
         this.isGenerating = true;
         this.questions = [];
         this.batchResults.clear();
+        this.totalBatches = Math.ceil(questionCount / 20);
 
         try {
             this.updateProgressStep(2, 'active');
