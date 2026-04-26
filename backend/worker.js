@@ -1623,7 +1623,7 @@ async function deleteFromGCS(name, token, env) {
 /* ==================== VERTEX AI ==================== */
 
 async function streamVertex(fileUri, prompt, env, token, modelIdOverride = null, thinkingConfigOverride = null) {
-  const modelId = modelIdOverride || env.GCP_MODEL_ID || 'gemini-2.5-flash-lite';
+  const modelId = modelIdOverride || env.GCP_MODEL_ID || 'fake-gemini-2.5-flash-lite';
   const isGlobal = env.GCP_LOCATION === 'global';
   const host = isGlobal ? 'aiplatform.googleapis.com' : `${env.GCP_LOCATION}-aiplatform.googleapis.com`;
   const location = isGlobal ? 'global' : env.GCP_LOCATION;

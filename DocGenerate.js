@@ -694,7 +694,8 @@ class StreamingQuestionGenerator {
 
                                 case 'error':
                                     console.error('[DEBUG] Received error:', data.message);
-                                    throw new Error(data.message);
+                                    this.handleError(new Error(data.message));
+                                    return;
                             }
                         } catch (e) {
                             console.error('[DEBUG] Error parsing SSE data:', e);
@@ -865,7 +866,8 @@ class StreamingQuestionGenerator {
                                     break;
                                 case 'error':
                                     console.error('[DEBUG] Received error:', data.message);
-                                    throw new Error(data.message);
+                                    this.handleError(new Error(data.message));
+                                    return;
                             }
                         } catch (e) {
                             console.error('[DEBUG] Error parsing SSE data:', e);
