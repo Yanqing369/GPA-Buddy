@@ -1139,11 +1139,6 @@ function selectTutorMode(mode) {
         textBtn.className = mode === 'text' ? activeClass : inactiveClass;
     }
 
-    // 更新生成按钮上的扣费标签
-    const costValue = document.getElementById('tutorCostValue');
-    if (costValue) {
-        costValue.textContent = mode === 'text' ? '-2' : '-5';
-    }
 }
 
 function unlockTutorTextMode() {
