@@ -124,7 +124,10 @@ const TutorApp = {
             errorCode: '错误码',
             errorStatus: '状态',
             errorMessage: '信息',
-            useFallbackModel: '使用备用模型生成'
+            useFallbackModel: '使用备用模型生成',
+            turnstileRequiredTitle: '请完成人机验证',
+            turnstileRequiredDesc: '备用模型生成需要重新完成人机验证，请在页面上完成验证后点击继续。',
+            continue: '继续'
         },
         'zh-TW': {
             appName: '知識導學',
@@ -199,7 +202,10 @@ const TutorApp = {
             errorCode: '錯誤碼',
             errorStatus: '狀態',
             errorMessage: '訊息',
-            useFallbackModel: '使用備用模型生成'
+            useFallbackModel: '使用備用模型生成',
+            turnstileRequiredTitle: '請完成人機驗證',
+            turnstileRequiredDesc: '備用模型生成需要重新完成人機驗證，請在頁面上完成驗證後點擊繼續。',
+            continue: '繼續'
         },
         en: {
             appName: 'Knowledge Tutor',
@@ -1062,20 +1068,9 @@ const TutorApp = {
         if (modal) modal.classList.add('hidden');
     },
 
-    async startFallbackGeneration() {
-        this.closeErrorModal();
-        
-        if (!this.currentFile) {
-            this.showToast(this.t('uploadTitle'), 'error');
-            return;
-        }
-        
+    async _doFallback(turnstileToken) {
         const lang = document.getElementById('tutorLangValue')?.value || 'en';
         const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
-        const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
-        
-        // 切换到纯文本模式
-        this.selectTutorMode('text');
         
         this.isGenerating = true;
         enableTutorRefreshProtection();
@@ -1131,6 +1126,47 @@ const TutorApp = {
             this.hideProgressModal();
             this.showToast(this.translateBackendError(err.message) || this.t('networkError'), 'error');
         }
+    },
+
+    showTurnstileModal() {
+        const modal = document.getElementById('turnstileModal');
+        if (modal) modal.classList.remove('hidden');
+    },
+
+    closeTurnstileModal() {
+        const modal = document.getElementById('turnstileModal');
+        if (modal) modal.classList.add('hidden');
+    },
+
+    async continueFallbackAfterTurnstile() {
+        const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
+        if (!turnstileToken) {
+            this.showToast(this.t('turnstileRequiredDesc'), 'error');
+            return;
+        }
+        this.closeTurnstileModal();
+        await this._doFallback(turnstileToken);
+    },
+
+    async startFallbackGeneration() {
+        this.closeErrorModal();
+        
+        if (!this.currentFile) {
+            this.showToast(this.t('uploadTitle'), 'error');
+            return;
+        }
+        
+        // 切换到纯文本模式
+        this.selectTutorMode('text');
+        
+        let turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : '';
+        if (!turnstileToken) {
+            if (typeof turnstile !== 'undefined') turnstile.reset();
+            this.showTurnstileModal();
+            return;
+        }
+        
+        await this._doFallback(turnstileToken);
     },
 
     showToast(message, type = 'info') {
