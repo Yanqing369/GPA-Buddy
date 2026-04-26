@@ -6,13 +6,13 @@
 const TutorSSE = {
     decoder: new TextDecoder(),
 
-    async stream(formData, callbacks) {
+    async stream(formData, callbacks, url = `${API_BASE}/api/tutor/generate`) {
         const { onSkeleton, onNodeStart, onNodeDone, onComplete, onError, onProgress } = callbacks;
 
         try {
             const controller = new AbortController();
             const token = localStorage.getItem('auth_token');
-            const response = await fetch(`${API_BASE}/api/tutor/generate`, {
+            const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
                 signal: controller.signal,

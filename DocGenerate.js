@@ -107,6 +107,9 @@ const i18n = {
         langKO: '한국어',
         customPrompt: '个性化要求',
         customPromptPlaceholder: '例如：请重点围绕第三章的内容出题',
+        generateMode: '生成模式',
+        modeMultimodal: '图文',
+        modeText: '纯文本',
         customPromptTooLong: '个性化要求不能超过100个字符',
         partialGenerationNotice: '由于AI服务波动，本次仅生成{0}题，不扣除您的点数',
         startGenerate: '开始生成',
@@ -183,6 +186,9 @@ const i18n = {
         langKO: '한국어',
         customPrompt: '個性化要求',
         customPromptPlaceholder: '例如：請重點圍繞第三章的內容出題',
+        generateMode: '生成模式',
+        modeMultimodal: '圖文',
+        modeText: '純文字',
         customPromptTooLong: '個性化要求不能超過100個字符',
         partialGenerationNotice: '由於AI服務波動，本次僅生成{0}題，不扣除您的點數',
         startGenerate: '開始生成',
@@ -259,6 +265,9 @@ const i18n = {
         langKO: 'Korean',
         customPrompt: 'Personalized Request',
         customPromptPlaceholder: 'e.g. Please focus on Chapter 3 when creating questions',
+        generateMode: 'Generation Mode',
+        modeMultimodal: 'Multimodal',
+        modeText: 'Text Only',
         customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
         partialGenerationNotice: 'Due to AI service fluctuations, only {0} questions were generated this time. No credits deducted.',
         startGenerate: 'Start Generation',
@@ -335,6 +344,9 @@ const i18n = {
         langKO: '한국어',
         customPrompt: '개인화 요구사항',
         customPromptPlaceholder: '예: 3장 내용을 중심으로 문제를 출제해 주세요',
+        generateMode: '생성 모드',
+        modeMultimodal: '멀티모달',
+        modeText: '텍스트 전용',
         customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
         partialGenerationNotice: 'AI 서비스 변동으로 인해 이번에 {0}문제만 생성되었습니다. 포인트가 차감되지 않습니다.',
         startGenerate: '생성 시작',
@@ -721,6 +733,143 @@ class StreamingQuestionGenerator {
                         const data = JSON.parse(dataLine);
                         if (data.type === 'final_result') {
                             console.log('[DEBUG] Processing final_result from remaining buffer');
+                            this.questions = data.data || [];
+                            generatedQuestions = this.questions;
+                        }
+                    } catch (e) {
+                        console.error('[DEBUG] Error parsing remaining buffer:', e);
+                    }
+                }
+            }
+
+        } catch (error) {
+            this.handleError(error);
+        } finally {
+            this.isGenerating = false;
+            disableRefreshProtection();
+        }
+    }
+
+    async extractPdfText(file, originalFileName) {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items.map(item => item.str).join(' ');
+            text += `-----[${originalFileName}_page${i}]-----\n${pageText}\n\n`;
+        }
+        return text;
+    }
+
+    async generateAllWithDeepSeek(file, config) {
+        const { questionCount, lang, turnstileToken, customPrompt } = config;
+
+        this.isGenerating = true;
+        this.questions = [];
+        this.batchResults.clear();
+
+        try {
+            this.updateProgressStep(2, 'active');
+
+            const controller = new AbortController();
+            this.abortControllers.push(controller);
+
+            const originalFileName = file.name.replace(/\.pdf$/i, '');
+            const text = await this.extractPdfText(file, originalFileName);
+
+            const token = localStorage.getItem('auth_token');
+            const fallbackForm = new FormData();
+            fallbackForm.append('text', text);
+            fallbackForm.append('questionCount', questionCount);
+            fallbackForm.append('lang', lang);
+            fallbackForm.append('originalFileName', originalFileName);
+            fallbackForm.append('customPrompt', customPrompt || '');
+            fallbackForm.append('turnstileToken', turnstileToken);
+            if (Visitor && Visitor.getId()) {
+                fallbackForm.append('visitorId', Visitor.getId());
+            }
+
+            const response = await fetch(`${API_BASE}/fallback/pdf_generate`, {
+                method: 'POST',
+                body: fallbackForm,
+                signal: controller.signal,
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(translateBackendError(error.error) || t('uploadError'));
+            }
+
+            const reader = response.body.getReader();
+            let sseBuffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                const chunk = this.decoder.decode(value, { stream: true });
+                sseBuffer += chunk;
+
+                let messageEnd = sseBuffer.indexOf('\n\n');
+                while (messageEnd !== -1) {
+                    const message = sseBuffer.substring(0, messageEnd);
+                    sseBuffer = sseBuffer.substring(messageEnd + 2);
+
+                    const lines = message.split('\n');
+                    let dataLine = '';
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            dataLine += line.substring(6);
+                        }
+                    }
+
+                    if (dataLine) {
+                        try {
+                            const data = JSON.parse(dataLine);
+                            switch (data.type) {
+                                case 'batch0_done':
+                                    console.log('[DEBUG] Batch 0 done:', data.count);
+                                    break;
+                                case 'final_result':
+                                    this.questions = data.data || [];
+                                    generatedQuestions = this.questions;
+                                    this.partialResult = data.partial || false;
+                                    this.generatedCount = data.generatedCount || this.questions.length;
+                                    this.requestedCount = data.requestedCount || this.questions.length;
+                                    this.batchResults.set(0, this.questions.slice(0, 20));
+                                    for (let i = 1; i < this.totalBatches; i++) {
+                                        this.batchResults.set(i, this.questions.slice(i * 20, (i + 1) * 20));
+                                    }
+                                    break;
+                                case 'done':
+                                    this.updateProgressStep(2, 'completed');
+                                    this.showCompletionUI();
+                                    break;
+                                case 'error':
+                                    console.error('[DEBUG] Received error:', data.message);
+                                    throw new Error(data.message);
+                            }
+                        } catch (e) {
+                            console.error('[DEBUG] Error parsing SSE data:', e);
+                        }
+                    }
+                    messageEnd = sseBuffer.indexOf('\n\n');
+                }
+            }
+
+            if (sseBuffer.trim()) {
+                const lines = sseBuffer.split('\n');
+                let dataLine = '';
+                for (const line of lines) {
+                    if (line.startsWith('data: ')) dataLine += line.substring(6);
+                }
+                if (dataLine) {
+                    try {
+                        const data = JSON.parse(dataLine);
+                        if (data.type === 'final_result') {
                             this.questions = data.data || [];
                             generatedQuestions = this.questions;
                         }
@@ -1435,6 +1584,7 @@ async function startGeneration() {
 
     const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
     const lang = document.getElementById('genLangValue')?.value || 'zh';
+    const mode = document.getElementById('genModeValue')?.value || 'multimodal';
     const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
     
     // 自定义提示词长度限制（100 Unicode 字符）
@@ -1465,12 +1615,21 @@ async function startGeneration() {
         streamingGenerator.updateProgressStep(1, 'completed');
         streamingGenerator.updateProgressStep(2, 'active');
         
-        await streamingGenerator.generateAll(currentFiles[0], {
-            questionCount: totalCount,
-            lang: lang,
-            turnstileToken: turnstileToken,
-            customPrompt: customPrompt
-        });
+        if (mode === 'text') {
+            await streamingGenerator.generateAllWithDeepSeek(currentFiles[0], {
+                questionCount: totalCount,
+                lang: lang,
+                turnstileToken: turnstileToken,
+                customPrompt: customPrompt
+            });
+        } else {
+            await streamingGenerator.generateAll(currentFiles[0], {
+                questionCount: totalCount,
+                lang: lang,
+                turnstileToken: turnstileToken,
+                customPrompt: customPrompt
+            });
+        }
         
     } catch (err) {
         console.error('Generation error:', err);

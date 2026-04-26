@@ -100,6 +100,8 @@ const TutorApp = {
             generateMode: '生成模式',
             modeFast: '快速',
             modeExpert: '精研',
+            modeText: '純文字',
+            modeText: '纯文本',
             customPrompt: '个性化要求',
             customPromptPlaceholder: '例如：请重点围绕第三章的内容构建图谱',
             customPromptTooLong: '个性化要求不能超过100个字符',
@@ -238,6 +240,7 @@ const TutorApp = {
             generateMode: 'Generation Mode',
             modeFast: 'Fast',
             modeExpert: 'Deep Study',
+            modeText: 'Text Only',
             customPrompt: 'Personalized Request',
             customPromptPlaceholder: 'e.g. Please focus on Chapter 3 when building the graph',
             customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
@@ -305,6 +308,7 @@ const TutorApp = {
             generateMode: '생성 모드',
             modeFast: '빠르게',
             modeExpert: '심도연구',
+            modeText: '텍스트 전용',
             customPrompt: '개인화 요구사항',
             customPromptPlaceholder: '예: 3장 내용을 중심으로 그래프를 구성해 주세요',
             customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
@@ -601,25 +605,13 @@ const TutorApp = {
             return;
         }
 
-        const uploadFile = new File([this.processedPdfBytes], this.processedFileName || this.currentFile.name, { type: 'application/pdf' });
-
-        const formData = new FormData();
-        formData.append('file', uploadFile);
-        formData.append('turnstileToken', turnstileToken);
-        formData.append('lang', lang);
-        formData.append('mode', mode);
-        formData.append('customPrompt', customPrompt);
-        if (Visitor && Visitor.getId()) {
-            formData.append('visitorId', Visitor.getId());
-        }
-
         let skeleton = null;
         let graphId = null;
         let nodeCount = 0;
         let completedCount = 0;
         const pendingContents = []; // 用于暂存 graphId 还没准备好时的节点内容
 
-        await TutorSSE.stream(formData, {
+        const streamCallbacks = {
             onSkeleton: (data) => {
                 skeleton = data;
                 nodeCount = skeleton?.nodes?.length || 1;
@@ -677,7 +669,59 @@ const TutorApp = {
             onProgress: (current, total) => {
                 if (total && !nodeCount) nodeCount = total;
             }
-        });
+        };
+
+        if (mode === 'text') {
+            await this.generateWithDeepSeek(lang, customPrompt, turnstileToken, streamCallbacks);
+            return;
+        }
+
+        const uploadFile = new File([this.processedPdfBytes], this.processedFileName || this.currentFile.name, { type: 'application/pdf' });
+
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+        formData.append('turnstileToken', turnstileToken);
+        formData.append('lang', lang);
+        formData.append('mode', mode);
+        formData.append('customPrompt', customPrompt);
+        if (Visitor && Visitor.getId()) {
+            formData.append('visitorId', Visitor.getId());
+        }
+
+        await TutorSSE.stream(formData, streamCallbacks);
+    },
+
+    async generateWithDeepSeek(lang, customPrompt, turnstileToken, callbacks) {
+        try {
+            const arrayBuffer = this.processedPdfBytes;
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+            const originalFileName = (this.processedFileName || this.currentFile?.name || 'document').replace(/\.pdf$/i, '');
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const pageText = content.items.map(item => item.str).join(' ');
+                text += `-----[${originalFileName}_page${i}]-----\n${pageText}\n\n`;
+            }
+
+            const fallbackForm = new FormData();
+            fallbackForm.append('text', text);
+            fallbackForm.append('lang', lang);
+            fallbackForm.append('customPrompt', customPrompt);
+            fallbackForm.append('turnstileToken', turnstileToken);
+            if (Visitor && Visitor.getId()) {
+                fallbackForm.append('visitorId', Visitor.getId());
+            }
+
+            await TutorSSE.stream(fallbackForm, callbacks, `${API_BASE}/fallback/tutor_generate`);
+        } catch (err) {
+            console.error('DeepSeek generation error:', err);
+            this.isGenerating = false;
+            disableTutorRefreshProtection();
+            this.hideProgressModal();
+            this.showToast(this.translateBackendError(err.message) || this.t('networkError'), 'error');
+        }
     },
 
     async createGraphFromSkeleton(skeleton) {
@@ -1034,14 +1078,15 @@ function selectTutorMode(mode) {
     if (valueInput) valueInput.value = mode;
     const fastBtn = document.getElementById('btnModeFast');
     const expertBtn = document.getElementById('btnModeExpert');
-    if (!fastBtn || !expertBtn) return;
-    if (mode === 'fast') {
-        fastBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-emerald-400 to-green-500 shadow-sm transition-all flex items-center gap-1.5';
-        expertBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition-all flex items-center gap-1.5';
-    } else {
-        fastBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition-all flex items-center gap-1.5';
-        expertBtn.className = 'px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-emerald-400 to-green-500 shadow-sm transition-all flex items-center gap-1.5';
-    }
+    const textBtn = document.getElementById('btnModeText');
+    if (!fastBtn || !expertBtn || !textBtn) return;
+
+    const activeClass = 'px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-emerald-400 to-green-500 shadow-sm transition-all flex items-center gap-1.5';
+    const inactiveClass = 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition-all flex items-center gap-1.5';
+
+    fastBtn.className = mode === 'fast' ? activeClass : inactiveClass;
+    expertBtn.className = mode === 'expert' ? activeClass : inactiveClass;
+    textBtn.className = mode === 'text' ? activeClass : inactiveClass;
 }
 
 // 初始化 tutor 语言下拉高亮
