@@ -4120,7 +4120,7 @@ export default {
 
             if (!vertexRes0.ok) {
               const errText = await vertexRes0.text();
-              throw new Error(`Batch 0 failed: ${errText}`);
+              throw new Error(`VERTEX_ERROR|Batch 0 failed: ${errText}`);
             }
 
             // 流式读取 batch0 并转发给前端
