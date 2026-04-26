@@ -1135,8 +1135,15 @@ function selectTutorMode(mode) {
     fastBtn.className = mode === 'fast' ? activeClass : inactiveClass;
     expertBtn.className = mode === 'expert' ? activeClass : inactiveClass;
     // 纯文本按钮未解锁时不允许手动切换
-    if (textBtn.disabled) return;
-    textBtn.className = mode === 'text' ? activeClass : inactiveClass;
+    if (!textBtn.disabled) {
+        textBtn.className = mode === 'text' ? activeClass : inactiveClass;
+    }
+
+    // 更新生成按钮上的扣费标签
+    const costValue = document.getElementById('tutorCostValue');
+    if (costValue) {
+        costValue.textContent = mode === 'text' ? '-2' : '-5';
+    }
 }
 
 function unlockTutorTextMode() {
