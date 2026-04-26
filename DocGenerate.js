@@ -567,6 +567,7 @@ class StreamingQuestionGenerator {
         this.questions = [];
         this.batchResults.clear();
         this.totalBatches = Math.ceil(questionCount / 20);
+        this.totalBatches = Math.ceil(questionCount / 20);
         this.currentBatch = 0;
         this.abortControllers = [];
 
@@ -804,6 +805,8 @@ class StreamingQuestionGenerator {
             }
 
             const reader = response.body.getReader();
+            let batch0Buffer = '';
+            let displayedCount = 0;
             let sseBuffer = '';
 
             while (true) {
@@ -830,6 +833,17 @@ class StreamingQuestionGenerator {
                         try {
                             const data = JSON.parse(dataLine);
                             switch (data.type) {
+                                case 'batch0_chunk':
+                                    batch0Buffer += data.data;
+                                    const newQuestions = this.extractCompleteObjects(batch0Buffer);
+                                    if (newQuestions.length > displayedCount) {
+                                        for (let i = displayedCount; i < newQuestions.length; i++) {
+                                            this.renderQuestionStream(newQuestions[i], i, true);
+                                        }
+                                        displayedCount = newQuestions.length;
+                                        this.updateProgress(0, displayedCount);
+                                    }
+                                    break;
                                 case 'batch0_done':
                                     console.log('[DEBUG] Batch 0 done:', data.count);
                                     break;
