@@ -722,6 +722,7 @@ const TutorApp = {
             fallbackForm.append('lang', lang);
             fallbackForm.append('customPrompt', customPrompt);
             fallbackForm.append('turnstileToken', turnstileToken);
+            fallbackForm.append('mode', 'text');
             if (Visitor && Visitor.getId()) {
                 fallbackForm.append('visitorId', Visitor.getId());
             }

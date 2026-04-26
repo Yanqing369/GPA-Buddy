@@ -1127,7 +1127,7 @@ async function checkAndConsumeQuota(userId, env) {
 }
 
 // 仅检查用户额度，不扣除（用于 pdf_generate 延迟扣费）
-async function peekUserQuota(userId, env) {
+async function peekUserQuota(userId, env, cost = 1) {
   const balance = await env.DB.prepare('SELECT * FROM balances WHERE user_id = ?')
     .bind(userId)
     .first();
@@ -1141,13 +1141,13 @@ async function peekUserQuota(userId, env) {
   }
   
   const totalQuota = (balance.free_quota_daily - balance.free_quota_used) + balance.amount;
-  if (totalQuota < 1) return { allowed: false, reason: 'Quota exceeded and insufficient balance' };
+  if (totalQuota < cost) return { allowed: false, reason: 'Quota exceeded and insufficient balance' };
   
   return { allowed: true };
 }
 
 // 扣除用户额度（带并发保护）
-async function deductUserQuota(userId, env, action = 'Generate questions') {
+async function deductUserQuota(userId, env, action = 'Generate questions', cost = 1) {
   const balance = await env.DB.prepare('SELECT * FROM balances WHERE user_id = ?')
     .bind(userId)
     .first();
@@ -1160,24 +1160,30 @@ async function deductUserQuota(userId, env, action = 'Generate questions') {
     balance.free_quota_used = 0;
   }
   
-  // 优先尝试免费额度（条件更新防并发）
-  const freeResult = await env.DB.prepare(
-    'UPDATE balances SET free_quota_used = free_quota_used + 1, last_reset_date = ? WHERE user_id = ? AND free_quota_used < free_quota_daily'
-  ).bind(today, userId).run();
-  if (freeResult.meta?.changes > 0) return true;
-  
-  // 再尝试付费余额（条件更新防并发）
-  const paidResult = await env.DB.prepare(
-    'UPDATE balances SET amount = amount - 1 WHERE user_id = ? AND amount >= 1'
-  ).bind(userId).run();
-  if (paidResult.meta?.changes > 0) {
-    await env.DB.prepare(
-      'INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)'
-    ).bind(userId, 'consume', -1, action).run();
-    return true;
+  // 循环扣费（每次 1 点，优先免费额度）
+  for (let i = 0; i < cost; i++) {
+    // 优先尝试免费额度（条件更新防并发）
+    const freeResult = await env.DB.prepare(
+      'UPDATE balances SET free_quota_used = free_quota_used + 1, last_reset_date = ? WHERE user_id = ? AND free_quota_used < free_quota_daily'
+    ).bind(today, userId).run();
+    if (freeResult.meta?.changes > 0) continue;
+    
+    // 再尝试付费余额（条件更新防并发）
+    const paidResult = await env.DB.prepare(
+      'UPDATE balances SET amount = amount - 1 WHERE user_id = ? AND amount >= 1'
+    ).bind(userId).run();
+    if (paidResult.meta?.changes > 0) {
+      await env.DB.prepare(
+        'INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)'
+      ).bind(userId, 'consume', -1, action).run();
+      continue;
+    }
+    
+    // 某一次扣费失败，已扣的无法回滚
+    return false;
   }
   
-  return false;
+  return true;
 }
 
 async function handleGetBalance(request, env) {
@@ -1416,7 +1422,7 @@ async function handleVisitorAddCredit(request, env) {
   }));
 }
 
-async function checkAndConsumeVisitorCredits(visitorId, request, env, action = 'generate') {
+async function checkAndConsumeVisitorCredits(visitorId, request, env, action = 'generate', cost = 1) {
   await ensureVisitorTables(env);
   const visitor = await env.DB.prepare('SELECT * FROM visitors WHERE visitor_id = ?')
     .bind(visitorId)
@@ -1425,33 +1431,33 @@ async function checkAndConsumeVisitorCredits(visitorId, request, env, action = '
   if (!visitor) return { allowed: false, reason: 'Visitor not found' };
   if (visitor.is_blocked) return { allowed: false, reason: 'Visitor blocked' };
   
-  // 已绑定用户：校验 JWT 并转扣 user balance
+  // 已绑定用户：校验 JWT 并转扣 user balance（循环扣费）
   if (visitor.linked_user_id) {
     const user = await getUserFromRequest(request, env);
-    if (user) {
-      // 当前已登录（不管是不是原来绑定的用户），走当前用户的 balance
-      return await checkAndConsumeQuota(user.id, env);
+    const targetUserId = user ? user.id : visitor.linked_user_id;
+    for (let i = 0; i < cost; i++) {
+      const result = await checkAndConsumeQuota(targetUserId, env);
+      if (!result.allowed) return result;
     }
-    // 未登录状态，提示需要登录
-    return { allowed: false, reason: 'Visitor bound to another account, please login' };
+    return { allowed: true };
   }
   
   // 未绑定：走原有 visitor credits 逻辑
-  if (visitor.credits < 1) return { allowed: false, reason: 'Insufficient credits' };
+  if (visitor.credits < cost) return { allowed: false, reason: 'Insufficient credits' };
 
   await env.DB.prepare(
-    'UPDATE visitors SET credits = credits - 1, total_used = total_used + 1, last_visit = datetime("now") WHERE visitor_id = ?'
-  ).bind(visitorId).run();
+    'UPDATE visitors SET credits = credits - ?, total_used = total_used + ?, last_visit = datetime("now") WHERE visitor_id = ?'
+  ).bind(cost, cost, visitorId).run();
 
   await env.DB.prepare(
-    'INSERT INTO visitor_logs (visitor_id, action, credits_used) VALUES (?, ?, 1)'
-  ).bind(visitorId, action).run();
+    'INSERT INTO visitor_logs (visitor_id, action, credits_used) VALUES (?, ?, ?)'
+  ).bind(visitorId, action, cost).run();
 
-  return { allowed: true, creditsLeft: visitor.credits - 1 };
+  return { allowed: true, creditsLeft: visitor.credits - cost };
 }
 
 // 仅检查 visitor 额度，不扣除（用于 pdf_generate 延迟扣费）
-async function peekVisitorCredits(visitorId, request, env) {
+async function peekVisitorCredits(visitorId, request, env, cost = 1) {
   await ensureVisitorTables(env);
   const visitor = await env.DB.prepare('SELECT * FROM visitors WHERE visitor_id = ?')
     .bind(visitorId)
@@ -1465,19 +1471,19 @@ async function peekVisitorCredits(visitorId, request, env) {
     const user = await getUserFromRequest(request, env);
     if (user) {
       // 当前已登录（不管是不是原来绑定的用户），走当前用户的 balance
-      return await peekUserQuota(user.id, env);
+      return await peekUserQuota(user.id, env, cost);
     }
     // 未登录状态，提示需要登录
     return { allowed: false, reason: 'Visitor bound to another account, please login' };
   }
   
   // 未绑定：检查 credits 是否足够
-  if (visitor.credits < 1) return { allowed: false, reason: 'Insufficient credits' };
+  if (visitor.credits < cost) return { allowed: false, reason: 'Insufficient credits' };
   return { allowed: true, creditsLeft: visitor.credits };
 }
 
 // 扣除 visitor 额度（带并发保护）
-async function deductVisitorCredits(visitorId, request, env, action = 'pdf_generate') {
+async function deductVisitorCredits(visitorId, request, env, action = 'pdf_generate', cost = 1) {
   await ensureVisitorTables(env);
   const visitor = await env.DB.prepare('SELECT * FROM visitors WHERE visitor_id = ?')
     .bind(visitorId)
@@ -1486,25 +1492,27 @@ async function deductVisitorCredits(visitorId, request, env, action = 'pdf_gener
   if (!visitor) return false;
   if (visitor.is_blocked) return false;
   
-  // 已绑定用户：转扣当前登录用户的 balance（支持切换账户）
+  // 已绑定用户：转扣当前登录用户的 balance（支持切换账户，循环扣费）
   if (visitor.linked_user_id) {
     const user = request ? await getUserFromRequest(request, env) : null;
-    if (user) {
-      return await deductUserQuota(user.id, env, action);
+    const targetUserId = user ? user.id : visitor.linked_user_id;
+    for (let i = 0; i < cost; i++) {
+      const ok = await deductUserQuota(targetUserId, env, action);
+      if (!ok) return false;
     }
-    return await deductUserQuota(visitor.linked_user_id, env, action);
+    return true;
   }
   
   // 未绑定：条件更新防并发超扣
   const result = await env.DB.prepare(
-    'UPDATE visitors SET credits = credits - 1, total_used = total_used + 1, last_visit = datetime("now") WHERE visitor_id = ? AND credits >= 1'
-  ).bind(visitorId).run();
+    'UPDATE visitors SET credits = credits - ?, total_used = total_used + ?, last_visit = datetime("now") WHERE visitor_id = ? AND credits >= ?'
+  ).bind(cost, cost, visitorId, cost).run();
   
   if (result.meta?.changes === 0) return false;
   
   await env.DB.prepare(
-    'INSERT INTO visitor_logs (visitor_id, action, credits_used) VALUES (?, ?, 1)'
-  ).bind(visitorId, action).run();
+    'INSERT INTO visitor_logs (visitor_id, action, credits_used) VALUES (?, ?, ?)'
+  ).bind(visitorId, action, cost).run();
   
   return true;
 }
@@ -1623,7 +1631,7 @@ async function deleteFromGCS(name, token, env) {
 /* ==================== VERTEX AI ==================== */
 
 async function streamVertex(fileUri, prompt, env, token, modelIdOverride = null, thinkingConfigOverride = null) {
-  const modelId = modelIdOverride || env.GCP_MODEL_ID || 'fake-gemini-2.5-flash-lite';
+  const modelId = modelIdOverride || env.GCP_MODEL_ID || 'gemini-2.5-flash-lite';
   const isGlobal = env.GCP_LOCATION === 'global';
   const host = isGlobal ? 'aiplatform.googleapis.com' : `${env.GCP_LOCATION}-aiplatform.googleapis.com`;
   const location = isGlobal ? 'global' : env.GCP_LOCATION;
@@ -3802,10 +3810,11 @@ export default {
           }
         }
 
-        // Visitor credits check
+        // Visitor credits check (fast/expert = 5 credits)
         const visitorId = form.get('visitorId');
+        const tutorCost = 5;
         if (visitorId) {
-          const quota = await checkAndConsumeVisitorCredits(visitorId, request, env, 'tutor_generate');
+          const quota = await checkAndConsumeVisitorCredits(visitorId, request, env, 'tutor_generate', tutorCost);
           if (!quota.allowed) {
             return createResponse(JSON.stringify({ error: quota.reason || 'Insufficient credits' }), 402);
           }
@@ -4385,8 +4394,10 @@ export default {
         }
 
         const visitorId = form.get('visitorId');
+        const fallbackMode = form.get('mode') || 'text';
+        const tutorCost = fallbackMode === 'text' ? 2 : 5;
         if (visitorId) {
-          const quota = await checkAndConsumeVisitorCredits(visitorId, request, env, 'tutor_generate');
+          const quota = await checkAndConsumeVisitorCredits(visitorId, request, env, 'tutor_generate', tutorCost);
           if (!quota.allowed) {
             return createResponse(JSON.stringify({ error: quota.reason || 'Insufficient credits' }), 402);
           }
