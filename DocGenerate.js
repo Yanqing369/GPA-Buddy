@@ -93,7 +93,8 @@ const i18n = {
     zh: {
         appName: '请出题',
         back: '返回',
-        generateHeader: '从资料生成题库',
+        generateHeader: '智能出题',
+        generateSubtitle: '上传学习资料，AI提取知识点，生成助学练习题',
         uploadStudyMaterial: '上传学习资料',
         dropText: '拖拽文件到此处，或点击上传',
         supportFormats: '支持 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
@@ -177,7 +178,8 @@ const i18n = {
     'zh-TW': {
         appName: '請出題',
         back: '返回',
-        generateHeader: '從資料生成題庫',
+        generateHeader: '智能出題',
+        generateSubtitle: '上傳學習資料，AI提取知識點，生成助學練習題',
         uploadStudyMaterial: '上傳學習資料',
         dropText: '拖曳PDF檔案到此處，或點擊上傳',
         supportFormats: '支援 PDF、Word(DOCX)、PPT(PPTX)、Excel(XLSX/XLS)、TXT 格式',
@@ -261,7 +263,8 @@ const i18n = {
     en: {
         appName: 'GPA4.0',
         back: 'Back',
-        generateHeader: 'Generate from Material',
+        generateHeader: 'Smart Question Generation',
+        generateSubtitle: 'Upload study materials, AI extracts key points, generates practice questions',
         uploadStudyMaterial: 'Upload Study Material',
         dropText: 'Drop files here or click to upload',
         supportFormats: 'Supports PDF, Word(DOCX), PPT(PPTX), Excel(XLSX/XLS), TXT formats',
@@ -345,7 +348,8 @@ const i18n = {
     ko: {
         appName: 'GPA4.0',
         back: '돌아가기',
-        generateHeader: '자료에서 문제은행 생성',
+        generateHeader: '스마트 문제 출제',
+        generateSubtitle: '학습 자료를 업로드하면 AI가 핵심 포인트를 추출하여 연습 문제를 생성합니다',
         uploadStudyMaterial: '학습 자료 업로드',
         dropText: '파일을 여기로 끌어다 놓거나 클릭하여 업로드',
         supportFormats: 'PDF, Word(DOCX), PPT(PPTX), Excel(XLSX/XLS), TXT 형식 지원',
