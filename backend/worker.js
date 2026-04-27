@@ -713,6 +713,7 @@ async function handleGetMe(request, env) {
     avatar: user.avatar,
     accountType: user.account_type,
     invitationCode: user.invitation_code,
+    lastClaim: user.last_claim,
     balance: balance ? {
       amount: balance.amount,
       freeQuotaDaily: balance.free_quota_daily,
@@ -1212,6 +1213,143 @@ async function handleGetBalance(request, env) {
     freeQuotaUsed: balance?.free_quota_used || 0,
     freeQuotaLeft: Math.max(0, (balance?.free_quota_daily || 10) - (balance?.free_quota_used || 0)),
   }));
+}
+
+/* ==================== DAILY CLAIM ==================== */
+
+// 获取 UTC+8 时区的当日零点，返回 UTC ISO 字符串
+function getUTC8DayStart() {
+  const now = new Date();
+  const utc8Ms = now.getTime() + 8 * 60 * 60 * 1000;
+  const utc8Date = new Date(utc8Ms);
+  const year = utc8Date.getUTCFullYear();
+  const month = String(utc8Date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(utc8Date.getUTCDate()).padStart(2, '0');
+  return new Date(`${year}-${month}-${day}T00:00:00+08:00`).toISOString();
+}
+
+async function handleClaimDaily(request, env) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) {
+    return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+  }
+
+  const todayStart = getUTC8DayStart();
+  const now = new Date().toISOString();
+
+  try {
+    // 原子性检查：仅在未签到或上次签到早于今日零点时更新
+    const updateResult = await env.DB.prepare(
+      'UPDATE users SET last_claim = ? WHERE id = ? AND (last_claim IS NULL OR last_claim < ?)'
+    ).bind(now, user.id, todayStart).run();
+
+    if (updateResult.meta.changes === 0) {
+      return createResponse(JSON.stringify({
+        claimed: false,
+        error: 'already_claimed',
+      }), 200);
+    }
+
+    // 增加 10 积分
+    await env.DB.prepare(
+      'UPDATE balances SET amount = amount + 10 WHERE user_id = ?'
+    ).bind(user.id).run();
+
+    // 获取最新余额
+    const balance = await env.DB.prepare(
+      'SELECT amount FROM balances WHERE user_id = ?'
+    ).bind(user.id).first();
+
+    return createResponse(JSON.stringify({
+      claimed: true,
+      credits: 10,
+      balance: balance?.amount || 0,
+    }), 200);
+  } catch (e) {
+    console.error('Claim daily error:', e);
+    return createResponse(JSON.stringify({ error: 'claim_failed' }), 500);
+  }
+}
+
+/* ==================== VOUCHER REDEMPTION ==================== */
+
+async function handleRedeemVoucher(request, env) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) {
+    return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return createResponse(JSON.stringify({ error: 'Invalid JSON' }), 400);
+  }
+
+  const { voucher_text } = body;
+  if (!voucher_text || typeof voucher_text !== 'string') {
+    return createResponse(JSON.stringify({ error: 'voucher_text required' }), 400);
+  }
+
+  try {
+    const voucher = await env.DB.prepare(
+      'SELECT * FROM vouchers WHERE voucher_text = ?'
+    ).bind(voucher_text.trim()).first();
+
+    if (!voucher) {
+      return createResponse(JSON.stringify({ error: 'invalid_voucher' }), 400);
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    if (voucher.expire_date < today) {
+      return createResponse(JSON.stringify({ error: 'expired' }), 400);
+    }
+
+    if (voucher.times_remaining <= 0) {
+      return createResponse(JSON.stringify({ error: 'no_remaining' }), 400);
+    }
+
+    const already = await env.DB.prepare(
+      'SELECT 1 FROM voucher_redemptions WHERE user_id = ? AND voucher_id = ?'
+    ).bind(user.id, voucher.id).first();
+
+    if (already) {
+      return createResponse(JSON.stringify({ error: 'already_redeemed' }), 400);
+    }
+
+    await env.DB.prepare(
+      'UPDATE vouchers SET times_remaining = times_remaining - 1 WHERE id = ?'
+    ).bind(voucher.id).run();
+
+    await env.DB.prepare(
+      'INSERT INTO voucher_redemptions (user_id, voucher_id) VALUES (?, ?)'
+    ).bind(user.id, voucher.id).run();
+
+    await env.DB.prepare(
+      'UPDATE balances SET amount = amount + ? WHERE user_id = ?'
+    ).bind(voucher.credit_amount, user.id).run();
+
+    await env.DB.prepare(
+      "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, 'recharge', ?, ?)"
+    ).bind(user.id, voucher.credit_amount, `Voucher: ${voucher_text.trim()}`).run();
+
+    const balance = await env.DB.prepare(
+      'SELECT amount FROM balances WHERE user_id = ?'
+    ).bind(user.id).first();
+
+    return createResponse(JSON.stringify({
+      success: true,
+      credits: voucher.credit_amount,
+      balance: balance?.amount || 0,
+    }), 200);
+
+  } catch (e) {
+    console.error('Redeem voucher error:', e);
+    if (e.message && e.message.includes('UNIQUE constraint failed')) {
+      return createResponse(JSON.stringify({ error: 'already_redeemed' }), 400);
+    }
+    return createResponse(JSON.stringify({ error: 'redeem_failed' }), 500);
+  }
 }
 
 /* ==================== VISITOR CREDITS ==================== */
@@ -3050,6 +3188,12 @@ export default {
     /* ===== BALANCE ROUTES ===== */
     if (url.pathname === '/api/balance' && request.method === 'GET') {
       return handleGetBalance(request, env);
+    }
+    if (url.pathname === '/api/claim-daily' && request.method === 'POST') {
+      return handleClaimDaily(request, env);
+    }
+    if (url.pathname === '/api/redeem-voucher' && request.method === 'POST') {
+      return handleRedeemVoucher(request, env);
     }
 
     /* ===== QUESTION BANK ROUTES ===== */

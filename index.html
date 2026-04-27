@@ -896,12 +896,21 @@
                                 </svg>
                                 <span data-i18n="myBanks">我的题库</span>
                             </a>
-                            <button onclick="copyInviteLink()" class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2">
+                            <button onclick="copyInviteLink('inviteLinkCopiedCustom')" class="w-full text-left px-3 py-2 text-sm text-slate-700 hover:bg-emerald-50 rounded-lg flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                                 </svg>
                                 <span data-i18n="copyInviteLink">复制邀请链接</span>
                             </button>
+                            <div class="px-3 py-2 border-t border-gray-100 space-y-1.5">
+                                <input type="text" id="voucherInput" data-i18n-placeholder="voucherPlaceholder" placeholder="兑换码" 
+                                       class="w-full px-2 py-1 text-xs border border-slate-200 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 leading-none">
+                                <button onclick="redeemVoucher()" 
+                                        class="w-full px-2 py-1 bg-indigo-600 text-white text-xs rounded-md hover:bg-indigo-700 transition-colors leading-none">
+                                    <span data-i18n="voucherBtn">兑换</span>
+                                </button>
+                            </div>
+                            <p id="voucherMsg" class="text-xs px-3 pb-1.5 hidden"></p>
                             <button onclick="handleLogout()" class="w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
@@ -1097,13 +1106,19 @@
                 <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-amber-100/50" style="background: linear-gradient(135deg, rgba(255,251,235,0.8) 0%, rgba(254,250,240,0.5) 100%);">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-100 text-amber-600 text-lg">🎁</div>
-                        <p class="text-sm text-slate-700" data-i18n="creditItem1">登录可以获得20个额外积分</p>
+                        <p class="text-sm text-slate-700" id="creditItem1Text"></p>
                     </div>
                 </div>
                 <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-emerald-100/50" style="background: linear-gradient(135deg, rgba(236,253,245,0.8) 0%, rgba(240,253,250,0.5) 100%);">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600 text-lg">🤝</div>
-                        <p class="text-sm text-slate-700" data-i18n="creditItem2">邀请新用户，新老用户各获得20积分，无上限</p>
+                        <p class="text-sm text-slate-700" id="creditItem2Text"></p>
+                    </div>
+                </div>
+                <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-purple-100/50" style="background: linear-gradient(135deg, rgba(245,243,255,0.8) 0%, rgba(243,240,255,0.5) 100%);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-purple-100 text-purple-600 text-lg">📅</div>
+                        <p class="text-sm text-slate-700" id="creditItemDailyText"></p>
                     </div>
                 </div>
                 <div class="p-4 rounded-2xl transition-all spring-hover liquid-btn border border-blue-100/50" style="background: linear-gradient(135deg, rgba(239,246,255,0.8) 0%, rgba(238,242,255,0.5) 100%);">
@@ -1384,17 +1399,88 @@
         }
 
         // 复制邀请链接
-        function copyInviteLink() {
+        function copyInviteLink(messageKey) {
             if (!currentUser || !currentUser.invitationCode) {
                 showToast(t('loginToGetInviteLink'), 'error');
                 return;
             }
             const link = `https://www.gpa-buddy.com/?inviter=${currentUser.invitationCode}`;
             navigator.clipboard.writeText(link).then(() => {
-                showToast(t('inviteLinkCopied'), 'success');
+                showToast(t(messageKey || 'inviteLinkCopied'), 'success');
             }).catch(() => {
                 showToast(t('inviteLinkCopyFailed'), 'error');
             });
+        }
+
+        // 积分说明模态框 - 登录链接点击
+        function handleCreditModalLogin() {
+            if (currentUser) {
+                showToast(t('alreadyLoggedIn'), 'info');
+                return;
+            }
+            hideCreditModal();
+            showLoginModal();
+        }
+
+        // 积分说明模态框 - 邀请链接点击
+        function handleCreditModalInvite() {
+            if (!currentUser || !currentUser.invitationCode) {
+                showToast(t('loginToGetInviteLink'), 'error');
+                return;
+            }
+            copyInviteLink('inviteLinkCopiedCustom');
+        }
+
+        // 积分说明模态框 - 每日签到点击
+        async function handleCreditModalClaim() {
+            if (!currentUser) {
+                showToast(t('loginToGetInviteLink'), 'error');
+                return;
+            }
+
+            try {
+                const res = await authFetch(`${API_BASE}/api/claim-daily`, {
+                    method: 'POST',
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    showToast(t('claimError'), 'error');
+                    return;
+                }
+
+                if (data.claimed) {
+                    showToast(t('claimSuccess'), 'success');
+                    // 刷新前端积分显示
+                    if (currentUser && currentUser.balance) {
+                        currentUser.balance.amount = data.balance;
+                        updateUserUI();
+                    }
+                } else if (data.error === 'already_claimed') {
+                    showToast(t('claimAlreadyDone'), 'info');
+                } else {
+                    showToast(t('claimError'), 'error');
+                }
+            } catch (e) {
+                showToast(t('claimError'), 'error');
+            }
+        }
+
+        // 渲染积分说明模态框中的可点击链接文本
+        function renderCreditModalText() {
+            const loginLink = `<span class="text-blue-600 underline cursor-pointer hover:text-blue-800 font-medium" onclick="handleCreditModalLogin()">${t('login')}</span>`;
+            const inviteLink = `<span class="text-blue-600 underline cursor-pointer hover:text-blue-800 font-medium" onclick="handleCreditModalInvite()">${t('creditItem2Link')}</span>`;
+            const claimLink = `<span class="text-blue-600 underline cursor-pointer hover:text-blue-800 font-medium" onclick="handleCreditModalClaim()">${t('creditItemDailyLink')}</span>`;
+            
+            const el1 = document.getElementById('creditItem1Text');
+            if (el1) el1.innerHTML = t('creditItem1', loginLink);
+            
+            const el2 = document.getElementById('creditItem2Text');
+            if (el2) el2.innerHTML = t('creditItem2', inviteLink);
+
+            const elDaily = document.getElementById('creditItemDailyText');
+            if (elDaily) elDaily.innerHTML = t('creditItemDaily', claimLink);
         }
 
         // 更新用户UI
@@ -1579,6 +1665,46 @@
             }
         }
         
+        async function redeemVoucher() {
+            const input = document.getElementById('voucherInput');
+            const msg = document.getElementById('voucherMsg');
+            const code = input.value.trim();
+            if (!code) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/api/redeem-voucher`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+                    },
+                    body: JSON.stringify({ voucher_text: code }),
+                });
+                const data = await res.json();
+
+                msg.classList.remove('hidden', 'text-red-600', 'text-emerald-600');
+                if (data.success) {
+                    msg.textContent = t('voucherSuccess', data.credits);
+                    msg.classList.add('text-emerald-600');
+                    input.value = '';
+                    if (typeof Visitor !== 'undefined') Visitor._updateUI();
+                } else {
+                    const map = {
+                        invalid_voucher: t('voucherInvalid'),
+                        expired: t('voucherExpired'),
+                        no_remaining: t('voucherNoRemaining'),
+                        already_redeemed: t('voucherAlreadyRedeemed'),
+                    };
+                    msg.textContent = map[data.error] || t('voucherFail');
+                    msg.classList.add('text-red-600');
+                }
+            } catch (e) {
+                msg.classList.remove('hidden', 'text-emerald-600');
+                msg.classList.add('text-red-600');
+                msg.textContent = t('saveError');
+            }
+        }
+
         // 退出登录
         async function handleLogout() {
             try {
@@ -1729,16 +1855,32 @@
                 invalidEmail: '请输入有效的邮箱地址',
                 invalidCode: '验证码格式错误',
                 creditModalTitle: '如何获得更多积分',
-                creditItem1: '登录可以获得20个额外积分',
-                creditItem2: '邀请新用户，新老用户各获得20积分，无上限',
+                creditItem1: '{0}可以获得20个额外积分',
+                creditItem2: '{0}新用户，新老用户各获得20积分，无上限',
                 creditItem3: '内测期间没有充值功能，需要的朋友敬请期待',
+                creditItemDaily: '{0}可领取10个免费积分（UTC+8）',
+                creditItemDailyLink: '每天',
+                claimSuccess: '每日签到成功，积分 +10',
+                claimAlreadyDone: '您今天已经签到过了，请明天再来',
+                claimError: '签到失败，请稍后重试',
+                creditItem2Link: '邀请',
+                alreadyLoggedIn: '您已登录',
+                inviteLinkCopiedCustom: '已复制邀请链接，粘贴发给好友，好友注册后即可完成',
                 bubbleMessages: [
                     '今天也要好好复习呀~ 尽力就好！✨',
                     '学累了就休息一下，等会儿继续📚',
                     '你表现很好哦，继续保持就行啦💪',
                     '熟能生巧，考试顺利！相信你自己🎯',
                     '优秀的你，必定前途似锦！加油🎓'
-                ]
+                ],
+                voucherPlaceholder: '兑换码',
+                voucherBtn: '兑换',
+                voucherSuccess: '兑换成功！+{0} 积分',
+                voucherFail: '兑换失败',
+                voucherInvalid: '兑换码无效',
+                voucherExpired: '兑换码已过期',
+                voucherNoRemaining: '兑换次数已用完',
+                voucherAlreadyRedeemed: '你已经兑换过这个码了'
             },
             'zh-TW': {
                 donateBannerText: '測試期間（2026年9月1日前）所有功能免費開放，之後可能適當收取成本，祝大家考試順利',
@@ -1814,16 +1956,32 @@
                 invalidEmail: '請輸入有效的電郵地址',
                 invalidCode: '驗證碼格式錯誤',
                 creditModalTitle: '如何獲得更多積分',
-                creditItem1: '登入可以獲得20個額外積分',
-                creditItem2: '邀請新用戶，新老用戶各獲得20積分，無上限',
+                creditItem1: '{0}可以獲得20個額外積分',
+                creditItem2: '{0}新用戶，新老用戶各獲得20積分，無上限',
                 creditItem3: '內測期間沒有充值功能，需要的朋友敬請期待',
+                creditItemDaily: '{0}可領取10個免費積分（UTC+8）',
+                creditItemDailyLink: '每天',
+                claimSuccess: '每日簽到成功，積分 +10',
+                claimAlreadyDone: '您今天已經簽到過了，請明天再來',
+                claimError: '簽到失敗，請稍後重試',
+                creditItem2Link: '邀請',
+                alreadyLoggedIn: '您已登入',
+                inviteLinkCopiedCustom: '已複製邀請連結，貼上發給好友，好友註冊後即可完成',
                 bubbleMessages: [
                     '今日都要好好用功呀~ 盡力就好！✨',
                     '做練習累了就休息一陣，等陣再繼續📚',
                     '你表現很好哦，繼續保持就行啦💪',
                     '熟能生巧，考試順利！相信自己🎯',
                     '你這麼厲害，前途一定光明！加油🎓'
-                ]
+                ],
+                voucherPlaceholder: '兌換碼',
+                voucherBtn: '兌換',
+                voucherSuccess: '兌換成功！+{0} 積分',
+                voucherFail: '兌換失敗',
+                voucherInvalid: '兌換碼無效',
+                voucherExpired: '兌換碼已過期',
+                voucherNoRemaining: '兌換次數已用完',
+                voucherAlreadyRedeemed: '你已經兌換過這個碼了'
             },
             en: {
                 "donateBannerText": "All features are free during the beta period (before Sep 1, 2026). A nominal fee may apply afterwards. Good luck on your exams!",
@@ -1899,16 +2057,32 @@
                 "invalidEmail": "Please enter a valid email",
                 "invalidCode": "Invalid code format",
                 "creditModalTitle": "How to Get More Credits",
-                "creditItem1": "Login to get 20 extra credits",
-                "creditItem2": "Invite new users, both get 20 credits, no limit",
+                "creditItem1": "{0} to get 20 extra credits",
+                "creditItem2": "{0} new users, both get 20 credits, no limit",
                 "creditItem3": "No recharge available during beta, stay tuned",
+                "creditItemDaily": "{0} 10 free credits daily (UTC+8)",
+                "creditItemDailyLink": "Claim",
+                "claimSuccess": "Daily check-in successful, +10 credits",
+                "claimAlreadyDone": "You've already checked in today, come back tomorrow",
+                "claimError": "Check-in failed, please try again later",
+                "creditItem2Link": "Invite",
+                "alreadyLoggedIn": "You are already logged in",
+                "inviteLinkCopiedCustom": "Invite link copied! Paste and send to friends. Once they register, you're all set!",
                 "bubbleMessages": [
                     "Keep up the good work today~✨",
                     "Take a break if you're tired📚",
                     "You're great, just keep going! 💪",
                     "Practice makes perfect. 🎯",
                     "You worth every success~ 🎓"
-                ]
+                ],
+                "voucherPlaceholder": "Voucher code",
+                "voucherBtn": "Redeem",
+                "voucherSuccess": "Redeemed! +{0} credits",
+                "voucherFail": "Redeem failed",
+                "voucherInvalid": "Invalid voucher code",
+                "voucherExpired": "Voucher expired",
+                "voucherNoRemaining": "No redemptions left",
+                "voucherAlreadyRedeemed": "You already redeemed this code"
             },
             ko: {
                 "donateBannerText": "테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 이후 적정 비용이 발생할 수 있습니다. 시험 잘 보세요!",
@@ -1984,9 +2158,17 @@
                 "invalidEmail": "유효한 이메일을 입력하세요",
                 "invalidCode": "인증번호 형식이 올바르지 않습니다",
                 "creditModalTitle": "더 많은 포인트 받는 방법",
-                "creditItem1": "로그인하면 20포인트 추가 획득",
-                "creditItem2": "새 사용자 초대 시双方各得 20포인트, 제한 없음",
+                "creditItem1": "{0}하면 20포인트 추가 획득",
+                "creditItem2": "새 사용자를 {0}하면 양쪽 모두 20포인트, 제한 없음",
                 "creditItem3": "베타 기간 동안 충전 기능 없음, 기대해 주세요",
+                "creditItemDaily": "{0}하면 매일 10개의 무료 포인트를 받을 수 있습니다 (UTC+8)",
+                "creditItemDailyLink": "출석",
+                "claimSuccess": "일일 출석 성공, 포인트 +10",
+                "claimAlreadyDone": "오늘 이미 출석하셨습니다, 내일 다시 오세요",
+                "claimError": "출석 실패, 잠시 후 다시 시도해 주세요",
+                "creditItem2Link": "초대",
+                "alreadyLoggedIn": "이미 로그인되어 있습니다",
+                "inviteLinkCopiedCustom": "초대 링크가 복사되었습니다. 친구에게 붙여넣어 보낸 후, 친구가 가입하면 완료됩니다",
                 "bubbleMessages": [
                     "오늘도 열심히 해봐요~ 최선을 다해요! ✨",
                     "피곤한 순간 쉬었다 가요 ㅎㅎ 📚",
@@ -2064,6 +2246,8 @@
             // 刷新 visitor credits 显示（翻译"登录查看"等）
             if (typeof Visitor !== 'undefined') Visitor._updateUI();
             updateLogo();
+            // 刷新积分说明模态框中的可点击链接文本
+            renderCreditModalText();
         }
 
         function toggleLangDropdown() {
