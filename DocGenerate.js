@@ -1891,4 +1891,7 @@ window.startFallbackGeneration = startFallbackGeneration;
 document.addEventListener('DOMContentLoaded', () => {
     updateLanguage();
     setupDropZone();
+    // 初始化输出语言：简体中文用户默认中文，其他默认英文
+    const userLang = localStorage.getItem('language') || 'zh';
+    selectGenLang(userLang === 'zh' ? 'zh' : 'en');
 });

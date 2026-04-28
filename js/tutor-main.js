@@ -33,6 +33,13 @@ function handleTutorBeforeUnload(e) {
     }
 }
 
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 const TutorApp = {
     currentLang: localStorage.getItem('language') || detectBrowserLanguage(),
     currentGraphId: null,
@@ -59,6 +66,7 @@ const TutorApp = {
             generating: '正在生成知识图谱...',
             fileProcessing: '处理文件',
             skeletonStep: '构建知识骨架',
+            genTimeHint: '需要5-10分钟，感谢您的耐心等待🙏',
             nodeStep: '填充节点内容 ({0}/{1})',
             completed: '生成完成！',
             graphTitle: '知识图谱',
@@ -121,6 +129,15 @@ const TutorApp = {
             errVisitorBlocked: '访客账号已被限制',
             errVisitorNotFound: '访客信息不存在，请刷新页面',
             errQuotaExceeded: '额度已用完，请明日再来',
+            errTurnstileRequired: '请完成人机验证',
+            errTurnstileFailed: '人机验证失败，请刷新页面后重试',
+            errNoFile: '未接收到文件，请重新上传',
+            errNoText: '未提供文本内容',
+            errTextTooLong: '文本内容过长（最大 500KB）',
+            errCustomPromptTooLong: '个性化要求过长（最大 2000 字符）',
+            errInvalidLanguage: '不支持的语言',
+            errInvalidMode: '无效的生成模式',
+            errInvalidQuestionCount: '题目数量无效（1-200）',
             uploadStudyMaterial: '上传学习资料',
             creditLoginToView: '登录查看',
             generationFailed: '生成失败',
@@ -140,6 +157,7 @@ const TutorApp = {
             generating: '正在生成知識圖譜...',
             fileProcessing: '處理檔案',
             skeletonStep: '構建知識骨架',
+            genTimeHint: '需要5-10分鐘，感謝您的耐心等待🙏',
             nodeStep: '填充節點內容 ({0}/{1})',
             completed: '生成完成！',
             graphTitle: '知識圖譜',
@@ -201,6 +219,15 @@ const TutorApp = {
             errVisitorBlocked: '訪客帳號已被限制',
             errVisitorNotFound: '訪客資訊不存在，請重新整理頁面',
             errQuotaExceeded: '額度已用完，請明日再來',
+            errTurnstileRequired: '請完成人機驗證',
+            errTurnstileFailed: '人機驗證失敗，請重新整理頁面後重試',
+            errNoFile: '未接收到檔案，請重新上傳',
+            errNoText: '未提供文字內容',
+            errTextTooLong: '文字內容過長（最大 500KB）',
+            errCustomPromptTooLong: '個性化要求過長（最大 2000 字元）',
+            errInvalidLanguage: '不支援的語言',
+            errInvalidMode: '無效的生成模式',
+            errInvalidQuestionCount: '題目數量無效（1-200）',
             uploadStudyMaterial: '上傳學習資料',
             creditLoginToView: '登入查看',
             generationFailed: '生成失敗',
@@ -220,6 +247,7 @@ const TutorApp = {
             generating: 'Generating knowledge graph...',
             fileProcessing: 'Processing file',
             skeletonStep: 'Building knowledge skeleton',
+            genTimeHint: 'Takes 5-10 minutes, thank you for your patience 🙏',
             nodeStep: 'Filling node content ({0}/{1})',
             completed: 'Generation complete!',
             graphTitle: 'Knowledge Graph',
@@ -281,7 +309,17 @@ const TutorApp = {
             errInsufficientCredits: 'Insufficient credits. Please login or invite friends to get more.',
             errVisitorBlocked: 'Visitor account has been restricted.',
             errVisitorNotFound: 'Visitor info not found, please refresh the page.',
-            errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.', mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it',
+            errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.',
+            errTurnstileRequired: 'Please complete the human verification.',
+            errTurnstileFailed: 'Human verification failed. Please refresh the page and try again.',
+            errNoFile: 'No file received. Please upload again.',
+            errNoText: 'No text content provided.',
+            errTextTooLong: 'Text content is too long (max 500KB).',
+            errCustomPromptTooLong: 'Custom prompt is too long (max 2000 characters).',
+            errInvalidLanguage: 'Unsupported language.',
+            errInvalidMode: 'Invalid generation mode.',
+            errInvalidQuestionCount: 'Invalid question count (1-200).',
+            mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it',
         },
         ko: {
             appName: 'GPA4.0',
@@ -293,6 +331,7 @@ const TutorApp = {
             generating: '지식 그래프 생성 중...',
             fileProcessing: '파일 처리 중',
             skeletonStep: '지식 골조 구축',
+            genTimeHint: '5-10분 정도 소요됩니다. 기다려 주셔서 감사합니다 🙏',
             nodeStep: '노드 내용 채우기 ({0}/{1})',
             completed: '생성 완료!',
             graphTitle: '지식 그래프',
@@ -354,7 +393,17 @@ const TutorApp = {
             errInsufficientCredits: '포인트가 부족합니다. 로그인하거나 친구를 초대하여 더 많은 포인트를 받으세요.',
             errVisitorBlocked: '방문자 계정이 제한되었습니다.',
             errVisitorNotFound: '방문자 정보가 없습니다. 페이지를 새로고침하세요.',
-            errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.', mobileConvertedTitle: '모바일 미리보기 지원 안 함', mobileConvertedDesc: '이 파일은 다른 형식에서 변환되었습니다. 모바일에서는 원본 PDF만 지원됩니다. 컴퓨터에서 다시 생성해 주세요.', mobileConvertedBtn: '확인',
+            errQuotaExceeded: '할당량이 소진되었습니다. 내일 다시 오세요.',
+            errTurnstileRequired: 'Please complete the human verification.',
+            errTurnstileFailed: 'Human verification failed. Please refresh the page and try again.',
+            errNoFile: 'No file received. Please upload again.',
+            errNoText: 'No text content provided.',
+            errTextTooLong: 'Text content is too long (max 500KB).',
+            errCustomPromptTooLong: 'Custom prompt is too long (max 2000 characters).',
+            errInvalidLanguage: 'Unsupported language.',
+            errInvalidMode: 'Invalid generation mode.',
+            errInvalidQuestionCount: 'Invalid question count (1-200).',
+            mobileConvertedTitle: '모바일 미리보기 지원 안 함', mobileConvertedDesc: '이 파일은 다른 형식에서 변환되었습니다. 모바일에서는 원본 PDF만 지원됩니다. 컴퓨터에서 다시 생성해 주세요.', mobileConvertedBtn: '확인',
         }
     },
 
@@ -377,6 +426,16 @@ const TutorApp = {
         if (msg.includes('Visitor not found')) return this.t('errVisitorNotFound');
         if (msg.includes('Quota exceeded')) return this.t('errQuotaExceeded');
         if (msg.includes('Balance record not found')) return this.t('errQuotaExceeded');
+        if (msg.includes('Turnstile token required')) return this.t('errTurnstileRequired');
+        if (msg.includes('Turnstile verification failed')) return this.t('errTurnstileFailed');
+        if (msg.includes('No file received')) return this.t('errNoFile');
+        if (msg.includes('No text provided')) return this.t('errNoText');
+        if (msg.includes('Text content is required')) return this.t('errNoText');
+        if (msg.includes('Text too long')) return this.t('errTextTooLong');
+        if (msg.includes('Custom prompt too long')) return this.t('errCustomPromptTooLong');
+        if (msg.includes('Invalid language')) return this.t('errInvalidLanguage');
+        if (msg.includes('Invalid mode')) return this.t('errInvalidMode');
+        if (msg.includes('Invalid question count')) return this.t('errInvalidQuestionCount');
         return msg;
     },
 
@@ -627,7 +686,7 @@ const TutorApp = {
         this.updateProgressStep(0, 'completed');
 
         const lang = document.getElementById('tutorLangValue')?.value || 'en';
-        const mode = document.getElementById('tutorModeValue')?.value || 'expert';
+        const mode = document.getElementById('tutorModeValue')?.value || 'fast';
         const customPrompt = document.getElementById('customPrompt')?.value.trim() || '';
 
         // 自定义提示词长度限制（100 Unicode 字符）
@@ -695,7 +754,7 @@ const TutorApp = {
                 this.isGenerating = false;
                 disableTutorRefreshProtection();
                 this.hideProgressModal();
-                this.showErrorModal(msg, source);
+                this.showErrorModal(this.translateBackendError(msg) || msg, source);
             },
             onProgress: (current, total) => {
                 if (total && !nodeCount) nodeCount = total;
@@ -719,7 +778,15 @@ const TutorApp = {
             formData.append('visitorId', Visitor.getId());
         }
 
-        await TutorSSE.stream(formData, streamCallbacks);
+        try {
+            await TutorSSE.stream(formData, streamCallbacks);
+        } catch (err) {
+            console.error('[Tutor] Stream error:', err);
+            this.isGenerating = false;
+            disableTutorRefreshProtection();
+            this.hideProgressModal();
+            this.showErrorModal(this.translateBackendError(err.message) || this.t('networkError'));
+        }
     },
 
     async generateWithDeepSeek(lang, customPrompt, turnstileToken, callbacks) {
@@ -1170,10 +1237,9 @@ function unlockTutorTextMode() {
 
 // 初始化 tutor 语言下拉高亮
 (function initTutorLangActive() {
-    const current = document.getElementById('tutorLangValue')?.value || 'en';
-    document.querySelectorAll('#tutorLangOptions .lang-option').forEach(opt => {
-        opt.classList.toggle('active', opt.dataset.lang === current);
-    });
+    const userLang = localStorage.getItem('language') || 'en';
+    const defaultLang = userLang === 'zh' ? 'zh' : 'en';
+    selectTutorLang(defaultLang);
 })();
 
 // 点击空白区域关闭 tutor 语言下拉

@@ -53,7 +53,13 @@ const TutorSSE = {
                 this.handleMessage(sseBuffer, { onSkeleton, onNodeStart, onNodeDone, onComplete, onError, onProgress });
             }
         } catch (err) {
-            if (onError) onError(err.message);
+            if (onError) {
+                try {
+                    onError(err.message);
+                } catch (cbErr) {
+                    console.error('[TutorSSE] onError callback failed:', cbErr);
+                }
+            }
         }
     },
 
@@ -83,7 +89,13 @@ const TutorSSE = {
                     if (callbacks.onComplete) callbacks.onComplete();
                     break;
                 case 'error':
-                    if (callbacks.onError) callbacks.onError(data.message, data.source);
+                    if (callbacks.onError) {
+                        try {
+                            callbacks.onError(data.message, data.source);
+                        } catch (cbErr) {
+                            console.error('[TutorSSE] onError callback failed:', cbErr);
+                        }
+                    }
                     break;
                 case 'progress':
                     if (callbacks.onProgress) callbacks.onProgress(data.current, data.total);

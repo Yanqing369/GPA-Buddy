@@ -810,6 +810,23 @@
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
+        
+        /* 图谱导学角标 */
+        .tutor-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+            color: white;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            z-index: 20;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+            pointer-events: none;
+        }
     </style>
 
 </head>
@@ -981,6 +998,7 @@
 
             <!-- 知识导学卡片 - 液态玻璃 -->
             <a href="tutor.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+                <div class="tutor-badge" data-i18n="tutorBadge">可读论文</div>
                 <div class="absolute inset-0 bg-gradient-to-br from-sky-100/40 via-transparent to-blue-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-sky-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
@@ -1787,6 +1805,7 @@
                 supportUs: '支持我们',
                 appName: '请出题',
                 tutorTitle: '图谱导学',
+                tutorBadge: '可读论文',
                 tutorDesc: 'AI 构建思维导图，按逻辑关系逐步理解关键概念',
                 welcomeTitle: '备考，如此简单',
                 welcomeDesc: '上传课件和笔记，自动划重点出题，复习更精准。',
@@ -1888,6 +1907,7 @@
                 supportUs: '支持我們',
                 appName: '請出題',
                 tutorTitle: '圖譜導學',
+                tutorBadge: '可讀論文',
                 tutorDesc: 'AI 構建思維導圖，按邏輯關係逐步理解關鍵概念',
                 welcomeTitle: '溫書，Such Easy',
                 welcomeDesc: '上載課程文檔與筆記，AI自動生成練習題，final溫習更精準。',
@@ -1989,6 +2009,7 @@
                 "supportUs": "Support Us",
                 "appName": "GPA4.0",
                 "tutorTitle": "Mind Map Tutor",
+                "tutorBadge": "Read Paper",
                 "tutorDesc": "AI builds mind maps to help you understand key concepts step by step",
                 "welcomeTitle": "Boost Your GPA！",
                 "welcomeDesc": "Upload your slides and notes, get AI-generated practice questions instantly. Study smarter, not harder.",
@@ -2090,6 +2111,7 @@
                 "supportUs": "후원하기",
                 "appName": "GPA4.0",
                 "tutorTitle": "마인드맵 학습",
+                "tutorBadge": "논문 읽기",
                 "tutorDesc": "AI가 마인드맵을 구축하여 논리적 관계에 따라 핵심 개념을 단계별로 이해합니다",
                 "welcomeTitle": "스마트 학습 도우미",
                 "welcomeDesc": "강의 자료와 노트를 업로드하면 AI가 연습 문제를 자동으로 만들어줍니다. 이제 smarter하게 공부하세요.",
