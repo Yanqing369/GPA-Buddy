@@ -238,7 +238,7 @@ const TutorApp = {
             switchToTextModel: '切換到純文字模型'
         },
         en: {
-            appName: 'GPA4.0',
+            appName: 'GPA-Buddy',
             back: 'Back',
             uploadTitle: 'Upload Study Material',
             dropText: 'Drop PDF/docx/txt/pptx here, or click to upload',
@@ -280,7 +280,7 @@ const TutorApp = {
             networkError: 'Network error',
             refreshWarning: '⚠️ Do not close or refresh the page during generation',
             unlockPrerequisite: 'Please learn first: {0}',
-            pageTitle: 'GPA4.0',
+            pageTitle: 'GPA-Buddy',
             language: 'Output Language',
             langZH: 'Chinese',
             langTW: 'Traditional Chinese',
@@ -322,7 +322,7 @@ const TutorApp = {
             mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it',
         },
         ko: {
-            appName: 'GPA4.0',
+            appName: 'GPA-Buddy',
             back: '돌아가기',
             uploadTitle: '학습 자료 업로드',
             dropText: 'Drop PDF/docx/txt/pptx here, or click to upload',
@@ -364,7 +364,7 @@ const TutorApp = {
             networkError: '네트워크 오류',
             refreshWarning: '⚠️ 생성 중에 페이지를 닫거나 새로고침하지 마세요',
             unlockPrerequisite: '먼저 학습하세요: {0}',
-            pageTitle: 'GPA4.0',
+            pageTitle: 'GPA-Buddy',
             language: '출력 언어',
             langZH: '중국어',
             langTW: '번체 중국어',

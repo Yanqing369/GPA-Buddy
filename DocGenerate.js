@@ -261,7 +261,7 @@ const i18n = {
         errQuotaExceeded: '額度已用完，請明日再來'
     },
     en: {
-        appName: 'GPA4.0',
+        appName: 'GPA-Buddy',
         back: 'Back',
         generateHeader: 'Smart Question Generation',
         generateSubtitle: 'Upload study materials, AI extracts key points, generates practice questions',
@@ -318,7 +318,7 @@ const i18n = {
         partialSuccessTitle: 'Generation Complete (Partial Success)',
         partialSuccessMessage: 'Due to server rate limiting, only {0} of {1} questions were generated. We apologize for the inconvenience.',
         partialSuccessHint: 'Please try again later if you need more questions.',
-        pageTitle: 'GPA4.0',
+        pageTitle: 'GPA-Buddy',
         toastSuccess: 'Operation successful',
         streamingStatus: 'Streaming generation...',
         batchProgress: 'Batch {0}/{1}: {2} questions generated',
@@ -346,7 +346,7 @@ const i18n = {
         errQuotaExceeded: 'Quota exhausted. Please come back tomorrow.'
     },
     ko: {
-        appName: 'GPA4.0',
+        appName: 'GPA-Buddy',
         back: '돌아가기',
         generateHeader: '스마트 문제 출제',
         generateSubtitle: '학습 자료를 업로드하면 AI가 핵심 포인트를 추출하여 연습 문제를 생성합니다',
@@ -403,7 +403,7 @@ const i18n = {
         partialSuccessTitle: '생성 완료 (일부 성공)',
         partialSuccessMessage: '서버 속도 제한으로 인해 {0}개 문제 중 {1}개 문제만 생성되었습니다. 불편을 드려 죄송합니다.',
         partialSuccessHint: '더 많은 문제가 필요하면 나중에 다시 시도하세요.',
-        pageTitle: 'GPA4.0',
+        pageTitle: 'GPA-Buddy',
         toastSuccess: '작업 성공',
         streamingStatus: '실시간 생성 중...',
         batchProgress: '배치 {0}/{1}: {2}개 문제 생성됨',
