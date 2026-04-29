@@ -1560,9 +1560,21 @@
         }
 
         async function doGoogleLogin() {
-            // 请求后端获取 Google OAuth URL（redirect_uri 指向前端域名，让登录页显示前端域名）
             const visitorId = (typeof Visitor !== 'undefined') ? Visitor.getId() : '';
             const inviteCode = (typeof Visitor !== 'undefined') ? Visitor.getInviteCode() : '';
+
+            // 本地开发环境：走旧流程（后端回调），不需要在 Google Console 额外配置本地 redirect URI
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            if (isLocal) {
+                const params = new URLSearchParams();
+                if (visitorId) params.set('visitorId', visitorId);
+                if (inviteCode) params.set('inviter', inviteCode);
+                const query = params.toString();
+                window.location.href = `${API_BASE}/auth/google${query ? '?' + query : ''}`;
+                return;
+            }
+
+            // 生产环境：走新流程（前端域名回调），让 Google 登录页显示前端域名
             const redirectUri = `${window.location.origin}/oauth-callback.html`;
 
             const params = new URLSearchParams();
@@ -1573,7 +1585,11 @@
             try {
                 const res = await fetch(`${API_BASE}/auth/google?${params.toString()}`);
                 const data = await res.json();
-                if (data.url) {
+                if (data.url && data.state) {
+                    // 存储到 sessionStorage，供回调页面使用
+                    sessionStorage.setItem('oauth_state', data.state);
+                    sessionStorage.setItem('oauth_visitor', visitorId);
+                    sessionStorage.setItem('oauth_invite', inviteCode);
                     window.location.href = data.url;
                 } else {
                     showToast(data.error || '登录初始化失败', 'error');
