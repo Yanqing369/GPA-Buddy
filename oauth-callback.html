@@ -83,7 +83,7 @@
                 const data = await res.json();
 
                 if (data.token) {
-                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('auth_token', data.token);
                     const params = new URLSearchParams();
                     params.set('login', 'success');
                     params.set('merged', data.mergedAmount || 0);

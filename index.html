@@ -1327,6 +1327,7 @@
             console.log('Stored authToken:', authToken ? 'present' : 'missing');
             
             if (token && login === 'success') {
+                // 旧流程：token 在 URL 参数里
                 console.log('Login success from URL, storing token');
                 authToken = token;
                 localStorage.setItem('auth_token', token);
@@ -1344,6 +1345,25 @@
                 // 清除URL参数
                 window.history.replaceState({}, document.title, window.location.pathname);
                 loadUserInfo();
+            } else if (login === 'success') {
+                // 新流程：token 已由 oauth-callback.html 存入 localStorage
+                console.log('Login success from callback, loading from storage');
+                authToken = localStorage.getItem('auth_token');
+                const merged = parseInt(urlParams.get('merged') || '0');
+                if (merged > 0) {
+                    window.__pendingMergedAmount = merged;
+                }
+                const inviteBonus = parseInt(urlParams.get('inviteBonus') || '0');
+                if (inviteBonus > 0) {
+                    window.__pendingInviteBonus = inviteBonus;
+                    window.__pendingInviterName = decodeURIComponent(urlParams.get('inviterName') || '');
+                }
+                window.history.replaceState({}, document.title, window.location.pathname);
+                if (authToken) {
+                    loadUserInfo();
+                } else {
+                    updateUserUI();
+                }
             } else if (authToken) {
                 console.log('Found stored token, loading user info');
                 loadUserInfo();
