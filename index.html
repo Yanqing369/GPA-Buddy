@@ -1559,15 +1559,28 @@
             document.getElementById('loginOptionsView').classList.remove('hidden');
         }
 
-        function doGoogleLogin() {
-            // 跳转到Google登录，带上 visitorId 和 invite code
+        async function doGoogleLogin() {
+            // 请求后端获取 Google OAuth URL（redirect_uri 指向前端域名，让登录页显示前端域名）
             const visitorId = (typeof Visitor !== 'undefined') ? Visitor.getId() : '';
             const inviteCode = (typeof Visitor !== 'undefined') ? Visitor.getInviteCode() : '';
+            const redirectUri = `${window.location.origin}/oauth-callback.html`;
+
             const params = new URLSearchParams();
+            params.set('redirectUri', redirectUri);
             if (visitorId) params.set('visitorId', visitorId);
             if (inviteCode) params.set('inviter', inviteCode);
-            const query = params.toString();
-            window.location.href = `${API_BASE}/auth/google${query ? '?' + query : ''}`;
+
+            try {
+                const res = await fetch(`${API_BASE}/auth/google?${params.toString()}`);
+                const data = await res.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    showToast(data.error || '登录初始化失败', 'error');
+                }
+            } catch (err) {
+                showToast('登录初始化失败', 'error');
+            }
         }
 
         /* ==================== EMAIL OTP LOGIN ==================== */
