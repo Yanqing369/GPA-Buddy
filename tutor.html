@@ -115,6 +115,21 @@
         }
         .step-item.active .step-number { background: #6366f1; color: white; }
         .step-item.completed .step-number { background: #10b981; color: white; }
+        .step-spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid #e2e8f0;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin-step 0.8s linear infinite;
+            display: none;
+            margin-left: 4px;
+            flex-shrink: 0;
+        }
+        .step-item.active .step-spinner { display: inline-block; }
+        @keyframes spin-step {
+            to { transform: rotate(360deg); }
+        }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 4px; }
@@ -341,14 +356,17 @@
                 <div id="step0" class="step-item text-slate-400">
                     <div class="step-number">1</div>
                     <span data-i18n="fileProcessing">处理文件</span>
+                    <div class="step-spinner"></div>
                 </div>
                 <div id="step1" class="step-item text-slate-400">
                     <div class="step-number">2</div>
                     <span data-i18n="skeletonStep">构建知识骨架</span>
+                    <div class="step-spinner"></div>
                 </div>
                 <div id="step2" class="step-item text-slate-400">
                     <div class="step-number">3</div>
                     <span id="progressText" data-i18n="nodeStep">填充节点内容</span>
+                    <div class="step-spinner"></div>
                 </div>
             </div>
             <p class="text-sm text-slate-500 text-center mb-4" data-i18n="genTimeHint">需要5-10分钟，感谢您的耐心等待🙏</p>

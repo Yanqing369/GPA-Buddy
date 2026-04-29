@@ -230,6 +230,28 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
         }
         
+        .spinner-green {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #d1fae5;
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin-green 0.8s linear infinite;
+        }
+        
+        .spinner-green-sm {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin-green 0.8s linear infinite;
+        }
+        
+        @keyframes spin-green {
+            to { transform: rotate(360deg); }
+        }
+        
         .drop-zone {
             border: 2px dashed #cbd5e1;
             transition: all 0.3s ease;
@@ -271,8 +293,8 @@
         }
 
         .step-item.active {
-            background: #eef2ff;
-            color: #6366f1;
+            background: #fff7ed;
+            color: #f59e0b;
         }
 
         .step-item.completed {
@@ -294,9 +316,9 @@
         }
 
         .step-item.active .step-number {
-            background: #6366f1;
+            background: #f59e0b;
             color: white;
-            border-color: #6366f1;
+            border-color: #f59e0b;
         }
 
         .step-item.completed .step-number {
@@ -520,24 +542,20 @@
             <div class="p-6 border-b border-slate-200">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center">
-                        <div class="w-10 h-10 gradient-bg rounded-full flex items-center justify-center mr-3 pulse-ring">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
+                        <img src="resources/logo.png" class="w-10 h-10 object-contain mr-3 rounded-xl" alt="logo">
                         <div>
                             <h3 class="text-lg font-bold text-slate-900" data-i18n="generating">正在生成题库...</h3>
                             <p class="text-xs text-slate-500 loading-dots" data-i18n="aiProcessing">AI正在分析文档内容</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <span id="questionProgressText" class="text-sm font-medium text-indigo-600">0 / 100</span>
+                        <span id="questionProgressText" class="text-sm font-medium text-emerald-600">0 / 100</span>
                     </div>
                 </div>
                 
                 <!-- 进度条 -->
                 <div class="w-full bg-slate-200 rounded-full h-2">
-                    <div id="progressBar" class="gradient-bg h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    <div id="progressBar" class="h-2 rounded-full transition-all duration-300 bg-gradient-to-r from-emerald-400 to-green-500" style="width: 0%"></div>
                 </div>
                 
                 <!-- 警告横幅 -->

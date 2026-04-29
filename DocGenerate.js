@@ -1083,7 +1083,7 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         if (streamingContainer) {
             streamingContainer.innerHTML = `
                 <div class="flex flex-col items-center justify-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mb-3"></div>
+                    <div class="spinner-green-sm mb-3"></div>
                     <div class="text-center text-slate-400 text-sm">${t('waitingFirstQuestion')}</div>
                 </div>
             `;
@@ -1149,12 +1149,12 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
                 }
                 
                 const item = document.createElement('div');
-                item.className = 'py-2 px-3 bg-white rounded border-l-4 border-indigo-500 slide-in';
+                item.className = 'py-2 px-3 bg-white rounded border-l-4 border-emerald-500 slide-in';
                 item.style.animationDelay = `${index * 0.05}s`;
                 
                 item.innerHTML = `
                     <div class="text-sm text-slate-700">
-                        <span class="font-medium text-indigo-600 mr-2">${question.id || index + 1}.</span>
+                        <span class="font-medium text-emerald-600 mr-2">${question.id || index + 1}.</span>
                         ${escapeHtml(question.question)}
                     </div>
                 `;
@@ -1173,7 +1173,7 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
         card.style.animationDelay = `${index * 0.05}s`;
         
         const sourceInfo = question.source 
-            ? `<div class="text-xs text-indigo-600 mt-1">📄 ${question.source}</div>` 
+            ? `<div class="text-xs text-emerald-600 mt-1">📄 ${question.source}</div>` 
             : '';
 
         card.innerHTML = `

@@ -684,6 +684,7 @@ const TutorApp = {
             }
         }
         this.updateProgressStep(0, 'completed');
+        this.updateProgressStep(1, 'active');
 
         const lang = document.getElementById('tutorLangValue')?.value || 'en';
         const mode = document.getElementById('tutorModeValue')?.value || 'fast';
