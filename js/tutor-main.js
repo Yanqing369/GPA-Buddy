@@ -114,6 +114,11 @@ const TutorApp = {
             modeFastShort: '快速',
             modeExpertShort: '精研',
             modeTextShort: '文本',
+            modeUserApi: '自备API',
+            modeUserApiShort: '自备',
+            userApiHintPrefix: '使用您自己的 API 密钥直接调用大模型，不经过平台服务器，不消耗积分。api可在主页',
+            settingsLink: '设置',
+            userApiHintSuffix: '里配置。',
             customPrompt: '个性化要求',
             customPromptPlaceholder: '例如：请重点围绕第三章的内容构建图谱',
             customPromptTooLong: '个性化要求不能超过100个字符',
@@ -137,6 +142,11 @@ const TutorApp = {
             errCustomPromptTooLong: '个性化要求过长（最大 2000 字符）',
             errInvalidLanguage: '不支持的语言',
             errInvalidMode: '无效的生成模式',
+            userApiNotConfigured: '请在设置中配置 API Base URL 和 API Key',
+            userApiDesc: '使用您自己的 API 密钥直接调用大模型，不经过平台服务器，不消耗积分。',
+            userApiCorsWarning: '请确保您的 API 地址支持浏览器跨域访问（CORS）。',
+            save: '保存',
+            clear: '清除',
             errInvalidQuestionCount: '题目数量无效（1-200）',
             uploadStudyMaterial: '上传学习资料',
             creditLoginToView: '登录查看',
@@ -204,6 +214,11 @@ const TutorApp = {
             modeFastShort: '快速',
             modeExpertShort: '精研',
             modeTextShort: '文本',
+            modeUserApi: '自備API',
+            modeUserApiShort: '自備',
+            userApiHintPrefix: '使用您自己的 API 密鑰直接調用大模型，不經過平台伺服器，不消耗積分。api可在主頁',
+            settingsLink: '設置',
+            userApiHintSuffix: '裡配置。',
             customPrompt: '個性化要求',
             customPromptPlaceholder: '例如：請重點圍繞第三章的內容構建圖譜',
             customPromptTooLong: '個性化要求不能超過100個字符',
@@ -227,6 +242,11 @@ const TutorApp = {
             errCustomPromptTooLong: '個性化要求過長（最大 2000 字元）',
             errInvalidLanguage: '不支援的語言',
             errInvalidMode: '無效的生成模式',
+            userApiNotConfigured: '請在設定中配置 API Base URL 和 API Key',
+            userApiDesc: '使用您自己的 API 密鑰直接調用大模型，不經過平台伺服器，不消耗積分。',
+            userApiCorsWarning: '請確保您的 API 地址支持瀏覽器跨域訪問（CORS）。',
+            save: '保存',
+            clear: '清除',
             errInvalidQuestionCount: '題目數量無效（1-200）',
             uploadStudyMaterial: '上傳學習資料',
             creditLoginToView: '登入查看',
@@ -295,6 +315,11 @@ const TutorApp = {
             modeFastShort: 'Fast',
             modeExpertShort: 'Deep',
             modeTextShort: 'Text',
+            modeUserApi: 'Custom API',
+            modeUserApiShort: 'Custom',
+            userApiHintPrefix: 'Use your own API key to call the model directly, bypassing the platform server, no credits consumed. API can be configured in the home page ',
+            settingsLink: 'settings',
+            userApiHintSuffix: '.',
             customPrompt: 'Personalized Request',
             customPromptPlaceholder: 'e.g. Please focus on Chapter 3 when building the graph',
             customPromptTooLong: 'Custom prompt cannot exceed 100 characters',
@@ -318,6 +343,11 @@ const TutorApp = {
             errCustomPromptTooLong: 'Custom prompt is too long (max 2000 characters).',
             errInvalidLanguage: 'Unsupported language.',
             errInvalidMode: 'Invalid generation mode.',
+            userApiNotConfigured: 'Please configure API Base URL and API Key in settings.',
+            userApiDesc: 'Use your own API key to call the model directly. No credits consumed.',
+            userApiCorsWarning: 'Please make sure your API endpoint supports browser CORS.',
+            save: 'Save',
+            clear: 'Clear',
             errInvalidQuestionCount: 'Invalid question count (1-200).',
             mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it',
         },
@@ -379,6 +409,11 @@ const TutorApp = {
             modeFastShort: '빠름',
             modeExpertShort: '심화',
             modeTextShort: '텍스트',
+            modeUserApi: '사용자 API',
+            modeUserApiShort: '사용자',
+            userApiHintPrefix: '자신의 API 키를 사용하여 모델을 직접 호출합니다. 플랫폼 서버를 거치지 않으며 크레딧이 소모되지 않습니다. API는 홈페이지 ',
+            settingsLink: '설정',
+            userApiHintSuffix: '에서 구성할 수 있습니다.',
             customPrompt: '개인화 요구사항',
             customPromptPlaceholder: '예: 3장 내용을 중심으로 그래프를 구성해 주세요',
             customPromptTooLong: '개인화 요구사항은 100자를 초과할 수 없습니다',
@@ -403,6 +438,11 @@ const TutorApp = {
             errInvalidLanguage: 'Unsupported language.',
             errInvalidMode: 'Invalid generation mode.',
             errInvalidQuestionCount: 'Invalid question count (1-200).',
+            userApiNotConfigured: '설정에서 API Base URL과 API Key를 구성하세요.',
+            userApiDesc: '자신의 API 키를 사용하여 모델을 직접 호출합니다. 크레딧이 소모되지 않습니다.',
+            userApiCorsWarning: 'API 엔드포인트가 브라우저 CORS를 지원하는지 확인하세요.',
+            save: '저장',
+            clear: '지우기',
             mobileConvertedTitle: '모바일 미리보기 지원 안 함', mobileConvertedDesc: '이 파일은 다른 형식에서 변환되었습니다. 모바일에서는 원본 PDF만 지원됩니다. 컴퓨터에서 다시 생성해 주세요.', mobileConvertedBtn: '확인',
         }
     },
@@ -767,6 +807,15 @@ const TutorApp = {
             return;
         }
 
+        if (mode === 'userapi') {
+            if (!UserAPIConfig.isConfigured()) {
+                this.showToast(this.t('userApiNotConfigured'), 'error');
+                return;
+            }
+            await this.generateWithUserAPI(lang, customPrompt, streamCallbacks);
+            return;
+        }
+
         const uploadFile = new File([this.processedPdfBytes], this.processedFileName || this.currentFile.name, { type: 'application/pdf' });
 
         const formData = new FormData();
@@ -817,6 +866,36 @@ const TutorApp = {
             await TutorSSE.stream(fallbackForm, callbacks, `${API_BASE}/fallback/tutor_generate`);
         } catch (err) {
             console.error('DeepSeek generation error:', err);
+            this.isGenerating = false;
+            disableTutorRefreshProtection();
+            this.hideProgressModal();
+            this.showToast(this.translateBackendError(err.message) || this.t('networkError'), 'error');
+        }
+    },
+
+    async generateWithUserAPI(lang, customPrompt, callbacks) {
+        try {
+            const arrayBuffer = this.processedPdfBytes;
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+            const originalFileName = (this.processedFileName || this.currentFile?.name || 'document').replace(/\.pdf$/i, '');
+
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                const pageText = content.items.map(item => item.str).join(' ');
+                text += `-----[${originalFileName}_page${i}]-----\n${pageText}\n\n`;
+            }
+
+            // Log usage (non-blocking)
+            logUsageToWorker('tutor_generate');
+
+            const controller = new AbortController();
+            this._abortController = controller;
+
+            await UserAPITutorEngine.generate(text, lang, customPrompt, callbacks, controller.signal);
+        } catch (err) {
+            console.error('User API generation error:', err);
             this.isGenerating = false;
             disableTutorRefreshProtection();
             this.hideProgressModal();
@@ -1208,32 +1287,87 @@ function selectTutorLang(lang) {
     });
 }
 
+function toggleTutorModeDropdown() {
+    const dropdown = document.getElementById('tutorModeOptions');
+    if (dropdown) dropdown.classList.toggle('show');
+}
+
 function selectTutorMode(mode) {
     const valueInput = document.getElementById('tutorModeValue');
     if (valueInput) valueInput.value = mode;
-    const fastBtn = document.getElementById('btnModeFast');
-    const expertBtn = document.getElementById('btnModeExpert');
-    const textBtn = document.getElementById('btnModeText');
-    if (!fastBtn || !expertBtn || !textBtn) return;
 
-    const activeClass = 'px-4 py-1.5 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-emerald-400 to-green-500 shadow-sm transition-all flex items-center gap-1.5';
-    const inactiveClass = 'px-4 py-1.5 rounded-lg text-sm font-medium text-slate-600 transition-all flex items-center gap-1.5';
+    // 关闭下拉
+    const dropdown = document.getElementById('tutorModeOptions');
+    if (dropdown) dropdown.classList.remove('show');
 
-    fastBtn.className = mode === 'fast' ? activeClass : inactiveClass;
-    expertBtn.className = mode === 'expert' ? activeClass : inactiveClass;
-    // 纯文本按钮未解锁时不允许手动切换
-    if (!textBtn.disabled) {
-        textBtn.className = mode === 'text' ? activeClass : inactiveClass;
+    // 更新显示文本
+    const display = document.getElementById('modeDisplay');
+    const modeLabels = {
+        fast: '🚀 ' + (TutorApp.t ? TutorApp.t('modeFast') : '快速'),
+        expert: '🔍 ' + (TutorApp.t ? TutorApp.t('modeExpert') : '精研'),
+        text: '📝 ' + (TutorApp.t ? TutorApp.t('modeText') : '纯文本'),
+        userapi: '🔧 ' + (TutorApp.t ? TutorApp.t('modeUserApi') : '自备API')
+    };
+    if (display) display.innerHTML = modeLabels[mode] || modeLabels.fast;
+
+    // 高亮当前选项
+    ['fast', 'expert', 'text', 'userapi'].forEach(m => {
+        const opt = document.getElementById('modeOption' + (m === 'userapi' ? 'UserApi' : m.charAt(0).toUpperCase() + m.slice(1)));
+        if (opt) {
+            if (m === mode) {
+                opt.classList.add('active');
+            } else {
+                opt.classList.remove('active');
+            }
+        }
+    });
+
+    // 显示/隐藏自备 API 提示
+    const hint = document.getElementById('userApiHint');
+    if (hint) {
+        if (mode === 'userapi') {
+            hint.classList.remove('hidden');
+        } else {
+            hint.classList.add('hidden');
+        }
     }
-
 }
 
 function unlockTutorTextMode() {
-    const textBtn = document.getElementById('btnModeText');
-    if (!textBtn) return;
-    textBtn.disabled = false;
-    textBtn.removeAttribute('title');
-    textBtn.onclick = function() { selectTutorMode('text'); };
+    const textOpt = document.getElementById('modeOptionText');
+    if (!textOpt) return;
+    textOpt.classList.remove('opacity-50', 'cursor-not-allowed');
+    textOpt.classList.add('cursor-pointer');
+    textOpt.removeAttribute('title');
+    textOpt.onclick = function() { selectTutorMode('text'); };
+}
+
+function saveUserApiConfig() {
+    const baseUrl = document.getElementById('userApiBaseUrl').value.trim();
+    const apiKey = document.getElementById('userApiKey').value.trim();
+    const model = document.getElementById('userApiModel').value.trim();
+    if (!baseUrl || !apiKey) {
+        if (typeof TutorApp !== 'undefined') {
+            TutorApp.showToast('请填写 Base URL 和 API Key', 'error');
+        } else {
+            alert('请填写 Base URL 和 API Key');
+        }
+        return;
+    }
+    UserAPIConfig.save(baseUrl, apiKey, model);
+    if (typeof TutorApp !== 'undefined') {
+        TutorApp.showToast('API 配置已保存', 'success');
+    }
+}
+
+function clearUserApiConfig() {
+    UserAPIConfig.clear();
+    document.getElementById('userApiBaseUrl').value = '';
+    document.getElementById('userApiKey').value = '';
+    document.getElementById('userApiModel').value = '';
+    if (typeof TutorApp !== 'undefined') {
+        TutorApp.showToast('API 配置已清除', 'success');
+    }
 }
 
 // 初始化 tutor 语言下拉高亮
@@ -1243,12 +1377,18 @@ function unlockTutorTextMode() {
     selectTutorLang(defaultLang);
 })();
 
-// 点击空白区域关闭 tutor 语言下拉
+// 点击空白区域关闭 tutor 语言和模式下拉
 window.addEventListener('click', (event) => {
     if (!event.target.closest('#tutorLangDropdown')) {
-        const dropdown = document.getElementById('tutorLangOptions');
-        if (dropdown && dropdown.classList.contains('show')) {
-            dropdown.classList.remove('show');
+        const langDropdown = document.getElementById('tutorLangOptions');
+        if (langDropdown && langDropdown.classList.contains('show')) {
+            langDropdown.classList.remove('show');
+        }
+    }
+    if (!event.target.closest('#btnModeDropdown') && !event.target.closest('#tutorModeOptions')) {
+        const modeDropdown = document.getElementById('tutorModeOptions');
+        if (modeDropdown && modeDropdown.classList.contains('show')) {
+            modeDropdown.classList.remove('show');
         }
     }
 });

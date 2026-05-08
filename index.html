@@ -1249,6 +1249,21 @@
                         重置数据库
                     </button>
                 </div>
+
+                <div class="p-5 rounded-2xl liquid-btn border-0" style="background: linear-gradient(135deg, rgba(239,246,255,0.6) 0%, rgba(219,234,254,0.4) 100%);">
+                    <h4 class="font-bold text-blue-900 mb-1 flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span data-i18n="userApiTitle">自备 API</span>
+                    </h4>
+                    <p class="text-xs text-blue-700/80 mb-3" data-i18n="userApiDesc">使用自己的 API Key 直接调用大模型，不消耗积分</p>
+                    <input type="url" id="settingsUserApiBaseUrl" placeholder="https://api.deepseek.com" class="w-full mb-2 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    <input type="password" id="settingsUserApiKey" placeholder="sk-..." class="w-full mb-2 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    <input type="text" id="settingsUserApiModel" placeholder="deepseek-v4-flash" class="w-full mb-3 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                    <button onclick="saveSettingsUserApi()" class="w-full py-2 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors" data-i18n="saveApiConfig">保存 API 配置</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1303,6 +1318,7 @@
         const API_BASE = "https://moyuxiaowu.org";
     </script>
     <script src="js/visitor.js"></script>
+    <script src="js/user-api-client.js"></script>
     <script>
         // 注册 Service Worker
         if ('serviceWorker' in navigator) {
@@ -1948,7 +1964,10 @@
                 voucherInvalid: '兑换码无效',
                 voucherExpired: '兑换码已过期',
                 voucherNoRemaining: '兑换次数已用完',
-                voucherAlreadyRedeemed: '你已经兑换过这个码了'
+                voucherAlreadyRedeemed: '你已经兑换过这个码了',
+                userApiTitle: '自备 API',
+                userApiDesc: '使用自己的 API Key 直接调用大模型，不消耗积分',
+                saveApiConfig: '保存 API 配置'
             },
             'zh-TW': {
                 donateBannerText: '測試期間（2026年9月1日前）所有功能免費開放，之後可能適當收取成本，祝大家考試順利',
@@ -2050,7 +2069,10 @@
                 voucherInvalid: '兌換碼無效',
                 voucherExpired: '兌換碼已過期',
                 voucherNoRemaining: '兌換次數已用完',
-                voucherAlreadyRedeemed: '你已經兌換過這個碼了'
+                voucherAlreadyRedeemed: '你已經兌換過這個碼了',
+                userApiTitle: '自備 API',
+                userApiDesc: '使用自己的 API Key 直接調用大模型，不消耗積分',
+                saveApiConfig: '保存 API 配置'
             },
             en: {
                 "donateBannerText": "All features are free during the beta period (before Sep 1, 2026). A nominal fee may apply afterwards. Good luck on your exams!",
@@ -2152,7 +2174,10 @@
                 "voucherInvalid": "Invalid voucher code",
                 "voucherExpired": "Voucher expired",
                 "voucherNoRemaining": "No redemptions left",
-                "voucherAlreadyRedeemed": "You already redeemed this code"
+                "voucherAlreadyRedeemed": "You already redeemed this code",
+                "userApiTitle": "Custom API",
+                "userApiDesc": "Use your own API key to call the model directly. No credits consumed.",
+                "saveApiConfig": "Save API Config"
             },
             ko: {
                 "donateBannerText": "테스트 기간 동안(2026년 9월 1일 이전) 모든 기능이 묵료입니다. 이후 적정 비용이 발생할 수 있습니다. 시험 잘 보세요!",
@@ -2246,7 +2271,10 @@
                     "잘하고 있어요! 지금 이대로 손만 알아요 💪",
                     "반복하면 서는 생긴다는데 잘될 거예요! 🎯",
                     "우수인 당신! 앞으로 더 착착할 거예요 🎓"
-                ]
+                ],
+                "userApiTitle": "사용자 API",
+                "userApiDesc": "자신의 API 키를 사용하여 모델을 직접 호출합니다. 크레딧이 소모되지 않습니다.",
+                "saveApiConfig": "API 설정 저장"
             }
         };
 
@@ -2397,6 +2425,21 @@
             const banks = await db.questionBanks.toArray();
             const size = JSON.stringify(banks).length;
             document.getElementById('storageStats').textContent = `Used: ${(size/1024).toFixed(1)}KB`;
+            document.getElementById('settingsUserApiBaseUrl').value = UserAPIConfig.getBaseUrl() || 'https://api.deepseek.com';
+            document.getElementById('settingsUserApiKey').value = UserAPIConfig.getApiKey();
+            document.getElementById('settingsUserApiModel').value = UserAPIConfig.getModel() || 'deepseek-v4-flash';
+        }
+
+        function saveSettingsUserApi() {
+            const baseUrl = document.getElementById('settingsUserApiBaseUrl').value.trim();
+            const apiKey = document.getElementById('settingsUserApiKey').value.trim();
+            const model = document.getElementById('settingsUserApiModel').value.trim();
+            if (!baseUrl || !apiKey) {
+                showToast('请填写 Base URL 和 API Key', 'error');
+                return;
+            }
+            UserAPIConfig.save(baseUrl, apiKey, model);
+            showToast('API 配置已保存', 'success');
         }
 
         async function clearAllData() {
@@ -2571,6 +2614,11 @@
             
             // 女孩说话气泡定时显示
             initGirlBubble();
+
+            // 从其他页面跳转过来打开设置面板
+            if (new URLSearchParams(window.location.search).get('openSettings')) {
+                showSettings();
+            }
         });
         
         // 女孩说话气泡 - 每16秒显示一次，持续3秒

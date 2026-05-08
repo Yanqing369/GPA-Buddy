@@ -111,6 +111,15 @@ const i18n = {
         generateMode: '生成模式',
         modeMultimodal: '图文',
         modeText: '纯文本',
+        modeUserApi: '自备API',
+        userApiDesc: '使用您自己的 API 密钥直接调用大模型，不经过平台服务器，不消耗积分。',
+        userApiCorsWarning: '请确保您的 API 地址支持浏览器跨域访问（CORS）。',
+        userApiNotConfigured: '请在设置中配置 API Base URL 和 API Key',
+        userApiHintPrefix: '使用您自己的 API 密钥直接调用大模型，不经过平台服务器，不消耗积分。api可在主页',
+        settingsLink: '设置',
+        userApiHintSuffix: '里配置。',
+        save: '保存',
+        clear: '清除',
         confirm: '确定',
         errorCode: '错误码',
         errorStatus: '状态',
@@ -196,6 +205,15 @@ const i18n = {
         generateMode: '生成模式',
         modeMultimodal: '圖文',
         modeText: '純文字',
+        modeUserApi: '自備API',
+        userApiDesc: '使用您自己的 API 密鑰直接調用大模型，不經過平台伺服器，不消耗積分。',
+        userApiCorsWarning: '請確保您的 API 地址支持瀏覽器跨域訪問（CORS）。',
+        userApiNotConfigured: '請在設定中配置 API Base URL 和 API Key',
+        userApiHintPrefix: '使用您自己的 API 密鑰直接調用大模型，不經過平台伺服器，不消耗積分。api可在主頁',
+        settingsLink: '設置',
+        userApiHintSuffix: '裡配置。',
+        save: '保存',
+        clear: '清除',
         confirm: '確定',
         errorCode: '錯誤碼',
         errorStatus: '狀態',
@@ -281,6 +299,15 @@ const i18n = {
         generateMode: 'Generation Mode',
         modeMultimodal: 'Multimodal',
         modeText: 'Text Only',
+        modeUserApi: 'Custom API',
+        userApiDesc: 'Use your own API key to call the model directly. No credits consumed.',
+        userApiCorsWarning: 'Please make sure your API endpoint supports browser CORS.',
+        userApiNotConfigured: 'Please configure API Base URL and API Key in settings.',
+        userApiHintPrefix: 'Use your own API key to call the model directly, bypassing the platform server, no credits consumed. API can be configured in the home page ',
+        settingsLink: 'settings',
+        userApiHintSuffix: '.',
+        save: 'Save',
+        clear: 'Clear',
         confirm: 'OK',
         errorCode: 'Error Code',
         errorStatus: 'Status',
@@ -366,6 +393,15 @@ const i18n = {
         generateMode: '생성 모드',
         modeMultimodal: '멀티모달',
         modeText: '텍스트 전용',
+        modeUserApi: '사용자 API',
+        userApiDesc: '자신의 API 키를 사용하여 모델을 직접 호출합니다. 크레딧이 소모되지 않습니다.',
+        userApiCorsWarning: 'API 엔드포인트가 브라우저 CORS를 지원하는지 확인하세요.',
+        userApiNotConfigured: '설정에서 API Base URL과 API Key를 구성하세요.',
+        userApiHintPrefix: '자신의 API 키를 사용하여 모델을 직접 호출합니다. 플랫폼 서버를 거치지 않으며 크레딧이 소모되지 않습니다. API는 홈페이지 ',
+        settingsLink: '설정',
+        userApiHintSuffix: '에서 구성할 수 있습니다.',
+        save: '저장',
+        clear: '지우기',
         confirm: '확인',
         errorCode: '오류 코드',
         errorStatus: '상태',
@@ -919,6 +955,78 @@ class StreamingQuestionGenerator {
                     }
                 }
             }
+
+        } catch (error) {
+            this.handleError(error);
+        } finally {
+            this.isGenerating = false;
+            disableRefreshProtection();
+        }
+    }
+
+    async generateAllWithUserAPI(file, config) {
+        const { questionCount, lang, customPrompt } = config;
+
+        this.isGenerating = true;
+        this.questions = [];
+        this.batchResults.clear();
+        this.totalBatches = Math.ceil(questionCount / 20);
+
+        try {
+            this.updateProgressStep(2, 'active');
+
+            const controller = new AbortController();
+            this.abortControllers.push(controller);
+
+            const originalFileName = file.name.replace(/\.pdf$/i, '');
+            const text = await this.extractPdfText(file, originalFileName);
+
+            // Log usage (non-blocking)
+            logUsageToWorker('pdf_generate');
+
+            let batch0Buffer = '';
+            let displayedCount = 0;
+
+            await UserAPIPdfEngine.generate(text, {
+                questionCount,
+                lang,
+                customPrompt,
+                originalFileName
+            }, {
+                onBatch0Chunk: (chunk) => {
+                    batch0Buffer += chunk;
+                    const newQuestions = this.extractCompleteObjects(batch0Buffer);
+                    if (newQuestions.length > displayedCount) {
+                        for (let i = displayedCount; i < newQuestions.length; i++) {
+                            this.renderQuestionStream(newQuestions[i], i, true);
+                        }
+                        displayedCount = newQuestions.length;
+                        this.updateProgress(0, displayedCount);
+                    }
+                },
+                onBatch0Done: (count) => {
+                    console.log('[DEBUG] Batch 0 done:', count);
+                },
+                onFinalResult: (result) => {
+                    this.questions = result.data || [];
+                    generatedQuestions = this.questions;
+                    this.partialResult = result.partial || false;
+                    this.generatedCount = result.generatedCount || this.questions.length;
+                    this.requestedCount = result.requestedCount || this.questions.length;
+                    this.batchResults.set(0, this.questions.slice(0, 20));
+                    for (let i = 1; i < this.totalBatches; i++) {
+                        this.batchResults.set(i, this.questions.slice(i * 20, (i + 1) * 20));
+                    }
+                },
+                onDone: () => {
+                    this.updateProgressStep(2, 'completed');
+                    this.showCompletionUI();
+                },
+                onError: (message) => {
+                    console.error('[DEBUG] UserAPI error:', message);
+                    this.handleError(new Error(message), 'user_api');
+                }
+            }, controller.signal);
 
         } catch (error) {
             this.handleError(error);
@@ -1616,13 +1724,6 @@ async function startGeneration() {
         return;
     }
 
-    // 获取 Turnstile token
-    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
-    if (!turnstileToken) {
-        showToast('请先完成人机验证 / Please complete the CAPTCHA', 'error');
-        return;
-    }
-
     const totalCount = parseInt(document.getElementById('questionCount')?.value) || 20;
     const lang = document.getElementById('genLangValue')?.value || 'zh';
     const mode = document.getElementById('genModeValue')?.value || 'multimodal';
@@ -1631,6 +1732,19 @@ async function startGeneration() {
     // 自定义提示词长度限制（100 Unicode 字符）
     if (customPrompt.length > 100) {
         showToast(t('customPromptTooLong'), 'error');
+        return;
+    }
+    
+    // 非自备API模式需要人机验证
+    const turnstileToken = typeof turnstile !== 'undefined' ? turnstile.getResponse() : null;
+    if (mode !== 'userapi' && !turnstileToken) {
+        showToast('请先完成人机验证 / Please complete the CAPTCHA', 'error');
+        return;
+    }
+
+    // 自备API模式需要已配置
+    if (mode === 'userapi' && !UserAPIConfig.isConfigured()) {
+        showToast(t('userApiNotConfigured'), 'error');
         return;
     }
     
@@ -1661,6 +1775,12 @@ async function startGeneration() {
                 questionCount: totalCount,
                 lang: lang,
                 turnstileToken: turnstileToken,
+                customPrompt: customPrompt
+            });
+        } else if (mode === 'userapi') {
+            await streamingGenerator.generateAllWithUserAPI(currentFiles[0], {
+                questionCount: totalCount,
+                lang: lang,
                 customPrompt: customPrompt
             });
         } else {
