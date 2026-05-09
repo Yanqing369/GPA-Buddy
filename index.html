@@ -1222,47 +1222,50 @@
                 </button>
             </div>
 
-            <div class="space-y-6">
-                <div class="p-5 rounded-2xl liquid-btn border-0" style="background: linear-gradient(135deg, rgba(241,245,249,0.8) 0%, rgba(248,250,252,0.6) 100%);">
-                    <h4 class="font-bold text-slate-900 mb-1 flex items-center gap-2 text-sm">
-                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+            <div class="space-y-3">
+                <!-- 数据库管理 -->
+                <div class="rounded-2xl border-0 overflow-hidden" style="background: linear-gradient(135deg, rgba(241,245,249,0.8) 0%, rgba(248,250,252,0.6) 100%);">
+                    <button onclick="toggleSettingsPanel('dbPanel')" class="w-full flex justify-between items-center p-4 text-left">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/>
+                            </svg>
+                            <span class="font-bold text-slate-900 text-sm" data-i18n="dbManageTitle">数据库管理</span>
+                        </div>
+                        <svg id="dbPanel-chevron" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        <span data-i18n="storage">存储管理</span>
-                    </h4>
-                    <p class="text-xs text-slate-500 mb-4 leading-relaxed" data-i18n="localStorage">所有资料都保存在你的电脑上，不用担心泄露</p>
-                    <p class="text-xs text-slate-400 mb-3" id="storageStats">已使用: 计算中...</p>
-                    <button onclick="clearAllData()" class="w-full py-3 rounded-xl liquid-btn-red text-red-600 text-sm font-semibold spring-active" data-i18n="clearAll">
-                        清空所有题库
                     </button>
+                    <div id="dbPanel" class="hidden px-4 pb-4">
+                        <p class="text-xs text-slate-500 mb-3" id="storageStats">已使用: 计算中...</p>
+                        <div class="flex gap-2">
+                            <button onclick="clearAllData()" class="flex-1 py-2.5 rounded-xl liquid-btn-red text-red-600 text-xs font-semibold spring-active" data-i18n="clearAll">清空题库</button>
+                            <button onclick="resetDatabase()" class="flex-1 py-2.5 rounded-xl liquid-btn-amber text-amber-700 text-xs font-semibold spring-active" data-i18n="resetDbBtn">重置数据库</button>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="p-5 rounded-2xl liquid-btn border-0" style="background: linear-gradient(135deg, rgba(254,252,232,0.6) 0%, rgba(254,250,240,0.4) 100%);">
-                    <h4 class="font-bold text-amber-900 mb-1 flex items-center gap-2 text-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                <!-- 自备 API 配置 -->
+                <div class="rounded-2xl border-0 overflow-hidden" style="background: linear-gradient(135deg, rgba(239,246,255,0.6) 0%, rgba(219,234,254,0.4) 100%);">
+                    <button onclick="toggleSettingsPanel('apiPanel')" class="w-full flex justify-between items-center p-4 text-left">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            <span class="font-bold text-blue-900 text-sm" data-i18n="userApiConfigTitle">自备 API 配置</span>
+                        </div>
+                        <svg id="apiPanel-chevron" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        <span data-i18n="dbResetTitle">修复数据问题</span>
-                    </h4>
-                    <p class="text-xs text-amber-700/80 mb-4 leading-relaxed" data-i18n="dbResetDesc">如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。</p>
-                    <button onclick="resetDatabase()" class="w-full py-3 rounded-xl liquid-btn-amber text-white text-sm font-semibold spring-active" data-i18n="resetDbBtn">
-                        重置数据库
                     </button>
-                </div>
-
-                <div class="p-5 rounded-2xl liquid-btn border-0" style="background: linear-gradient(135deg, rgba(239,246,255,0.6) 0%, rgba(219,234,254,0.4) 100%);">
-                    <h4 class="font-bold text-blue-900 mb-1 flex items-center gap-2 text-sm">
-                        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                        <span data-i18n="userApiTitle">自备 API</span>
-                    </h4>
-                    <p class="text-xs text-blue-700/80 mb-3" data-i18n="userApiDesc">使用自己的 API Key 直接调用大模型，不消耗积分</p>
-                    <input type="url" id="settingsUserApiBaseUrl" placeholder="https://api.deepseek.com" class="w-full mb-2 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
-                    <input type="password" id="settingsUserApiKey" placeholder="sk-..." class="w-full mb-2 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
-                    <input type="text" id="settingsUserApiModel" placeholder="deepseek-v4-flash" class="w-full mb-3 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
-                    <button onclick="saveSettingsUserApi()" class="w-full py-2 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors" data-i18n="saveApiConfig">保存 API 配置</button>
+                    <div id="apiPanel" class="hidden px-4 pb-4">
+                        <p class="text-xs text-blue-700/80 mb-3" data-i18n="userApiDesc">使用自己的 API Key 直接调用大模型，不消耗积分</p>
+                        <input type="url" id="settingsUserApiBaseUrl" placeholder="https://api.deepseek.com" class="w-full mb-2 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                        <input type="password" id="settingsUserApiKey" placeholder="sk-..." class="w-full mb-2 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                        <input type="text" id="settingsUserApiModel" placeholder="deepseek-v4-flash" class="w-full mb-3 px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+                        <button onclick="saveSettingsUserApi()" class="w-full py-2 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 transition-colors" data-i18n="saveApiConfig">保存 API 配置</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1897,7 +1900,8 @@
                 myBanks: '我的题库',
                 unlimited: '不限次数',
                 localStorage: '所有资料都保存在你的电脑上，不用担心泄露',
-                clearAll: '清空所有题库',
+                dbManageTitle: '数据库管理',
+                clearAll: '清空题库',
                 dbResetTitle: '修复数据问题',
                 dbResetDesc: '如果遇到使用问题（如页面卡顿、数据加载失败），可以点击修复。这会清空所有题库并重新初始化。',
                 resetDbBtn: '重置数据库',
@@ -1967,6 +1971,7 @@
                 voucherAlreadyRedeemed: '你已经兑换过这个码了',
                 userApiTitle: '自备 API',
                 userApiDesc: '使用自己的 API Key 直接调用大模型，不消耗积分',
+                userApiConfigTitle: '自备 API 配置',
                 saveApiConfig: '保存 API 配置'
             },
             'zh-TW': {
@@ -2002,7 +2007,8 @@
                 myBanks: '我的題庫',
                 unlimited: '不限次數',
                 localStorage: '所有資料均儲存在你的電腦內，不用擔心外洩',
-                clearAll: '清空所有試題庫',
+                dbManageTitle: '資料庫管理',
+                clearAll: '清空題庫',
                 dbResetTitle: '修復資料問題',
                 dbResetDesc: '如遇到使用問題（例如畫面卡住、資料無法載入），可點擊修復。這將清空所有試題庫並重新初始化。',
                 resetDbBtn: '重置資料庫',
@@ -2072,6 +2078,7 @@
                 voucherAlreadyRedeemed: '你已經兌換過這個碼了',
                 userApiTitle: '自備 API',
                 userApiDesc: '使用自己的 API Key 直接調用大模型，不消耗積分',
+                userApiConfigTitle: '自備 API 配置',
                 saveApiConfig: '保存 API 配置'
             },
             en: {
@@ -2117,7 +2124,8 @@
                 "myBanks": "My Question Sets",
                 "unlimited": "Unlimited",
                 "localStorage": "All data is stored locally in your browser (IndexedDB)",
-                "clearAll": "Clear All Data",
+                "dbManageTitle": "Database Management",
+                "clearAll": "Clear Bank",
                 "dbResetTitle": "Reset Database (Troubleshooting)",
                 "dbResetDesc": "Getting database errors? Reset to start fresh. This wipes everything.",
                 "resetDbBtn": "Reset Database",
@@ -2177,6 +2185,7 @@
                 "voucherAlreadyRedeemed": "You already redeemed this code",
                 "userApiTitle": "Custom API",
                 "userApiDesc": "Use your own API key to call the model directly. No credits consumed.",
+                "userApiConfigTitle": "Custom API Config",
                 "saveApiConfig": "Save API Config"
             },
             ko: {
@@ -2222,6 +2231,7 @@
                 "myBanks": "내 문제세트",
                 "unlimited": "무제한",
                 "localStorage": "모든 데이터는 브라우저에 로컬로 저장됩니다 (IndexedDB)",
+                "dbManageTitle": "데이터베이스 관리",
                 "clearAll": "모든 데이터 삭제",
                 "dbResetTitle": "데이터베이스 초기화 (문제 해결)",
                 "dbResetDesc": "오류가 발생했나요? 데이터베이스를 초기화하여 새로 시작하세요. 모든 데이터가 삭제됩니다.",
@@ -2274,6 +2284,7 @@
                 ],
                 "userApiTitle": "사용자 API",
                 "userApiDesc": "자신의 API 키를 사용하여 모델을 직접 호출합니다. 크레딧이 소모되지 않습니다.",
+                "userApiConfigTitle": "사용자 API 설정",
                 "saveApiConfig": "API 설정 저장"
             }
         };
@@ -2404,6 +2415,13 @@
 
         function hideSettings() {
             document.getElementById('settingsModal').classList.add('hidden');
+        }
+
+        function toggleSettingsPanel(id) {
+            const panel = document.getElementById(id);
+            const chevron = document.getElementById(id + '-chevron');
+            panel.classList.toggle('hidden');
+            chevron.style.transform = panel.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
         }
 
         async function resetDatabase() {
