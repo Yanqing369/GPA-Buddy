@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="pageTitle">使用说明</title>
+    <link rel="icon" href="resources/logo.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+            color: #1c1c1e;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .glass-nav {
+            background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,251,235,0.85) 50%, rgba(254,252,232,0.88) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 50%, rgba(250,249,246,0.85) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                0 2px 8px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+        }
+        
+        .liquid-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.08),
+                0 1px 4px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .liquid-btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(252,251,248,0.95) 100%);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.12),
+                0 2px 8px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            transform: translateY(-2px);
+        }
+        
+        .liquid-btn:active { transform: scale(0.98) translateY(0); }
+        
+        .liquid-btn-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.95) 100%);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            box-shadow: 
+                0 4px 16px rgba(16, 185, 129, 0.3),
+                0 1px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(167, 243, 208, 0.5),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+        
+        .liquid-btn-emerald:hover {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.95) 0%, rgba(16, 185, 129, 1) 100%);
+            box-shadow: 
+                0 8px 24px rgba(16, 185, 129, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(167, 243, 208, 0.6),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .squircle { border-radius: 24px; }
+        .spring-active:active { transform: scale(0.96); }
+        
+        .lang-dropdown { position: relative; display: inline-block; }
+        .lang-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            min-width: 160px;
+            z-index: 50;
+            margin-top: 8px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 8px 16px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            overflow: hidden;
+        }
+        .lang-dropdown-content.show { display: block; }
+        .lang-option {
+            padding: 12px 18px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #475569;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 4px 6px;
+            border-radius: 12px;
+        }
+        .lang-option:hover {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+            color: #6366f1;
+            transform: translateX(2px);
+        }
+        .lang-option.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.08) 100%);
+            color: #6366f1;
+            font-weight: 600;
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        .lang-option.active::after { content: '✓'; margin-left: 8px; }
+        
+        .feature-list { list-style: none; padding: 0; margin-top: 12px; }
+        .feature-list li {
+            position: relative;
+            padding-left: 20px;
+            font-size: 15px;
+            line-height: 1.8;
+            color: #4a5a4a;
+        }
+        .feature-list li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 10px;
+            width: 6px;
+            height: 6px;
+            background: #8bc9a4;
+            border-radius: 50%;
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
+
+    <nav class="glass-nav sticky top-0 z-50 h-16">
+        <div class="max-w-5xl mx-auto px-6 h-full flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer spring-active" onclick="window.location.href='index.html'">
+                <div id="navLogoContainer" class="h-12 md:h-10 rounded-none md:rounded-xl overflow-hidden flex-shrink-0 md:w-10 bg-white md:bg-transparent">
+                    <img id="navLogo" src="resources/logo.png" alt="logo" class="h-full w-auto md:w-full md:h-full object-contain">
+                </div>
+                <span class="hidden md:inline font-bold text-base md:text-lg tracking-tight text-slate-900" data-i18n="appName">请出题</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="lang-dropdown">
+                    <button onclick="toggleLangDropdown()" class="px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                        </svg>
+                        <span id="currentLangDisplay" class="hidden md:inline ml-1">简体中文</span>
+                        <svg class="w-4 h-4 ml-1 hidden md:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="langDropdown" class="lang-dropdown-content">
+                        <div class="lang-option" onclick="changeLanguage('zh')" data-lang="zh">简体中文</div>
+                        <div class="lang-option" onclick="changeLanguage('zh-TW')" data-lang="zh-TW">繁體中文</div>
+                        <div class="lang-option" onclick="changeLanguage('en')" data-lang="en">English</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-3xl mx-auto px-6 py-12">
+        <section class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-3 tracking-tight" data-i18n="introTitle">使用说明</h1>
+        </section>
+
+        <section class="glass-card squircle p-6 md:p-8 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full" data-i18n="copyHint">以下文字可直接选中复制</span>
+                <button onclick="copyContent()" class="text-xs font-medium text-slate-500 hover:text-emerald-600 flex items-center gap-1 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    <span data-i18n="copyBtn">复制全文</span>
+                </button>
+            </div>
+            <div id="copyArea">
+                <p class="font-semibold text-slate-900 mb-3" data-i18n="byline">由香港科技大学在读学生开发的公益学习工具。</p>
+                <p class="text-slate-700 leading-relaxed text-sm md:text-base mb-3" data-i18n="paragraph1">
+                    「请出题」是一个面向学生群体的公益学习工具。用户可将课件、笔记、论文等学习资料上传至系统，由 AI 自动提取其中的知识要点，并据此生成选择题与思维导图。
+                </p>
+                <p class="text-slate-700 text-sm md:text-base mb-2" data-i18n="paragraph2Label">具体功能包括：</p>
+                <ul class="feature-list text-sm md:text-base">
+                    <li data-i18n="bullet1">上传学习资料，自动识别并提取知识点；</li>
+                    <li data-i18n="bullet2">针对各知识点设计科学的选择题，供用户逐一练习；</li>
+                    <li data-i18n="bullet3">对复杂的知识体系，按逻辑顺序生成思维导图，辅助整体理解。</li>
+                </ul>
+                <p class="text-slate-700 leading-relaxed text-sm md:text-base mt-4" data-i18n="paragraph3">
+                    该工具旨在帮助正在备考或日常学习的学生巩固知识，以练习代替被动阅读，让 AI 成为辅助进步的工具。
+                </p>
+            </div>
+        </section>
+
+        <div class="text-center">
+            <a href="index.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl liquid-btn-emerald text-white font-medium spring-active text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                <span data-i18n="backToHome">返回主页</span>
+            </a>
+        </div>
+    </main>
+
+    <footer class="max-w-5xl mx-auto px-6 pb-12 text-center">
+        <p class="text-sm text-slate-400" data-i18n="feedbackText">遇到问题？联系我们</p>
+    </footer>
+
+    <script>
+        let currentLang = localStorage.getItem('language') || detectBrowserLanguage();
+
+        const i18n = {
+            zh: {
+                pageTitle: '使用说明',
+                appName: '请出题',
+                introTitle: '使用说明',
+                copyHint: '以下文字可直接选中复制',
+                copyBtn: '复制全文',
+                copySuccess: '已复制到剪贴板',
+                byline: '由香港科技大学在读学生开发的学习工具。',
+                paragraph1: '「请出题」是一个面向学生群体的非盈利学习工具。用户可将课件、笔记、论文等学习资料上传至系统，由 AI 自动提取其中的知识要点，并据此生成选择题与思维导图。',
+                paragraph2Label: '具体功能包括：',
+                bullet1: '上传学习资料，自动识别并提取知识点；',
+                bullet2: '针对各知识点设计科学的选择题，供用户逐一练习；',
+                bullet3: '对复杂的知识体系，按逻辑顺序生成思维导图，辅助整体理解。',
+                paragraph3: '该工具旨在帮助正在备考或日常学习的学生巩固知识，以练习代替被动阅读，让 AI 成为辅助进步的工具。用户数量提高后，我们会收取最低成本以供运营。',
+                backToHome: '返回主页',
+                feedbackText: '遇到问题？联系我们'
+            },
+            'zh-TW': {
+                pageTitle: '使用說明',
+                appName: '請出題',
+                introTitle: '使用說明',
+                copyHint: '以下文字可直接選取複製',
+                copyBtn: '複製全文',
+                copySuccess: '已複製到剪貼簿',
+                byline: '由香港科技大學在讀學生開發的學習工具。',
+                paragraph1: '「請出題」是一個面向學生群體的非營利學習工具。使用者可將課堂簡報、筆記、學術文章等學習材料上載至系統，由 AI 自動提取當中的知識重點，並據此生成選擇題與腦圖。',
+                paragraph2Label: '具體功能包括：',
+                bullet1: '上載學習材料，自動識別並提取知識重點；',
+                bullet2: '針對各項重點設計科學化的選擇題，供使用者逐一練習；',
+                bullet3: '就複雜的知識體系，按邏輯順序生成腦圖，輔助整體理解。',
+                paragraph3: '此工具旨在協助正在溫習或日常學習的學生鞏固知識，以練習取代單向閱讀，讓 AI 成為輔助學習的實用工具。用戶數量提高後，我們會收取最低成本以供營運。',
+                backToHome: '返回主頁',
+                feedbackText: '遇到問題？聯絡我們'
+            },
+            en: {
+                pageTitle: 'Introduction',
+                appName: 'GPA-Buddy',
+                introTitle: 'Introduction',
+                copyHint: 'Select and copy the text below',
+                copyBtn: 'Copy all',
+                copySuccess: 'Copied to clipboard',
+                byline: 'A non-profit learning tool developed by students at the Hong Kong University of Science and Technology.',
+                paragraph1: 'GPA-Buddy is a non-profit learning tool designed for students. Users can upload course materials, notes, academic papers, and other study resources to the system. The AI then automatically extracts key knowledge points and generates multiple-choice questions and mind maps accordingly.',
+                paragraph2Label: 'Core features:',
+                bullet1: 'Upload study materials to have knowledge points automatically identified and extracted;',
+                bullet2: 'Scientifically designed multiple-choice questions for each knowledge point, allowing users to practice step by step;',
+                bullet3: 'For complex knowledge systems, generate mind maps in logical order to aid overall comprehension.',
+                paragraph3: 'This tool is intended to help students consolidate knowledge during exam preparation or daily study. It replaces passive reading with active practice, using AI as a practical aid for learning. As our user base grows, we may charge a nominal fee to cover operating costs.',
+                backToHome: 'Back to Home',
+                feedbackText: 'Got feedback? Drop us a line'
+            }
+        };
+
+        function t(key) {
+            return i18n[currentLang]?.[key] || i18n['zh']?.[key] || key;
+        }
+
+        function detectBrowserLanguage() {
+            const browserLang = navigator.language || navigator.userLanguage || 'en';
+            const lang = browserLang.toLowerCase();
+            if (lang.startsWith('zh') && (lang.includes('cn') || lang.includes('sg') || lang.includes('hans') || lang === 'zh')) return 'zh';
+            if (lang.startsWith('zh') && (lang.includes('tw') || lang.includes('hk') || lang.includes('mo') || lang.includes('hant'))) return 'zh-TW';
+            if (lang.startsWith('en')) return 'en';
+            return 'en';
+        }
+
+        const langDisplayNames = {
+            'zh': '简体中文',
+            'zh-TW': '繁體中文',
+            'en': 'English'
+        };
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang]?.[key]) {
+                    el.textContent = i18n[currentLang][key];
+                }
+            });
+            document.querySelectorAll('.lang-option').forEach(btn => {
+                if (btn.getAttribute('data-lang') === currentLang) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            document.getElementById('currentLangDisplay').textContent = langDisplayNames[currentLang];
+            document.title = t('pageTitle');
+            updateLogo();
+        }
+
+        function toggleLangDropdown() {
+            document.getElementById('langDropdown').classList.toggle('show');
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('language', currentLang);
+            updateLanguage();
+            document.getElementById('langDropdown').classList.remove('show');
+        }
+
+        function copyContent() {
+            const area = document.getElementById('copyArea');
+            const text = area.innerText.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.querySelector('button[onclick="copyContent()"] span');
+                const original = btn.textContent;
+                btn.textContent = t('copySuccess');
+                setTimeout(() => btn.textContent = original, 2000);
+            }).catch(() => {
+                const selection = window.getSelection();
+                const range = document.createRange();
+                range.selectNodeContents(area);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            });
+        }
+
+        function updateLogo() {
+            const logo = document.getElementById('navLogo');
+            if (!logo) return;
+            const isMobile = window.innerWidth < 768;
+            logo.src = isMobile ? (currentLang === 'zh' ? 'resources/chineselogo.png' : 'resources/ENlogo.png') : 'resources/logo.png';
+        }
+
+        window.addEventListener('resize', updateLogo);
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) {
+                const dropdown = document.getElementById('langDropdown');
+                if (dropdown.classList.contains('show')) dropdown.classList.remove('show');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLanguage();
+        });
+    </script>
+</body>
+</html>
