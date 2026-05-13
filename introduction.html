@@ -228,6 +228,9 @@
 
     <footer class="max-w-5xl mx-auto px-6 pb-12 text-center">
         <p class="text-sm text-slate-400" data-i18n="feedbackText">遇到问题？联系我们</p>
+        <p id="beian-info" class="text-xs text-slate-400 mt-2" style="display:none">
+            <a href="https://beian.miit.gov.cn/" target="_blank" class="hover:text-slate-600 transition-colors">鄂ICP备2026023383号</a>
+        </p>
     </footer>
 
     <script>
@@ -372,6 +375,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             updateLanguage();
         });
+    </script>
+    <script>
+        (function() {
+            const allowedDomains = ['www.gpa-buddy.cn', 'www.gpa-buddy.site', '127.0.0.1'];
+            if (allowedDomains.includes(window.location.hostname)) {
+                const el = document.getElementById('beian-info');
+                if (el) el.style.display = 'block';
+            }
+        })();
     </script>
 </body>
 </html>

@@ -1115,6 +1115,9 @@
                     <img src="resources/github.png" alt="GitHub" class="w-5 h-5 object-contain">
                 </a>
             </div>
+            <p id="beian-info" class="text-xs text-slate-400" style="display:none">
+                <a href="https://beian.miit.gov.cn/" target="_blank" class="hover:text-slate-600 transition-colors">鄂ICP备2026023383号</a>
+            </p>
         </div>
     </footer>
 
@@ -2680,6 +2683,15 @@
         window.addEventListener('load', () => {
             window.scrollTo(0, 0);
         });
+    </script>
+    <script>
+        (function() {
+            const allowedDomains = ['www.gpa-buddy.cn', 'www.gpa-buddy.site', '127.0.0.1'];
+            if (allowedDomains.includes(window.location.hostname)) {
+                const el = document.getElementById('beian-info');
+                if (el) el.style.display = 'block';
+            }
+        })();
     </script>
 </body>
 </html>
