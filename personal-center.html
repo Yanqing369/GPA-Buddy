@@ -312,6 +312,19 @@
         </div>
     </div>
 
+    <!-- 从教务系统导入结果模态框 -->
+    <div id="moodleImportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-lg modal-enter flex flex-col max-h-[80vh]">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">教务系统课程列表</h3>
+            <div id="moodleCourseList" class="overflow-y-auto flex-1 min-h-0 pr-1">
+                <div class="text-center py-8 text-slate-400 text-sm">正在读取...</div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="hideMoodleImportModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 添加题目模态框 -->
     <div id="addQuestionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-card rounded-2xl p-6 w-full max-w-lg modal-enter">
@@ -351,6 +364,7 @@
     </div>
 
     <script>
+        const API_BASE = "https://moyuxiaowu.org";
         const STORAGE_KEY = 'personalCenterData';
         let data = { courses: [], materials: [], questions: [] };
         let currentCourseId = null;
@@ -706,9 +720,58 @@
             showToast('题目已删除');
         }
 
-        // 预留功能：从教务系统导入课程
-        function importFromAcademicSystem() {
-            showToast('从教务系统导入功能开发中，敬请期待', 'info');
+        // 从教务系统导入课程（Moodle）
+        function hideMoodleImportModal() {
+            document.getElementById('moodleImportModal').classList.add('hidden');
+        }
+
+        async function importFromAcademicSystem() {
+            const modal = document.getElementById('moodleImportModal');
+            const container = document.getElementById('moodleCourseList');
+            modal.classList.remove('hidden');
+            container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在读取课程列表...</div>';
+
+            try {
+                // 本地测试：浏览器直连 Moodle（注意：会暴露 token，仅用于本地测试）
+                const moodleBase = 'http://34.92.201.123';
+                const token = '2b3adf96137807ab66c5cffe4041f024';
+                const params = new URLSearchParams();
+                params.append('wstoken', token);
+                params.append('wsfunction', 'core_course_get_courses');
+                params.append('moodlewsrestformat', 'json');
+
+                const response = await fetch(`${moodleBase}/webservice/rest/server.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: params.toString(),
+                });
+                const result = await response.json();
+
+                if (!response.ok || result.error || result.exception) {
+                    throw new Error(result.message || result.error || `请求失败 (${response.status})`);
+                }
+
+                if (!Array.isArray(result)) {
+                    throw new Error('Moodle 返回了非预期的数据格式');
+                }
+
+                const courses = result.filter(course => course.id !== 1);
+                if (courses.length === 0) {
+                    container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无可导入课程</div>';
+                    return;
+                }
+
+                container.innerHTML = courses.map(course => `
+                    <div class="p-3 rounded-xl bg-white/60 border border-white/80">
+                        <div class="font-medium text-sm text-slate-900">${escapeHtml(course.fullname)}</div>
+                        <div class="text-xs text-slate-500 mt-1">ID: ${course.id} · ${escapeHtml(course.shortname || '')}</div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">读取失败：${escapeHtml(err.message)}</div>`;
+            }
         }
 
         // 预留功能：智能推荐题目
@@ -748,6 +811,9 @@
         });
         document.getElementById('addQuestionModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddQuestionModal();
+        });
+        document.getElementById('moodleImportModal').addEventListener('click', function(e) {
+            if (e.target === this) hideMoodleImportModal();
         });
 
         document.addEventListener('DOMContentLoaded', init);
