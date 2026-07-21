@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人中心 - GPA-Buddy</title>
+    <link rel="icon" href="resources/logo.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+        
+        :root {
+            --paper-bg: #FAF9F6;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --forest: #86efac;
+            --forest-dark: #22c55e;
+            --purple-soft: #e9d5ff;
+            --blue-soft: #bfdbfe;
+            --orange-soft: #fed7aa;
+            --text-primary: #1c1c1e;
+            --text-secondary: #6b7280;
+        }
+        
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+        
+        .glass-nav {
+            background: linear-gradient(135deg, rgba(255,255,255,0.82) 0%, rgba(255,251,235,0.85) 50%, rgba(254,252,232,0.88) 100%);
+            backdrop-filter: blur(24px) saturate(200%);
+            -webkit-backdrop-filter: blur(24px) saturate(200%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02), inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 50%, rgba(250,249,246,0.85) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                0 2px 8px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .liquid-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 
+                0 4px 16px rgba(0, 0, 0, 0.08),
+                0 1px 4px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .liquid-btn:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,1) 0%, rgba(252,251,248,0.95) 100%);
+            box-shadow: 
+                0 8px 24px rgba(0, 0, 0, 0.12),
+                0 2px 8px rgba(0, 0, 0, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 1),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+            transform: translateY(-2px);
+        }
+        
+        .liquid-btn:active {
+            transform: scale(0.98) translateY(0);
+        }
+        
+        .liquid-btn-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.95) 100%);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            box-shadow: 
+                0 4px 16px rgba(16, 185, 129, 0.3),
+                0 1px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(167, 243, 208, 0.5),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+        
+        .liquid-btn-emerald:hover {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.95) 0%, rgba(16, 185, 129, 1) 100%);
+            box-shadow: 
+                0 8px 24px rgba(16, 185, 129, 0.4),
+                0 2px 8px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(167, 243, 208, 0.6),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        }
+        
+        .spring-hover {
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .spring-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 8px 16px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.02);
+        }
+        
+        .course-item {
+            transition: all 0.2s ease;
+        }
+        
+        .course-item.active {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            color: #059669;
+            border-left: 3px solid #10b981;
+        }
+        
+        .course-item:not(.active):hover {
+            background: rgba(0, 0, 0, 0.03);
+        }
+        
+        .tab-btn {
+            transition: all 0.2s ease;
+        }
+        
+        .upload-zone {
+            transition: all 0.2s ease;
+        }
+        
+        .upload-zone:hover {
+            border-color: #34d399;
+            background: rgba(52, 211, 153, 0.05);
+        }
+        
+        .upload-zone.dragover {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+        
+        .modal-enter {
+            animation: modalSlide 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        
+        @keyframes modalSlide {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.08);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-green-200 selection:text-green-900">
+
+    <!-- 导航栏 -->
+    <nav class="glass-nav sticky top-0 z-50 h-16">
+        <div class="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-3 cursor-pointer spring-hover">
+                <div class="h-10 rounded-xl overflow-hidden flex-shrink-0 w-10 bg-white">
+                    <img src="resources/logo.png" alt="logo" class="h-full w-full object-contain">
+                </div>
+                <span class="font-bold text-lg tracking-tight text-slate-900">个人中心</span>
+            </a>
+            <a href="index.html" class="px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                </svg>
+                <span>返回首页</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <main class="max-w-6xl mx-auto px-6 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <!-- 课程列表侧边栏 -->
+            <div class="md:col-span-1">
+                <div class="glass-card rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-bold text-lg text-slate-900">我的课程</h2>
+                        <span id="courseCount" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">0</span>
+                    </div>
+                    <div id="courseList" class="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
+                        <div class="text-slate-400 text-sm text-center py-8">暂无课程</div>
+                    </div>
+                    <button onclick="showAddCourseModal()" class="mt-4 w-full py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        添加课程
+                    </button>
+                </div>
+            </div>
+
+            <!-- 课程详情区域 -->
+            <div class="md:col-span-3">
+                <div id="emptyState" class="glass-card rounded-2xl p-12 text-center">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-2">管理你的课程资料与题目</h3>
+                    <p class="text-slate-500 mb-6">从左侧选择课程，或添加新课程开始整理</p>
+                    <button onclick="showAddCourseModal()" class="px-6 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">添加第一门课程</button>
+                </div>
+
+                <div id="courseDetail" class="hidden glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 id="currentCourseName" class="text-2xl font-bold text-slate-900"></h2>
+                            <p class="text-sm text-slate-500 mt-1">管理该课程的资料与题目</p>
+                        </div>
+                        <button onclick="deleteCurrentCourse()" class="px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm font-medium flex items-center gap-2 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            删除课程
+                        </button>
+                    </div>
+
+                    <!-- 标签页 -->
+                    <div class="flex gap-6 border-b border-gray-100 mb-6">
+                        <button onclick="switchTab('materials')" id="tab-materials" class="tab-btn pb-3 border-b-2 border-emerald-500 font-semibold text-emerald-700 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            课程资料
+                            <span id="materialCountBadge" class="text-xs px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">0</span>
+                        </button>
+                        <button onclick="switchTab('questions')" id="tab-questions" class="tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            我的题目
+                            <span id="questionCountBadge" class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
+                        </button>
+                    </div>
+
+                    <!-- 课程资料 -->
+                    <div id="materialsSection">
+                        <div id="uploadZone" class="upload-zone border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center cursor-pointer">
+                            <input type="file" id="materialUpload" class="hidden" multiple onchange="handleMaterialUpload(event)">
+                            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                                <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                                </svg>
+                            </div>
+                            <p class="text-slate-700 font-medium">点击或拖拽上传资料</p>
+                            <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、图片等常用格式</p>
+                        </div>
+                        <div id="materialList" class="mt-6 space-y-3"></div>
+                    </div>
+
+                    <!-- 我的题目 -->
+                    <div id="questionsSection" class="hidden">
+                        <div class="flex flex-wrap items-center gap-3 mb-4">
+                            <button onclick="showAddQuestionModal()" class="px-4 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                添加题目
+                            </button>
+                            <button onclick="smartRecommendQuestions()" class="px-4 py-2.5 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 text-purple-700 hover:bg-purple-50 text-sm font-medium flex items-center gap-2 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                智能推题
+                            </button>
+                        </div>
+                        <div id="questionList" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 添加课程模态框 -->
+    <div id="addCourseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-md modal-enter">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">添加课程</h3>
+            <input type="text" id="courseNameInput" placeholder="例如：高等数学" 
+                   class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
+                   onkeypress="if(event.key==='Enter')addCourse()">
+            <button onclick="importFromAcademicSystem()" class="w-full mt-4 py-2.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/50 text-amber-700 hover:bg-amber-50 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                从教务系统导入
+            </button>
+            <div class="flex gap-3 mt-6">
+                <button onclick="hideAddCourseModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
+                <button onclick="addCourse()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">确认添加</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加题目模态框 -->
+    <div id="addQuestionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-lg modal-enter">
+            <h3 class="text-lg font-bold text-slate-900 mb-4">添加题目</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目标题</label>
+                    <input type="text" id="questionTitleInput" placeholder="简要描述题目" 
+                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目内容</label>
+                    <textarea id="questionContentInput" rows="3" placeholder="输入题目内容或题干"
+                              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">答案 / 解析</label>
+                    <textarea id="questionAnswerInput" rows="3" placeholder="输入答案或解析"
+                              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm resize-none"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="hideAddQuestionModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
+                <button onclick="addQuestion()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">保存题目</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 提示 -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 translate-y-20 opacity-0 transition-all duration-300">
+        <div class="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-emerald-200">
+            <svg id="toastIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span id="toastMessage">操作成功</span>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'personalCenterData';
+        let data = { courses: [], materials: [], questions: [] };
+        let currentCourseId = null;
+        let currentTab = 'materials';
+
+        // 初始化
+        function init() {
+            loadData();
+            renderCourseList();
+            setupDragDrop();
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    data = JSON.parse(saved);
+                }
+                // 确保字段存在
+                data.courses = data.courses || [];
+                data.materials = data.materials || [];
+                data.questions = data.questions || [];
+            } catch (e) {
+                console.error('加载个人中心数据失败:', e);
+                data = { courses: [], materials: [], questions: [] };
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            } catch (e) {
+                if (e.name === 'QuotaExceededError') {
+                    showToast('存储空间不足，请删除部分资料', 'error');
+                } else {
+                    showToast('保存失败', 'error');
+                }
+            }
+        }
+
+        function generateId() {
+            return 'pc_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatDate(isoString) {
+            return new Date(isoString).toLocaleDateString('zh-CN', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+        }
+
+        // 课程列表
+        function renderCourseList() {
+            const container = document.getElementById('courseList');
+            document.getElementById('courseCount').textContent = data.courses.length;
+
+            if (data.courses.length === 0) {
+                container.innerHTML = '<div class="text-slate-400 text-sm text-center py-8">暂无课程，点击下方添加</div>';
+                return;
+            }
+
+            container.innerHTML = data.courses.map(course => {
+                const isActive = course.id === currentCourseId;
+                const materialCount = data.materials.filter(m => m.courseId === course.id).length;
+                const questionCount = data.questions.filter(q => q.courseId === course.id).length;
+                return `
+                    <div onclick="selectCourse('${course.id}')" 
+                         class="course-item cursor-pointer rounded-xl p-3 ${isActive ? 'active' : 'text-slate-700'}">
+                        <div class="font-medium text-sm truncate">${escapeHtml(course.name)}</div>
+                        <div class="text-xs mt-1 ${isActive ? 'text-emerald-600' : 'text-slate-400'}">
+                            ${materialCount} 份资料 · ${questionCount} 道题目
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectCourse(courseId) {
+            currentCourseId = courseId;
+            renderCourseList();
+            renderCourseDetail();
+        }
+
+        function renderCourseDetail() {
+            const course = data.courses.find(c => c.id === currentCourseId);
+            if (!course) {
+                document.getElementById('courseDetail').classList.add('hidden');
+                document.getElementById('emptyState').classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('courseDetail').classList.remove('hidden');
+            document.getElementById('currentCourseName').textContent = course.name;
+
+            updateCountBadges();
+            if (currentTab === 'materials') {
+                renderMaterials();
+            } else {
+                renderQuestions();
+            }
+        }
+
+        function updateCountBadges() {
+            const materialCount = data.materials.filter(m => m.courseId === currentCourseId).length;
+            const questionCount = data.questions.filter(q => q.courseId === currentCourseId).length;
+            document.getElementById('materialCountBadge').textContent = materialCount;
+            document.getElementById('questionCountBadge').textContent = questionCount;
+        }
+
+        // 添加课程
+        function showAddCourseModal() {
+            document.getElementById('addCourseModal').classList.remove('hidden');
+            document.getElementById('courseNameInput').value = '';
+            setTimeout(() => document.getElementById('courseNameInput').focus(), 100);
+        }
+
+        function hideAddCourseModal() {
+            document.getElementById('addCourseModal').classList.add('hidden');
+        }
+
+        function addCourse() {
+            const input = document.getElementById('courseNameInput');
+            const name = input.value.trim();
+            if (!name) {
+                showToast('请输入课程名称', 'error');
+                return;
+            }
+            const course = {
+                id: generateId(),
+                name: name,
+                createdAt: new Date().toISOString()
+            };
+            data.courses.push(course);
+            saveData();
+            currentCourseId = course.id;
+            renderCourseList();
+            renderCourseDetail();
+            hideAddCourseModal();
+            showToast('课程添加成功');
+        }
+
+        function deleteCurrentCourse() {
+            const course = data.courses.find(c => c.id === currentCourseId);
+            if (!course) return;
+            if (!confirm(`确定要删除课程「${course.name}」吗？该课程下的所有资料和题目也将被删除。`)) return;
+
+            data.courses = data.courses.filter(c => c.id !== currentCourseId);
+            data.materials = data.materials.filter(m => m.courseId !== currentCourseId);
+            data.questions = data.questions.filter(q => q.courseId !== currentCourseId);
+            saveData();
+            currentCourseId = null;
+            renderCourseList();
+            renderCourseDetail();
+            showToast('课程已删除');
+        }
+
+        // 标签切换
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-materials').className = tab === 'materials' 
+                ? 'tab-btn pb-3 border-b-2 border-emerald-500 font-semibold text-emerald-700 flex items-center gap-2'
+                : 'tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2';
+            document.getElementById('tab-questions').className = tab === 'questions'
+                ? 'tab-btn pb-3 border-b-2 border-emerald-500 font-semibold text-emerald-700 flex items-center gap-2'
+                : 'tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2';
+            document.getElementById('materialsSection').classList.toggle('hidden', tab !== 'materials');
+            document.getElementById('questionsSection').classList.toggle('hidden', tab !== 'questions');
+            renderCourseDetail();
+        }
+
+        // 资料上传
+        function setupDragDrop() {
+            const zone = document.getElementById('uploadZone');
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, preventDefaults, false);
+            });
+            ['dragenter', 'dragover'].forEach(eventName => {
+                zone.addEventListener(eventName, () => zone.classList.add('dragover'), false);
+            });
+            ['dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, () => zone.classList.remove('dragover'), false);
+            });
+            zone.addEventListener('drop', handleDrop, false);
+            zone.addEventListener('click', () => document.getElementById('materialUpload').click());
+        }
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        function handleDrop(e) {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) uploadFiles(files);
+        }
+
+        function handleMaterialUpload(e) {
+            if (e.target.files.length > 0) uploadFiles(e.target.files);
+            e.target.value = ''; // 允许重复上传同一文件
+        }
+
+        function uploadFiles(files) {
+            if (!currentCourseId) return;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const material = {
+                        id: generateId(),
+                        courseId: currentCourseId,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type || 'application/octet-stream',
+                        data: e.target.result,
+                        createdAt: new Date().toISOString()
+                    };
+                    data.materials.push(material);
+                    saveData();
+                    updateCountBadges();
+                    if (currentTab === 'materials') renderMaterials();
+                };
+                reader.readAsDataURL(file);
+            });
+            showToast(`已上传 ${files.length} 个文件`);
+        }
+
+        function renderMaterials() {
+            const container = document.getElementById('materialList');
+            const materials = data.materials.filter(m => m.courseId === currentCourseId);
+
+            if (materials.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无资料，点击上方区域上传</div>';
+                return;
+            }
+
+            container.innerHTML = materials.map(m => `
+                <div class="flex items-center justify-between p-4 rounded-xl bg-white/60 border border-white/80 hover:bg-white/90 transition-colors">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-medium text-sm text-slate-900 truncate">${escapeHtml(m.name)}</div>
+                            <div class="text-xs text-slate-500">${formatFileSize(m.size)} · ${formatDate(m.createdAt)}</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <a href="${m.data}" download="${escapeHtml(m.name)}" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</a>
+                        <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteMaterial(materialId) {
+            if (!confirm('确定要删除这份资料吗？')) return;
+            data.materials = data.materials.filter(m => m.id !== materialId);
+            saveData();
+            updateCountBadges();
+            renderMaterials();
+            showToast('资料已删除');
+        }
+
+        // 题目管理
+        function showAddQuestionModal() {
+            document.getElementById('addQuestionModal').classList.remove('hidden');
+            document.getElementById('questionTitleInput').value = '';
+            document.getElementById('questionContentInput').value = '';
+            document.getElementById('questionAnswerInput').value = '';
+            setTimeout(() => document.getElementById('questionTitleInput').focus(), 100);
+        }
+
+        function hideAddQuestionModal() {
+            document.getElementById('addQuestionModal').classList.add('hidden');
+        }
+
+        function addQuestion() {
+            const title = document.getElementById('questionTitleInput').value.trim();
+            const content = document.getElementById('questionContentInput').value.trim();
+            const answer = document.getElementById('questionAnswerInput').value.trim();
+
+            if (!title || !content) {
+                showToast('请填写题目标题和内容', 'error');
+                return;
+            }
+
+            const question = {
+                id: generateId(),
+                courseId: currentCourseId,
+                title: title,
+                content: content,
+                answer: answer,
+                createdAt: new Date().toISOString()
+            };
+            data.questions.push(question);
+            saveData();
+            updateCountBadges();
+            if (currentTab === 'questions') renderQuestions();
+            hideAddQuestionModal();
+            showToast('题目保存成功');
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionList');
+            const questions = data.questions.filter(q => q.courseId === currentCourseId);
+
+            if (questions.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题目，点击上方按钮添加</div>';
+                return;
+            }
+
+            container.innerHTML = questions.map((q, index) => `
+                <div class="p-4 rounded-xl bg-white/60 border border-white/80">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">题 ${index + 1}</span>
+                                <h4 class="font-semibold text-slate-900 text-sm">${escapeHtml(q.title)}</h4>
+                            </div>
+                            <p class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(q.content)}</p>
+                            ${q.answer ? `
+                                <div class="mt-3 p-3 rounded-lg bg-slate-50 text-sm text-slate-600">
+                                    <span class="font-medium text-slate-700">答案 / 解析：</span>
+                                    <p class="mt-1 whitespace-pre-wrap">${escapeHtml(q.answer)}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <button onclick="deleteQuestion('${q.id}')" class="flex-shrink-0 p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function deleteQuestion(questionId) {
+            if (!confirm('确定要删除这道题目吗？')) return;
+            data.questions = data.questions.filter(q => q.id !== questionId);
+            saveData();
+            updateCountBadges();
+            renderQuestions();
+            showToast('题目已删除');
+        }
+
+        // 预留功能：从教务系统导入课程
+        function importFromAcademicSystem() {
+            showToast('从教务系统导入功能开发中，敬请期待', 'info');
+        }
+
+        // 预留功能：智能推荐题目
+        function smartRecommendQuestions() {
+            showToast('智能推题功能开发中，敬请期待', 'info');
+        }
+
+        // 工具函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMessage');
+            const icon = document.getElementById('toastIcon');
+            msg.textContent = message;
+            if (type === 'error') {
+                toast.querySelector('div').className = 'bg-red-50 text-red-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-red-200';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+            } else if (type === 'info') {
+                toast.querySelector('div').className = 'bg-blue-50 text-blue-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-blue-200';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+            } else {
+                toast.querySelector('div').className = 'bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-emerald-200';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+            }
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        // 点击模态框外部关闭
+        document.getElementById('addCourseModal').addEventListener('click', function(e) {
+            if (e.target === this) hideAddCourseModal();
+        });
+        document.getElementById('addQuestionModal').addEventListener('click', function(e) {
+            if (e.target === this) hideAddQuestionModal();
+        });
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
