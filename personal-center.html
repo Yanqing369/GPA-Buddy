@@ -387,10 +387,11 @@
     </div>
 
     <script>
-        const API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+        const isLocal = !location.hostname || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+        const API_BASE = isLocal
             ? 'http://localhost:8787'
-            : 'https://moyuxiaowu.org';
-        const TURNSTILE_SITE_KEY = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+            : 'https://autumn-fire-bc81.charlie2001hhh.workers.dev';
+        const TURNSTILE_SITE_KEY = isLocal
             ? '1x00000000000000000000AA'  // Turnstile test key (always passes)
             : '0x4AAAAAACyCQq1B6IXFL27N'; // Production key
 
@@ -736,13 +737,7 @@
                 return;
             }
 
-            container.innerHTML = materials.map(m => {
-                let downloadHref = m.file_data;
-                if (!downloadHref && m.content_text) {
-                    const blob = new Blob([m.content_text], { type: 'text/plain;charset=utf-8' });
-                    downloadHref = URL.createObjectURL(blob);
-                }
-                return `
+            container.innerHTML = materials.map(m => `
                 <div class="flex items-center justify-between p-4 rounded-xl bg-white/60 border border-white/80 hover:bg-white/90 transition-colors">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
@@ -756,11 +751,36 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <a href="${downloadHref || '#' }" download="${escapeHtml(m.name)}" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</a>
+                        <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</button>
                         <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
                     </div>
                 </div>
-            `}).join('');
+            `).join('');
+        }
+
+        async function downloadMaterial(materialId) {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
+            const material = data.materials.find(m => m.id === materialId);
+            if (!material) return;
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${materialId}/download`, { method: 'GET' });
+                if (!res.ok) throw new Error('Failed to download material');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = material.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error(e);
+                showToast('下载资料失败', 'error');
+            }
         }
 
         async function deleteMaterial(materialId) {
@@ -990,39 +1010,59 @@
                 return;
             }
 
-            if (!confirm('将基于课程资料解析生成约 3 道选择题，是否继续？')) return;
+            if (!confirm('将基于课程资料解析生成约 20 道选择题，是否继续？')) return;
 
             isGenerating = true;
             setAnalysisButtonLoading(true);
             showToast('正在解析资料并生成题目，请稍候...', 'info');
 
             try {
-                // TODO: 后端完成后替换为真实 API 调用
-                // const course = data.courses.find(c => c.id === currentCourseId);
-                // const form = new FormData();
-                // form.append('text', textMaterials.map(m => m.content_text).join('\n\n'));
-                // form.append('questionCount', '20');
-                // form.append('lang', 'zh');
-                // form.append('fileName', course?.name || 'course');
-                // form.append('fileType', 'txt');
-                // form.append('courseId', currentCourseId);
-                // form.append('turnstileToken', turnstileToken);
-                // const res = await apiFetch('/text_generate', { method: 'POST', body: form });
-                // ...
-
-                // 前端模拟：解析并生成题目
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                const generatedQuestions = generateMockQuestions(currentCourseId, textMaterials[0].content_text);
-                for (const q of generatedQuestions) {
-                    q.id = 'mock_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    q.course_id = currentCourseId;
-                    data.questions.unshift(q);
+                const res = await apiFetch(`/api/courses/${currentCourseId}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ turnstileToken })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `请求失败 (${res.status})`);
                 }
-                updateCourseCount(currentCourseId, 'questions', generatedQuestions.length);
-                renderCourseList();
-                if (currentTab === 'questions') renderQuestions();
 
+                // Parse SSE stream
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let generatedCount = 0;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const payload = line.slice(6).trim();
+                        if (!payload || payload === '[DONE]') continue;
+                        try {
+                            const event = JSON.parse(payload);
+                            if (event.type === 'error') throw new Error(event.message || '生成失败');
+                            if (event.type === 'final_result') {
+                                generatedCount = event.data?.length || generatedCount;
+                            }
+                            if (event.type === 'saved') {
+                                generatedCount = event.count || generatedCount;
+                            }
+                            if (event.type === 'done') break;
+                        } catch (e) {
+                            // ignore malformed lines
+                        }
+                    }
+                }
+
+                await loadCourseDetail(currentCourseId);
+                updateCountBadges();
+                renderCourseList();
                 showAnalysisCompleteModal();
+                showToast(`解析完成，已生成 ${generatedCount} 道题目`, 'success');
             } catch (e) {
                 console.error(e);
                 showToast('解析失败：' + e.message, 'error');
@@ -1031,54 +1071,6 @@
                 setAnalysisButtonLoading(false);
                 if (typeof turnstile !== 'undefined') turnstile.reset();
             }
-        }
-
-        function generateMockQuestions(courseId, sourceText) {
-            const previewText = (sourceText || '课程资料').trim().slice(0, 30) || '课程重点';
-            return [
-                {
-                    type: 'choice',
-                    title: `${previewText} - 概念理解`,
-                    content: JSON.stringify({
-                        question: `根据以下资料内容，关于"${previewText}"的正确描述是？`,
-                        options: { A: '选项 A 描述', B: '选项 B 描述', C: '选项 C 描述', D: '选项 D 描述' }
-                    }),
-                    answer: 'A',
-                    explanation: '这是由解析功能自动生成的示例题目。后端接入完成后，将替换为真实 AI 生成的题目和解析。',
-                    difficulty: 2,
-                    tags: JSON.stringify([]),
-                    source_material_id: null,
-                    created_at: new Date().toISOString()
-                },
-                {
-                    type: 'choice',
-                    title: `${previewText} - 应用分析`,
-                    content: JSON.stringify({
-                        question: `在"${previewText}"相关场景中，最合适的处理方式是？`,
-                        options: { A: '处理方式一', B: '处理方式二', C: '处理方式三', D: '处理方式四' }
-                    }),
-                    answer: 'B',
-                    explanation: '示例解析：后端接入后将基于真实资料内容生成详细解析。',
-                    difficulty: 3,
-                    tags: JSON.stringify([]),
-                    source_material_id: null,
-                    created_at: new Date().toISOString()
-                },
-                {
-                    type: 'choice',
-                    title: `${previewText} - 综合判断`,
-                    content: JSON.stringify({
-                        question: `关于"${previewText}"的下列说法，错误的是？`,
-                        options: { A: '说法一', B: '说法二', C: '说法三', D: '说法四' }
-                    }),
-                    answer: 'C',
-                    explanation: '示例解析：正式版本将返回基于资料内容的正确解析。',
-                    difficulty: 2,
-                    tags: JSON.stringify([]),
-                    source_material_id: null,
-                    created_at: new Date().toISOString()
-                }
-            ];
         }
 
         function setAnalysisButtonLoading(loading) {
