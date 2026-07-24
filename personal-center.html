@@ -6,6 +6,7 @@
     <title>个人中心 - GPA-Buddy</title>
     <link rel="icon" href="resources/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
@@ -267,6 +268,17 @@
                             <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、图片等常用格式</p>
                         </div>
                         <div id="materialList" class="mt-6 space-y-3"></div>
+
+                        <!-- 解析区域 -->
+                        <div id="parseSection" class="mt-6 pt-6 border-t border-slate-200">
+                            <div id="turnstileWidget" class="cf-turnstile mb-4"></div>
+                            <button id="startAnalysisBtn" onclick="startAnalysis()" class="w-full px-4 py-3 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 text-purple-700 hover:bg-purple-50 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                开始解析
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 我的题目 -->
@@ -277,12 +289,6 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                 </svg>
                                 添加题目
-                            </button>
-                            <button onclick="smartRecommendQuestions()" class="px-4 py-2.5 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 text-purple-700 hover:bg-purple-50 text-sm font-medium flex items-center gap-2 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                                智能推题
                             </button>
                         </div>
                         <div id="questionList" class="space-y-4"></div>
@@ -353,6 +359,23 @@
         </div>
     </div>
 
+    <!-- 解析完成模态框 -->
+    <div id="analysisCompleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-sm modal-enter text-center">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">解析完成</h3>
+            <p class="text-slate-600 text-sm mb-6">题目已生成，请在「我的题目」中查看。</p>
+            <div class="flex gap-3">
+                <button onclick="hideAnalysisCompleteModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">留在资料页</button>
+                <button onclick="goToQuestionsTab()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">查看题目</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast 提示 -->
     <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 translate-y-20 opacity-0 transition-all duration-300">
         <div class="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-emerald-200">
@@ -364,49 +387,50 @@
     </div>
 
     <script>
-        const API_BASE = "https://moyuxiaowu.org";
-        const STORAGE_KEY = 'personalCenterData';
+        const isLocal = !location.hostname || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+        const API_BASE = isLocal
+            ? 'http://localhost:8787'
+            : 'https://autumn-fire-bc81.charlie2001hhh.workers.dev';
+        const TURNSTILE_SITE_KEY = isLocal
+            ? '1x00000000000000000000AA'  // Turnstile test key (always passes)
+            : '0x4AAAAAACyCQq1B6IXFL27N'; // Production key
+
+
         let data = { courses: [], materials: [], questions: [] };
         let currentCourseId = null;
         let currentTab = 'materials';
+        let isGenerating = false;
 
-        // 初始化
-        function init() {
-            loadData();
-            renderCourseList();
-            setupDragDrop();
+        function getAuthToken() {
+            return localStorage.getItem('auth_token');
         }
 
-        function loadData() {
-            try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) {
-                    data = JSON.parse(saved);
-                }
-                // 确保字段存在
-                data.courses = data.courses || [];
-                data.materials = data.materials || [];
-                data.questions = data.questions || [];
-            } catch (e) {
-                console.error('加载个人中心数据失败:', e);
-                data = { courses: [], materials: [], questions: [] };
+        function apiFetch(path, options = {}) {
+            const token = getAuthToken();
+            options.headers = options.headers || {};
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
             }
+            return fetch(`${API_BASE}${path}`, options);
         }
 
-        function saveData() {
-            try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-            } catch (e) {
-                if (e.name === 'QuotaExceededError') {
-                    showToast('存储空间不足，请删除部分资料', 'error');
+        function renderTurnstile(retryCount = 0) {
+            const widget = document.getElementById('turnstileWidget');
+            if (!widget) return;
+            if (typeof turnstile === 'undefined') {
+                if (retryCount < 10) {
+                    setTimeout(() => renderTurnstile(retryCount + 1), 500);
                 } else {
-                    showToast('保存失败', 'error');
+                    console.warn('[Turnstile] API failed to load');
                 }
+                return;
             }
-        }
-
-        function generateId() {
-            return 'pc_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 9);
+            widget.innerHTML = '';
+            turnstile.render(widget, {
+                sitekey: TURNSTILE_SITE_KEY,
+                theme: 'light',
+                callback: (token) => console.log('[Turnstile] verified')
+            });
         }
 
         function formatFileSize(bytes) {
@@ -423,7 +447,85 @@
             });
         }
 
-        // 课程列表
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMessage');
+            const icon = document.getElementById('toastIcon');
+            msg.textContent = message;
+            if (type === 'error') {
+                toast.querySelector('div').className = 'bg-red-50 text-red-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-red-200';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
+            } else if (type === 'info') {
+                toast.querySelector('div').className = 'bg-blue-50 text-blue-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-blue-200';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+            } else {
+                toast.querySelector('div').className = 'bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-emerald-200';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+            }
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        async function init() {
+            if (!getAuthToken()) {
+                showToast('请先登录以使用个人中心', 'error');
+            } else {
+                await loadCourses();
+            }
+            setupDragDrop();
+        }
+
+        async function loadCourses() {
+            try {
+                const res = await apiFetch('/api/courses');
+                if (res.status === 401) {
+                    showToast('登录已过期，请重新登录', 'error');
+                    return;
+                }
+                if (!res.ok) throw new Error('Failed to load courses');
+                const result = await res.json();
+                data.courses = (result.courses || []).map(c => ({ ...c, id: String(c.id) }));
+                data.materials = [];
+                data.questions = [];
+                currentCourseId = null;
+                renderCourseList();
+                renderCourseDetail();
+            } catch (e) {
+                console.error(e);
+                showToast('加载课程失败', 'error');
+            }
+        }
+
+        async function loadCourseDetail(courseId) {
+            try {
+                const res = await apiFetch(`/api/courses/${courseId}`);
+                if (!res.ok) throw new Error('Failed to load course detail');
+                const result = await res.json();
+                data.materials = (result.materials || []).map(m => ({ ...m, id: String(m.id), course_id: String(m.course_id) }));
+                data.questions = (result.questions || []).map(q => ({ ...q, id: String(q.id), course_id: String(q.course_id) }));
+                renderCourseDetail();
+            } catch (e) {
+                console.error(e);
+                showToast('加载课程详情失败', 'error');
+            }
+        }
+
+        function updateCourseCount(courseId, type, delta) {
+            const course = data.courses.find(c => c.id === courseId);
+            if (!course) return;
+            if (type === 'materials') {
+                course.material_count = Math.max(0, (course.material_count || 0) + delta);
+            } else if (type === 'questions') {
+                course.question_count = Math.max(0, (course.question_count || 0) + delta);
+            }
+        }
+
         function renderCourseList() {
             const container = document.getElementById('courseList');
             document.getElementById('courseCount').textContent = data.courses.length;
@@ -435,8 +537,8 @@
 
             container.innerHTML = data.courses.map(course => {
                 const isActive = course.id === currentCourseId;
-                const materialCount = data.materials.filter(m => m.courseId === course.id).length;
-                const questionCount = data.questions.filter(q => q.courseId === course.id).length;
+                const materialCount = course.material_count || 0;
+                const questionCount = course.question_count || 0;
                 return `
                     <div onclick="selectCourse('${course.id}')" 
                          class="course-item cursor-pointer rounded-xl p-3 ${isActive ? 'active' : 'text-slate-700'}">
@@ -449,10 +551,10 @@
             }).join('');
         }
 
-        function selectCourse(courseId) {
+        async function selectCourse(courseId) {
             currentCourseId = courseId;
             renderCourseList();
-            renderCourseDetail();
+            await loadCourseDetail(courseId);
         }
 
         function renderCourseDetail() {
@@ -470,19 +572,19 @@
             updateCountBadges();
             if (currentTab === 'materials') {
                 renderMaterials();
+                renderTurnstile();
             } else {
                 renderQuestions();
             }
         }
 
         function updateCountBadges() {
-            const materialCount = data.materials.filter(m => m.courseId === currentCourseId).length;
-            const questionCount = data.questions.filter(q => q.courseId === currentCourseId).length;
+            const materialCount = data.materials.filter(m => m.course_id === currentCourseId).length;
+            const questionCount = data.questions.filter(q => q.course_id === currentCourseId).length;
             document.getElementById('materialCountBadge').textContent = materialCount;
             document.getElementById('questionCountBadge').textContent = questionCount;
         }
 
-        // 添加课程
         function showAddCourseModal() {
             document.getElementById('addCourseModal').classList.remove('hidden');
             document.getElementById('courseNameInput').value = '';
@@ -493,43 +595,63 @@
             document.getElementById('addCourseModal').classList.add('hidden');
         }
 
-        function addCourse() {
+        async function addCourse() {
             const input = document.getElementById('courseNameInput');
             const name = input.value.trim();
             if (!name) {
                 showToast('请输入课程名称', 'error');
                 return;
             }
-            const course = {
-                id: generateId(),
-                name: name,
-                createdAt: new Date().toISOString()
-            };
-            data.courses.push(course);
-            saveData();
-            currentCourseId = course.id;
-            renderCourseList();
-            renderCourseDetail();
-            hideAddCourseModal();
-            showToast('课程添加成功');
+            try {
+                const res = await apiFetch('/api/courses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (!res.ok) throw new Error('Failed to create course');
+                const result = await res.json();
+                result.course.id = String(result.course.id);
+                result.course.material_count = 0;
+                result.course.question_count = 0;
+                data.courses.unshift(result.course);
+                currentCourseId = result.course.id;
+                data.materials = [];
+                data.questions = [];
+                renderCourseList();
+                renderCourseDetail();
+                hideAddCourseModal();
+                showToast('课程添加成功');
+            } catch (e) {
+                console.error(e);
+                showToast('添加课程失败', 'error');
+            }
         }
 
-        function deleteCurrentCourse() {
+        async function deleteCurrentCourse() {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
             const course = data.courses.find(c => c.id === currentCourseId);
             if (!course) return;
             if (!confirm(`确定要删除课程「${course.name}」吗？该课程下的所有资料和题目也将被删除。`)) return;
 
-            data.courses = data.courses.filter(c => c.id !== currentCourseId);
-            data.materials = data.materials.filter(m => m.courseId !== currentCourseId);
-            data.questions = data.questions.filter(q => q.courseId !== currentCourseId);
-            saveData();
-            currentCourseId = null;
-            renderCourseList();
-            renderCourseDetail();
-            showToast('课程已删除');
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete course');
+                data.courses = data.courses.filter(c => c.id !== currentCourseId);
+                data.materials = data.materials.filter(m => m.course_id !== currentCourseId);
+                data.questions = data.questions.filter(q => q.course_id !== currentCourseId);
+                currentCourseId = null;
+                renderCourseList();
+                renderCourseDetail();
+                showToast('课程已删除');
+            } catch (e) {
+                console.error(e);
+                showToast('删除课程失败', 'error');
+            }
         }
 
-        // 标签切换
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('tab-materials').className = tab === 'materials' 
@@ -540,10 +662,10 @@
                 : 'tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2';
             document.getElementById('materialsSection').classList.toggle('hidden', tab !== 'materials');
             document.getElementById('questionsSection').classList.toggle('hidden', tab !== 'questions');
+            if (tab === 'materials') renderTurnstile();
             renderCourseDetail();
         }
 
-        // 资料上传
         function setupDragDrop() {
             const zone = document.getElementById('uploadZone');
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -571,36 +693,44 @@
 
         function handleMaterialUpload(e) {
             if (e.target.files.length > 0) uploadFiles(e.target.files);
-            e.target.value = ''; // 允许重复上传同一文件
+            e.target.value = '';
         }
 
-        function uploadFiles(files) {
-            if (!currentCourseId) return;
-            Array.from(files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const material = {
-                        id: generateId(),
-                        courseId: currentCourseId,
-                        name: file.name,
-                        size: file.size,
-                        type: file.type || 'application/octet-stream',
-                        data: e.target.result,
-                        createdAt: new Date().toISOString()
-                    };
-                    data.materials.push(material);
-                    saveData();
-                    updateCountBadges();
-                    if (currentTab === 'materials') renderMaterials();
-                };
-                reader.readAsDataURL(file);
-            });
-            showToast(`已上传 ${files.length} 个文件`);
+        async function uploadFiles(files) {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
+            let successCount = 0;
+            for (const file of Array.from(files)) {
+                const form = new FormData();
+                form.append('file', file);
+                form.append('name', file.name);
+                try {
+                    const res = await apiFetch(`/api/courses/${currentCourseId}/materials`, {
+                        method: 'POST',
+                        body: form
+                    });
+                    if (!res.ok) throw new Error('Failed to upload material');
+                    const result = await res.json();
+                    result.material.id = String(result.material.id);
+                    result.material.course_id = String(result.material.course_id);
+                    data.materials.push(result.material);
+                    successCount++;
+                } catch (e) {
+                    console.error(e);
+                    showToast(`上传 ${file.name} 失败`, 'error');
+                }
+            }
+            updateCourseCount(currentCourseId, 'materials', successCount);
+            updateCountBadges();
+            if (currentTab === 'materials') renderMaterials();
+            if (successCount > 0) showToast(`已上传 ${successCount} 个文件`);
         }
 
         function renderMaterials() {
             const container = document.getElementById('materialList');
-            const materials = data.materials.filter(m => m.courseId === currentCourseId);
+            const materials = data.materials.filter(m => m.course_id === currentCourseId);
 
             if (materials.length === 0) {
                 container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无资料，点击上方区域上传</div>';
@@ -617,27 +747,62 @@
                         </div>
                         <div class="min-w-0">
                             <div class="font-medium text-sm text-slate-900 truncate">${escapeHtml(m.name)}</div>
-                            <div class="text-xs text-slate-500">${formatFileSize(m.size)} · ${formatDate(m.createdAt)}</div>
+                            <div class="text-xs text-slate-500">${formatFileSize(m.size)} · ${formatDate(m.created_at)}</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <a href="${m.data}" download="${escapeHtml(m.name)}" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</a>
+                        <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</button>
                         <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        function deleteMaterial(materialId) {
-            if (!confirm('确定要删除这份资料吗？')) return;
-            data.materials = data.materials.filter(m => m.id !== materialId);
-            saveData();
-            updateCountBadges();
-            renderMaterials();
-            showToast('资料已删除');
+        async function downloadMaterial(materialId) {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
+            const material = data.materials.find(m => m.id === materialId);
+            if (!material) return;
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${materialId}/download`, { method: 'GET' });
+                if (!res.ok) throw new Error('Failed to download material');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = material.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error(e);
+                showToast('下载资料失败', 'error');
+            }
         }
 
-        // 题目管理
+        async function deleteMaterial(materialId) {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
+            if (!confirm('确定要删除这份资料吗？')) return;
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${materialId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete material');
+                data.materials = data.materials.filter(m => m.id !== materialId);
+                updateCourseCount(currentCourseId, 'materials', -1);
+                updateCountBadges();
+                renderMaterials();
+                showToast('资料已删除');
+            } catch (e) {
+                console.error(e);
+                showToast('删除资料失败', 'error');
+            }
+        }
+
         function showAddQuestionModal() {
             document.getElementById('addQuestionModal').classList.remove('hidden');
             document.getElementById('questionTitleInput').value = '';
@@ -650,7 +815,11 @@
             document.getElementById('addQuestionModal').classList.add('hidden');
         }
 
-        function addQuestion() {
+        async function addQuestion() {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
             const title = document.getElementById('questionTitleInput').value.trim();
             const content = document.getElementById('questionContentInput').value.trim();
             const answer = document.getElementById('questionAnswerInput').value.trim();
@@ -660,40 +829,62 @@
                 return;
             }
 
-            const question = {
-                id: generateId(),
-                courseId: currentCourseId,
-                title: title,
-                content: content,
-                answer: answer,
-                createdAt: new Date().toISOString()
-            };
-            data.questions.push(question);
-            saveData();
-            updateCountBadges();
-            if (currentTab === 'questions') renderQuestions();
-            hideAddQuestionModal();
-            showToast('题目保存成功');
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/questions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ questions: [{ type: 'choice', title, content, answer }] })
+                });
+                if (!res.ok) throw new Error('Failed to save question');
+                await loadCourseDetail(currentCourseId);
+                updateCourseCount(currentCourseId, 'questions', 1);
+                renderCourseList();
+                hideAddQuestionModal();
+                showToast('题目保存成功');
+            } catch (e) {
+                console.error(e);
+                showToast('保存题目失败', 'error');
+            }
         }
 
         function renderQuestions() {
             const container = document.getElementById('questionList');
-            const questions = data.questions.filter(q => q.courseId === currentCourseId);
+            const questions = data.questions.filter(q => q.course_id === currentCourseId);
 
             if (questions.length === 0) {
                 container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题目，点击上方按钮添加</div>';
                 return;
             }
 
-            container.innerHTML = questions.map((q, index) => `
+            container.innerHTML = questions.map((q, index) => {
+                let contentHtml = '';
+                let parsedContent = null;
+                try {
+                    parsedContent = JSON.parse(q.content);
+                } catch (e) {}
+
+                if (parsedContent && parsedContent.question) {
+                    contentHtml += `<p class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(parsedContent.question)}</p>`;
+                    if (parsedContent.options && Object.keys(parsedContent.options).length > 0) {
+                        contentHtml += `<div class="mt-2 space-y-1">`;
+                        for (const [key, val] of Object.entries(parsedContent.options)) {
+                            contentHtml += `<div class="text-sm text-slate-600"><span class="font-medium">${escapeHtml(key)}.</span> ${escapeHtml(val)}</div>`;
+                        }
+                        contentHtml += `</div>`;
+                    }
+                } else {
+                    contentHtml = `<p class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(q.content)}</p>`;
+                }
+
+                return `
                 <div class="p-4 rounded-xl bg-white/60 border border-white/80">
                     <div class="flex items-start justify-between gap-4">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">题 ${index + 1}</span>
-                                <h4 class="font-semibold text-slate-900 text-sm">${escapeHtml(q.title)}</h4>
+                                <h4 class="font-semibold text-slate-900 text-sm">${escapeHtml(q.title || '未命名题目')}</h4>
                             </div>
-                            <p class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(q.content)}</p>
+                            ${contentHtml}
                             ${q.answer ? `
                                 <div class="mt-3 p-3 rounded-lg bg-slate-50 text-sm text-slate-600">
                                     <span class="font-medium text-slate-700">答案 / 解析：</span>
@@ -708,16 +899,38 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
-        function deleteQuestion(questionId) {
+        async function deleteQuestion(questionId) {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
+            }
             if (!confirm('确定要删除这道题目吗？')) return;
-            data.questions = data.questions.filter(q => q.id !== questionId);
-            saveData();
-            updateCountBadges();
-            renderQuestions();
-            showToast('题目已删除');
+
+            // 前端模拟生成的题目，直接本地删除，不调后端
+            if (String(questionId).startsWith('mock_')) {
+                data.questions = data.questions.filter(q => q.id !== questionId);
+                updateCourseCount(currentCourseId, 'questions', -1);
+                updateCountBadges();
+                renderQuestions();
+                showToast('题目已删除');
+                return;
+            }
+
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/questions/${questionId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete question');
+                data.questions = data.questions.filter(q => q.id !== questionId);
+                updateCourseCount(currentCourseId, 'questions', -1);
+                updateCountBadges();
+                renderQuestions();
+                showToast('题目已删除');
+            } catch (e) {
+                console.error(e);
+                showToast('删除题目失败', 'error');
+            }
         }
 
         // 从教务系统导入课程（Moodle）
@@ -774,38 +987,127 @@
             }
         }
 
-        // 预留功能：智能推荐题目
-        function smartRecommendQuestions() {
-            showToast('智能推题功能开发中，敬请期待', 'info');
-        }
-
-        // 工具函数
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const msg = document.getElementById('toastMessage');
-            const icon = document.getElementById('toastIcon');
-            msg.textContent = message;
-            if (type === 'error') {
-                toast.querySelector('div').className = 'bg-red-50 text-red-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-red-200';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>';
-            } else if (type === 'info') {
-                toast.querySelector('div').className = 'bg-blue-50 text-blue-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-blue-200';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
-            } else {
-                toast.querySelector('div').className = 'bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-emerald-200';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>';
+        async function startAnalysis() {
+            if (!currentCourseId) {
+                showToast('请先选择课程', 'error');
+                return;
             }
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+            if (isGenerating) return;
+
+            const textMaterials = data.materials.filter(m => m.content_text && m.content_text.trim().length > 0);
+            if (textMaterials.length === 0) {
+                showToast('请先上传可提取文本的资料（如 .txt / .md），再使用开始解析', 'info');
+                return;
+            }
+
+            // 获取 Turnstile 验证 token
+            let turnstileToken = null;
+            if (typeof turnstile !== 'undefined') {
+                turnstileToken = turnstile.getResponse();
+            }
+            if (!turnstileToken) {
+                showToast('请先完成人机验证', 'error');
+                return;
+            }
+
+            if (!confirm('将基于课程资料解析生成约 20 道选择题，是否继续？')) return;
+
+            isGenerating = true;
+            setAnalysisButtonLoading(true);
+            showToast('正在解析资料并生成题目，请稍候...', 'info');
+
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ turnstileToken })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `请求失败 (${res.status})`);
+                }
+
+                // Parse SSE stream
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let generatedCount = 0;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const payload = line.slice(6).trim();
+                        if (!payload || payload === '[DONE]') continue;
+                        try {
+                            const event = JSON.parse(payload);
+                            if (event.type === 'error') throw new Error(event.message || '生成失败');
+                            if (event.type === 'final_result') {
+                                generatedCount = event.data?.length || generatedCount;
+                            }
+                            if (event.type === 'saved') {
+                                generatedCount = event.count || generatedCount;
+                            }
+                            if (event.type === 'done') break;
+                        } catch (e) {
+                            // ignore malformed lines
+                        }
+                    }
+                }
+
+                await loadCourseDetail(currentCourseId);
+                updateCountBadges();
+                renderCourseList();
+                showAnalysisCompleteModal();
+                showToast(`解析完成，已生成 ${generatedCount} 道题目`, 'success');
+            } catch (e) {
+                console.error(e);
+                showToast('解析失败：' + e.message, 'error');
+            } finally {
+                isGenerating = false;
+                setAnalysisButtonLoading(false);
+                if (typeof turnstile !== 'undefined') turnstile.reset();
+            }
         }
 
-        // 点击模态框外部关闭
+        function setAnalysisButtonLoading(loading) {
+            const btn = document.getElementById('startAnalysisBtn');
+            if (!btn) return;
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = `
+                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                    </svg>
+                    解析中...
+                `;
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                    </svg>
+                    开始解析
+                `;
+            }
+        }
+
+        function showAnalysisCompleteModal() {
+            document.getElementById('analysisCompleteModal').classList.remove('hidden');
+        }
+
+        function hideAnalysisCompleteModal() {
+            document.getElementById('analysisCompleteModal').classList.add('hidden');
+        }
+
+        function goToQuestionsTab() {
+            hideAnalysisCompleteModal();
+            switchTab('questions');
+        }
+
         document.getElementById('addCourseModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddCourseModal();
         });
@@ -814,6 +1116,9 @@
         });
         document.getElementById('moodleImportModal').addEventListener('click', function(e) {
             if (e.target === this) hideMoodleImportModal();
+        });
+        document.getElementById('analysisCompleteModal').addEventListener('click', function(e) {
+            if (e.target === this) hideAnalysisCompleteModal();
         });
 
         document.addEventListener('DOMContentLoaded', init);

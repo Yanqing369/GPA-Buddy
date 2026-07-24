@@ -1334,7 +1334,9 @@
     </div>
 
     <script>
-        const API_BASE = "https://moyuxiaowu.org";
+        const API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+            ? 'http://localhost:8787'
+            : 'https://moyuxiaowu.org';
     </script>
     <script src="js/visitor.js"></script>
     <script src="js/user-api-client.js"></script>
@@ -1999,7 +2001,7 @@
                 tutorTitle: '圖譜導學',
                 tutorBadge: '可讀論文',
                 tutorDesc: 'AI 構建思維導圖，按邏輯關係逐步理解關鍵概念',
-                welcomeTitle: '溫書，Such Easy',
+                welcomeTitle: '庆祝香港科技大学成立35周年',
                 welcomeDesc: '上載課程文檔與筆記，AI自動生成練習題，final溫習更精準。',
                 generateTitle: '立即出題',
                 generateDesc: '上載 PDF、Word、PPT，AI 自動抽取重點，生成 MC 題。',
@@ -2107,7 +2109,7 @@
                 "tutorTitle": "Mind Map Tutor",
                 "tutorBadge": "Read Paper",
                 "tutorDesc": "AI builds mind maps to help you understand key concepts step by step",
-                "welcomeTitle": "Boost Your GPA！",
+                "welcomeTitle": "庆祝香港科技大学成立35周年",
                 "welcomeDesc": "Upload your slides and notes, get AI-generated practice questions instantly. Study smarter, not harder.",
                 "generateTitle": "Generate Questions",
                 "generateDesc": "Drop in slides and notes. AI pulls out key concepts and turns them into MCQs.",
@@ -2215,7 +2217,7 @@
                 "tutorTitle": "마인드맵 학습",
                 "tutorBadge": "논문 읽기",
                 "tutorDesc": "AI가 마인드맵을 구축하여 논리적 관계에 따라 핵심 개념을 단계별로 이해합니다",
-                "welcomeTitle": "스마트 학습 도우미",
+                "welcomeTitle": "庆祝香港科技大学成立35周年",
                 "welcomeDesc": "강의 자료와 노트를 업로드하면 AI가 연습 문제를 자동으로 만들어줍니다. 이제 smarter하게 공부하세요.",
                 "generateTitle": "문제 생성",
                 "generateDesc": "PDF, Word, PPT를 업로드하세요. AI가 핵심 개념을 추출해 객관식 문제를 만들어줍니다.",
