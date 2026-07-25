@@ -998,11 +998,10 @@
                 };
                 data.courses.unshift(importedCourse);
                 currentCourseId = importedCourse.id;
-                data.materials = [];
-                data.questions = [];
                 renderCourseList();
-                renderCourseDetail();
+                await loadCourseDetail(importedCourse.id);
                 hideMoodleImportModal();
+                hideAddCourseModal();
                 showToast(`已导入课程「${result.course.name}」，共 ${result.materials.length} 个文件`);
             } catch (err) {
                 container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">导入失败：${escapeHtml(err.message)}</div>`;
