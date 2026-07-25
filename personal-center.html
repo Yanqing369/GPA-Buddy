@@ -945,11 +945,7 @@
             container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在读取课程列表...</div>';
 
             try {
-                const authToken = localStorage.getItem('auth_token');
-                const response = await fetch(`${API_BASE}/api/moodle/courses`, {
-                    credentials: 'include',
-                    headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
-                });
+                const response = await apiFetch('/api/moodle/courses');
                 const result = await response.json();
 
                 if (!response.ok || result.error) {
@@ -982,11 +978,8 @@
             container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在导入课程，请稍候...</div>';
 
             try {
-                const authToken = localStorage.getItem('auth_token');
-                const response = await fetch(`${API_BASE}/api/moodle/courses/${moodleCourseId}/import`, {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: authToken ? { 'Authorization': `Bearer ${authToken}` } : {}
+                const response = await apiFetch(`/api/moodle/courses/${moodleCourseId}/import`, {
+                    method: 'POST'
                 });
                 const result = await response.json();
 
@@ -995,14 +988,18 @@
                 }
 
                 // 导入成功，添加到本地课程列表
-                const newCourse = {
-                    id: 'pc_' + result.course.id,
+                const importedCourse = {
+                    id: String(result.course.id),
                     name: result.course.name,
-                    createdAt: new Date().toISOString()
+                    material_count: result.materials.length,
+                    question_count: 0,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
                 };
-                data.courses.push(newCourse);
-                saveData();
-                currentCourseId = newCourse.id;
+                data.courses.unshift(importedCourse);
+                currentCourseId = importedCourse.id;
+                data.materials = [];
+                data.questions = [];
                 renderCourseList();
                 renderCourseDetail();
                 hideMoodleImportModal();
