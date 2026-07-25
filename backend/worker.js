@@ -4261,6 +4261,73 @@ function safeParseJSON(text) {
 
 /* ==================== MOODLE API ==================== */
 
+async function fetchMoodle(functionName, params, baseUrl, token) {
+  const form = new URLSearchParams();
+  form.append('wstoken', token);
+  form.append('wsfunction', functionName);
+  form.append('moodlewsrestformat', 'json');
+  for (const [key, value] of Object.entries(params)) {
+    form.append(key, value);
+  }
+
+  const response = await fetch(`${baseUrl}/webservice/rest/server.php`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': 'GPA-Buddy-Worker/1.0',
+    },
+    body: form.toString(),
+  });
+
+  const responseText = await response.text();
+  if (!response.ok) {
+    throw new Error(`Moodle API HTTP error: ${response.status}, body: ${responseText.slice(0, 200)}`);
+  }
+
+  let result;
+  try {
+    result = JSON.parse(responseText);
+  } catch (e) {
+    throw new Error(`Moodle API returned non-JSON (check Moodle wwwroot config): ${responseText.slice(0, 200)}`);
+  }
+
+  if (result && typeof result === 'object' && (result.exception || result.error)) {
+    throw new Error(result.message || result.error || 'Moodle API error');
+  }
+
+  return result;
+}
+
+function buildMoodleDownloadUrl(fileurl, token) {
+  const url = new URL(fileurl);
+  url.searchParams.set('token', token);
+  url.searchParams.set('forcedownload', '1');
+  return url.toString();
+}
+
+function guessMimeType(filename) {
+  if (!filename) return 'application/octet-stream';
+  const ext = filename.split('.').pop().toLowerCase();
+  const map = {
+    pdf: 'application/pdf',
+    txt: 'text/plain',
+    md: 'text/markdown',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    mp3: 'audio/mpeg',
+    mp4: 'video/mp4',
+  };
+  return map[ext] || 'application/octet-stream';
+}
+
 async function handleMoodleCourses(request, env) {
   try {
     const baseUrl = (env.MOODLE_BASE_URL || 'https://moodle.gpa-buddy.com').replace(/\/$/, '');
@@ -4316,6 +4383,99 @@ async function handleMoodleCourses(request, env) {
     return createResponse(JSON.stringify({ courses }), 200, request);
   } catch (err) {
     console.error('[Moodle] failed to fetch courses:', err.message);
+    return createResponse(JSON.stringify({ error: err.message }), 500, request);
+  }
+}
+
+async function handleImportMoodleCourse(request, env, courseId) {
+  try {
+    const user = await getUserFromRequest(request, env);
+    if (!user) return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+
+    const baseUrl = (env.MOODLE_BASE_URL || 'https://moodle.gpa-buddy.com').replace(/\/$/, '');
+    const token = env.MOODLE_API_TOKEN || '2b3adf96137807ab66c5cffe4041f024';
+
+    // 1. 获取 Moodle 课程基本信息
+    const allCourses = await fetchMoodle('core_course_get_courses', { 'options[ids][0]': courseId }, baseUrl, token);
+    if (!Array.isArray(allCourses)) {
+      throw new Error('Unexpected Moodle course response');
+    }
+    const moodleCourse = allCourses.find(c => c.id == courseId);
+    if (!moodleCourse) {
+      throw new Error('Course not found in Moodle');
+    }
+
+    // 2. 在用户数据库中创建课程
+    const courseResult = await env.DB.prepare(
+      'INSERT INTO courses (user_id, name) VALUES (?, ?)'
+    ).bind(user.id, moodleCourse.fullname).run();
+    const newCourseId = courseResult.meta.last_row_id;
+
+    // 3. 获取课程内容
+    const contents = await fetchMoodle('core_course_get_contents', { courseid: courseId }, baseUrl, token);
+    if (!Array.isArray(contents)) {
+      throw new Error('Failed to get course contents from Moodle');
+    }
+
+    // 4. 收集文件资源
+    const files = [];
+    for (const section of contents) {
+      for (const module of section.modules || []) {
+        if (module.modname !== 'resource') continue;
+        for (const content of module.contents || []) {
+          if (content.type === 'file' && content.fileurl) {
+            files.push({
+              name: content.filename,
+              url: content.fileurl,
+              size: content.filesize || 0,
+              type: guessMimeType(content.filename),
+            });
+          }
+        }
+      }
+    }
+
+    // 5. 下载并迁移到 R2
+    const importedMaterials = [];
+    for (const file of files) {
+      try {
+        const downloadUrl = buildMoodleDownloadUrl(file.url, token);
+        const fileResponse = await fetch(downloadUrl);
+        if (!fileResponse.ok) {
+          console.error(`[Moodle Import] failed to download ${file.name}: ${fileResponse.status}`);
+          continue;
+        }
+        const fileBlob = await fileResponse.blob();
+
+        // 插入 materials 记录
+        const insertResult = await env.DB.prepare(
+          'INSERT INTO course_materials (course_id, name, size, type, content_text, r2_key) VALUES (?, ?, ?, ?, ?, ?)'
+        ).bind(newCourseId, file.name, file.size, file.type, '', '').run();
+        const materialId = insertResult.meta.last_row_id;
+
+        // 上传到 R2
+        const r2Key = buildMaterialR2Key(newCourseId, materialId, file.name);
+        await uploadToR2(fileBlob, r2Key, env);
+
+        // 更新 r2_key
+        await env.DB.prepare('UPDATE course_materials SET r2_key = ? WHERE id = ?').bind(r2Key, materialId).run();
+
+        importedMaterials.push({ id: materialId, name: file.name, size: file.size });
+      } catch (err) {
+        console.error(`[Moodle Import] error processing ${file.name}:`, err.message);
+      }
+    }
+
+    // 6. 更新课程时间戳
+    await env.DB.prepare('UPDATE courses SET updated_at = datetime("now") WHERE id = ?').bind(newCourseId).run();
+
+    return createResponse(JSON.stringify({
+      success: true,
+      course: { id: newCourseId, name: moodleCourse.fullname },
+      materials: importedMaterials,
+    }), 200, request);
+  } catch (err) {
+    console.error('[Moodle Import] error:', err.message);
     return createResponse(JSON.stringify({ error: err.message }), 500, request);
   }
 }
@@ -4404,6 +4564,11 @@ export default {
     /* ===== MOODLE ROUTES ===== */
     if (url.pathname === '/api/moodle/courses' && request.method === 'GET') {
       return handleMoodleCourses(request, env);
+    }
+
+    const moodleImportMatch = url.pathname.match(/^\/api\/moodle\/courses\/(\d+)\/import$/);
+    if (moodleImportMatch && request.method === 'POST') {
+      return handleImportMoodleCourse(request, env, moodleImportMatch[1]);
     }
 
     /* ===== COURSE ROUTES ===== */

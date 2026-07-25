@@ -960,14 +960,51 @@
                     return;
                 }
 
-                container.innerHTML = courses.map(course => `
-                    <div class="p-3 rounded-xl bg-white/60 border border-white/80">
-                        <div class="font-medium text-sm text-slate-900">${escapeHtml(course.fullname)}</div>
-                        <div class="text-xs text-slate-500 mt-1">ID: ${course.id} · ${escapeHtml(course.shortname || '')}</div>
-                    </div>
-                `).join('');
+                container.innerHTML = `
+                    <div class="text-xs text-slate-500 mb-2 px-1">点击课程名称开始导入</div>
+                    ${courses.map(course => `
+                        <div onclick="importMoodleCourse(${course.id}, ${JSON.stringify(course.fullname).replace(/"/g, '&quot;')})" 
+                             class="p-3 rounded-xl bg-white/60 border border-white/80 hover:bg-emerald-50/50 cursor-pointer transition-colors group">
+                            <div class="font-medium text-sm text-slate-900 group-hover:text-emerald-700">${escapeHtml(course.fullname)}</div>
+                            <div class="text-xs text-slate-500 mt-1">ID: ${course.id} · ${escapeHtml(course.shortname || '')}</div>
+                        </div>
+                    `).join('')}
+                `;
             } catch (err) {
                 container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">读取失败：${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function importMoodleCourse(moodleCourseId, courseName) {
+            const container = document.getElementById('moodleCourseList');
+            container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在导入课程，请稍候...</div>';
+
+            try {
+                const response = await fetch(`${API_BASE}/api/moodle/courses/${moodleCourseId}/import`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                const result = await response.json();
+
+                if (!response.ok || result.error) {
+                    throw new Error(result.error || `导入失败 (${response.status})`);
+                }
+
+                // 导入成功，添加到本地课程列表
+                const newCourse = {
+                    id: 'pc_' + result.course.id,
+                    name: result.course.name,
+                    createdAt: new Date().toISOString()
+                };
+                data.courses.push(newCourse);
+                saveData();
+                currentCourseId = newCourse.id;
+                renderCourseList();
+                renderCourseDetail();
+                hideMoodleImportModal();
+                showToast(`已导入课程「${result.course.name}」，共 ${result.materials.length} 个文件`);
+            } catch (err) {
+                container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">导入失败：${escapeHtml(err.message)}</div>`;
             }
         }
 
