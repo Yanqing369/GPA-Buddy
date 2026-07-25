@@ -4390,7 +4390,7 @@ async function handleMoodleCourses(request, env) {
 async function handleImportMoodleCourse(request, env, courseId) {
   try {
     const user = await getUserFromRequest(request, env);
-    if (!user) return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+    if (!user) return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401, request);
 
     const baseUrl = (env.MOODLE_BASE_URL || 'https://moodle.gpa-buddy.com').replace(/\/$/, '');
     const token = env.MOODLE_API_TOKEN || '2b3adf96137807ab66c5cffe4041f024';
