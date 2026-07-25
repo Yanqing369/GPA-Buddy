@@ -4259,6 +4259,67 @@ function safeParseJSON(text) {
   }
 }
 
+/* ==================== MOODLE API ==================== */
+
+async function handleMoodleCourses(request, env) {
+  try {
+    const baseUrl = (env.MOODLE_BASE_URL || 'https://moodle.gpa-buddy.com').replace(/\/$/, '');
+    const token = env.MOODLE_API_TOKEN || '2b3adf96137807ab66c5cffe4041f024';
+    const endpoint = `${baseUrl}/webservice/rest/server.php`;
+
+    const params = new URLSearchParams();
+    params.append('wstoken', token);
+    params.append('wsfunction', 'core_course_get_courses');
+    params.append('moodlewsrestformat', 'json');
+
+    console.log('[Moodle] fetching courses from:', endpoint);
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': 'GPA-Buddy-Worker/1.0',
+      },
+      body: params.toString(),
+    });
+
+    const responseText = await response.text();
+    console.log('[Moodle] response status:', response.status);
+    console.log('[Moodle] response body preview:', responseText.slice(0, 500));
+
+    if (!response.ok) {
+      throw new Error(`Moodle API HTTP error: ${response.status}, body: ${responseText.slice(0, 200)}`);
+    }
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Moodle API returned non-JSON (check Moodle wwwroot config): ${responseText.slice(0, 200)}`);
+    }
+
+    if (result && typeof result === 'object' && (result.exception || result.error)) {
+      throw new Error(result.message || result.error || 'Moodle API error');
+    }
+
+    if (!Array.isArray(result)) {
+      throw new Error('Unexpected Moodle API response');
+    }
+
+    const courses = result.filter(course => course.id !== 1).map(course => ({
+      id: course.id,
+      fullname: course.fullname,
+      shortname: course.shortname,
+      categoryid: course.categoryid,
+    }));
+
+    return createResponse(JSON.stringify({ courses }), 200, request);
+  } catch (err) {
+    console.error('[Moodle] failed to fetch courses:', err.message);
+    return createResponse(JSON.stringify({ error: err.message }), 500, request);
+  }
+}
+
 /* ==================== MAIN ==================== */
 
 export default {
@@ -4338,6 +4399,11 @@ export default {
     const questionsMatch = url.pathname.match(/^\/api\/banks\/(\d+)\/questions$/);
     if (questionsMatch && request.method === 'POST') {
       return handleSaveQuestions(request, env, questionsMatch[1]);
+    }
+
+    /* ===== MOODLE ROUTES ===== */
+    if (url.pathname === '/api/moodle/courses' && request.method === 'GET') {
+      return handleMoodleCourses(request, env);
     }
 
     /* ===== COURSE ROUTES ===== */

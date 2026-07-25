@@ -9,9 +9,13 @@ FRONTEND_URL = "https://www.gpa-buddy.com"
 
 # 这些密钥需要在 Cloudflare Dashboard 或使用 wrangler secret put 设置
 # DEEPSEEK_API_KEY = "your-api-key-here"
+# MOODLE_API_TOKEN = "your-moodle-token-here"
 # MOONSHOT_API_KEY = "your-moonshot-api-key-here"
 # GOOGLE_CLIENT_ID = "your-google-client-id"
 # TURNSTILE_SECRET_KEY = "your-turnstile-secret-key"
+
+# Moodle 教务系统地址
+MOODLE_BASE_URL = "https://moodle.gpa-buddy.com"
 
 # R2 存储空间（课程资料原始文件）
 [[r2_buckets]]

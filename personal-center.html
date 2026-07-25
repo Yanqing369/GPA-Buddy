@@ -945,32 +945,16 @@
             container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在读取课程列表...</div>';
 
             try {
-                // 本地测试：浏览器直连 Moodle（注意：会暴露 token，仅用于本地测试）
-                const moodleBase = 'https://moodle.gpa-buddy.com';
-                const token = '2b3adf96137807ab66c5cffe4041f024';
-                const params = new URLSearchParams();
-                params.append('wstoken', token);
-                params.append('wsfunction', 'core_course_get_courses');
-                params.append('moodlewsrestformat', 'json');
-
-                const response = await fetch(`${moodleBase}/webservice/rest/server.php`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: params.toString(),
+                const response = await fetch(`${API_BASE}/api/moodle/courses`, {
+                    credentials: 'include'
                 });
                 const result = await response.json();
 
-                if (!response.ok || result.error || result.exception) {
-                    throw new Error(result.message || result.error || `请求失败 (${response.status})`);
+                if (!response.ok || result.error) {
+                    throw new Error(result.error || `请求失败 (${response.status})`);
                 }
 
-                if (!Array.isArray(result)) {
-                    throw new Error('Moodle 返回了非预期的数据格式');
-                }
-
-                const courses = result.filter(course => course.id !== 1);
+                const courses = result.courses || [];
                 if (courses.length === 0) {
                     container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无可导入课程</div>';
                     return;
