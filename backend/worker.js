@@ -1685,6 +1685,32 @@ async function handleDeleteCourseQuestion(request, env, courseId, questionId) {
   return createResponse(JSON.stringify({ success: true }));
 }
 
+// 重命名题目批次（窗口）
+async function handleRenameCourseBatch(request, env, courseId, batchId) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+
+  const course = await env.DB.prepare(
+    'SELECT id FROM courses WHERE id = ? AND user_id = ?'
+  ).bind(courseId, user.id).first();
+  if (!course) return createResponse(JSON.stringify({ error: 'Course not found' }), 404);
+
+  const body = await request.json().catch(() => ({}));
+  const name = (body.name || '').toString().trim();
+  if (!name) return createResponse(JSON.stringify({ error: 'Name is required' }), 400);
+  if (name.length > 200) return createResponse(JSON.stringify({ error: 'Name too long (max 200 chars)' }), 400);
+
+  const result = await env.DB.prepare(
+    'UPDATE course_question_batches SET name = ? WHERE id = ? AND course_id = ?'
+  ).bind(name, batchId, courseId).run();
+
+  if (!result.meta.changes) return createResponse(JSON.stringify({ error: 'Batch not found' }), 404);
+
+  await env.DB.prepare('UPDATE courses SET updated_at = datetime("now") WHERE id = ?').bind(courseId).run();
+
+  return createResponse(JSON.stringify({ success: true }));
+}
+
 // Helper: persist AI-generated questions to a course
 async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMaterialId = null, batchId = null) {
   if (!Array.isArray(questions) || questions.length === 0) return;
@@ -4643,6 +4669,11 @@ export default {
     const courseQuestionDeleteMatch = url.pathname.match(/^\/api\/courses\/(\d+)\/questions\/(\d+)$/);
     if (courseQuestionDeleteMatch && request.method === 'DELETE') {
       return handleDeleteCourseQuestion(request, env, courseQuestionDeleteMatch[1], courseQuestionDeleteMatch[2]);
+    }
+
+    const courseBatchRenameMatch = url.pathname.match(/^\/api\/courses\/(\d+)\/batches\/(\d+)$/);
+    if (courseBatchRenameMatch && request.method === 'PUT') {
+      return handleRenameCourseBatch(request, env, courseBatchRenameMatch[1], courseBatchRenameMatch[2]);
     }
 
     /* ===== CLOUD BANK ROUTES ===== */

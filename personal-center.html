@@ -997,10 +997,18 @@
                             <div class="text-xs text-slate-500 mt-1.5">${w.count} 道题目</div>
                             <div class="text-xs text-slate-400 mt-0.5">生成于 ${formatDateTimeCN(w.created_at)}</div>
                         </div>
-                        <div class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
-                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                            </svg>
+                        <div class="flex items-center gap-1.5 flex-shrink-0">
+                            ${w.id !== 'null' ? `
+                            <button onclick="event.stopPropagation(); renameBatch('${w.id}')" title="重命名" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>` : ''}
+                            <div class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1010,6 +1018,36 @@
         function openQuiz(batchId) {
             if (!currentCourseId) return;
             window.location.href = `quiz.html?courseId=${encodeURIComponent(currentCourseId)}&batchId=${encodeURIComponent(batchId)}`;
+        }
+
+        async function renameBatch(batchId) {
+            const batch = (data.batches || []).find(b => b.id === batchId);
+            if (!batch) return;
+            const input = prompt('重命名题目窗口：', batch.name);
+            if (input === null) return;
+            const name = input.trim();
+            if (!name) {
+                showToast('名称不能为空', 'error');
+                return;
+            }
+            if (name === batch.name) return;
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/batches/${batchId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `重命名失败 (${res.status})`);
+                }
+                batch.name = name;
+                renderQuestions();
+                showToast('已重命名');
+            } catch (e) {
+                console.error(e);
+                showToast(e.message, 'error');
+            }
         }
 
         async function deleteQuestion(questionId) {
