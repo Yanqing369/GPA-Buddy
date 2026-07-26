@@ -7,14 +7,14 @@
     <link rel="icon" href="resources/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    <!-- document-converter.js 依赖（Office 文件浏览器端转 PDF） -->
-    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-    <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://unpkg.com/pptxtojson@latest/dist/index.umd.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/seikichi/tiff.js@master/tiff.min.js"></script>
+    <!-- document-converter.js 依赖（Office 文件浏览器端转 PDF，本地化避免 CDN 不可达） -->
+    <script src="js/vendor/pdf-lib.min.js"></script>
+    <script src="js/vendor/fontkit.umd.min.js"></script>
+    <script src="js/vendor/mammoth.browser.min.js"></script>
+    <script src="js/vendor/xlsx.full.min.js"></script>
+    <script src="js/vendor/jszip.min.js"></script>
+    <script src="js/vendor/pptxtojson.umd.js"></script>
+    <script src="js/vendor/tiff.min.js"></script>
     <script src="document-converter.js"></script>
     
     <style>
@@ -1108,13 +1108,6 @@
                 return;
             }
             if (isGenerating) return;
-
-            const hasAnalyzable = data.materials.some(m =>
-                (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m) || isOfficeMaterial(m));
-            if (!hasAnalyzable) {
-                showToast('请先上传可解析的资料（PDF、Word、PPT、Excel、.txt / .md 等），再使用开始解析', 'info');
-                return;
-            }
 
             if (!confirm('将基于课程资料解析生成约 20 道选择题，是否继续？')) return;
 
