@@ -7,6 +7,15 @@
     <link rel="icon" href="resources/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- document-converter.js 依赖（Office 文件浏览器端转 PDF） -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/pptxtojson@latest/dist/index.umd.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/seikichi/tiff.js@master/tiff.min.js"></script>
+    <script src="document-converter.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
@@ -265,7 +274,7 @@
                                 </svg>
                             </div>
                             <p class="text-slate-700 font-medium">点击或拖拽上传资料</p>
-                            <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、图片等常用格式</p>
+                            <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件将自动转为 PDF）</p>
                         </div>
                         <div id="materialList" class="mt-6 space-y-3"></div>
 
@@ -696,6 +705,33 @@
             e.target.value = '';
         }
 
+        // 可用 document-converter.js 浏览器端转 PDF 的 Office 格式
+        const OFFICE_EXTS = ['docx', 'pptx', 'xlsx', 'xls'];
+        let docConverter = null;
+
+        function getDocConverter() {
+            if (!docConverter) {
+                docConverter = new DocumentConverter({
+                    onProgress: (current, total, status) => console.log(`[Convert] ${current}/${total} - ${status}`)
+                });
+            }
+            return docConverter;
+        }
+
+        async function convertOfficeToPdf(file) {
+            const converter = getDocConverter();
+            if (!converter.isFontLoaded) {
+                showToast('正在加载转换字体...', 'info');
+                await converter.loadFont();
+            }
+            if (!converter.isFontLoaded || !converter.fontBytes) {
+                throw new Error('字体加载失败，无法转换中文内容');
+            }
+            const blob = await converter.convert(file, { download: false });
+            const pdfFileName = file.name.replace(/\.[^/.]+$/, '.pdf');
+            return new File([blob], pdfFileName, { type: 'application/pdf' });
+        }
+
         async function uploadFiles(files) {
             if (!currentCourseId) {
                 showToast('请先选择课程', 'error');
@@ -703,9 +739,22 @@
             }
             let successCount = 0;
             for (const file of Array.from(files)) {
+                // Office 文件先在浏览器端转换为 PDF（与题库生成页同一套逻辑），再上传
+                let uploadFile = file;
+                const ext = (file.name.split('.').pop() || '').toLowerCase();
+                if (OFFICE_EXTS.includes(ext)) {
+                    try {
+                        showToast(`正在将 ${file.name} 转换为 PDF...`, 'info');
+                        uploadFile = await convertOfficeToPdf(file);
+                    } catch (e) {
+                        console.error(e);
+                        showToast(`转换 ${file.name} 失败：` + e.message, 'error');
+                        continue;
+                    }
+                }
                 const form = new FormData();
-                form.append('file', file);
-                form.append('name', file.name);
+                form.append('file', uploadFile);
+                form.append('name', uploadFile.name);
                 try {
                     const res = await apiFetch(`/api/courses/${currentCourseId}/materials`, {
                         method: 'POST',
@@ -719,7 +768,7 @@
                     successCount++;
                 } catch (e) {
                     console.error(e);
-                    showToast(`上传 ${file.name} 失败`, 'error');
+                    showToast(`上传 ${uploadFile.name} 失败`, 'error');
                 }
             }
             updateCourseCount(currentCourseId, 'materials', successCount);
