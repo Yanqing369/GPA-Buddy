@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>做题 - GPA-Buddy</title>
+    <link rel="icon" href="resources/logo.png" type="image/png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+            color: #1c1c1e;
+            -webkit-font-smoothing: antialiased;
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 50%, rgba(250,249,246,0.85) 100%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.08),
+                0 2px 8px rgba(0, 0, 0, 0.04),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        .liquid-btn {
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(250,249,246,0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .liquid-btn:hover:not(:disabled) {
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1);
+            transform: translateY(-2px);
+        }
+
+        .liquid-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .liquid-btn-emerald {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.9) 0%, rgba(5, 150, 105, 0.95) 100%);
+            border: 1px solid rgba(52, 211, 153, 0.5);
+            box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3), inset 0 1px 0 rgba(167, 243, 208, 0.5);
+            color: white;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .liquid-btn-emerald:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(52, 211, 153, 0.95) 0%, rgba(16, 185, 129, 1) 100%);
+            transform: translateY(-2px);
+        }
+
+        .option-btn {
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            border-color: #34d399;
+            background: rgba(236, 253, 245, 0.8);
+        }
+
+        .option-btn.selected {
+            border-color: #10b981;
+            background: rgba(209, 250, 229, 0.9);
+            box-shadow: 0 0 0 1px #10b981;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+        <a href="personal-center.html" class="flex items-center gap-2 text-slate-600 hover:text-slate-900 text-sm font-medium transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+            </svg>
+            返回个人中心
+        </a>
+        <div id="timerBadge" class="hidden items-center gap-2 px-4 py-1.5 rounded-full bg-white/70 border border-white/80 text-sm font-medium text-slate-700">
+            <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="timerText">00:00</span>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-6 pb-16">
+        <!-- 加载 / 错误提示 -->
+        <div id="statusBox" class="glass-card rounded-2xl p-12 text-center text-slate-500 text-sm">正在加载题目...</div>
+
+        <!-- 做题区 -->
+        <div id="quizArea" class="hidden">
+            <div class="glass-card rounded-2xl p-6 mb-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h1 id="quizTitle" class="text-xl font-bold text-slate-900"></h1>
+                    <span id="progressText" class="text-sm text-slate-500"></span>
+                </div>
+                <div class="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div id="progressBar" class="h-full bg-emerald-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6">
+                <div id="questionStem" class="text-slate-900 font-medium leading-relaxed whitespace-pre-wrap"></div>
+                <div id="optionList" class="mt-5 space-y-3"></div>
+                <div id="fillArea" class="mt-5 hidden">
+                    <input type="text" id="fillInput" placeholder="请输入你的答案"
+                           class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between mt-6">
+                <button id="prevBtn" onclick="prevQuestion()" class="px-5 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">上一题</button>
+                <button id="submitBtn" onclick="submitQuiz()" class="px-8 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">提交</button>
+                <button id="nextBtn" onclick="nextQuestion()" class="px-5 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">下一题</button>
+            </div>
+        </div>
+
+        <!-- 结果区 -->
+        <div id="resultArea" class="hidden">
+            <div class="glass-card rounded-2xl p-6 mb-6 text-center">
+                <h2 class="text-xl font-bold text-slate-900 mb-2">练习结果</h2>
+                <p id="resultSummary" class="text-slate-600 text-sm"></p>
+                <div class="flex gap-3 justify-center mt-5">
+                    <button onclick="restartQuiz()" class="px-5 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">重新做一遍</button>
+                    <a href="personal-center.html" class="px-5 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center">返回个人中心</a>
+                </div>
+            </div>
+            <div id="resultList" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <script>
+        const isLocal = !location.hostname || location.hostname === 'localhost' || location.hostname === '127.0.0.1' || location.protocol === 'file:';
+        const API_BASE = isLocal
+            ? 'http://localhost:8787'
+            : 'https://moyuxiaowu.org';
+
+        const params = new URLSearchParams(location.search);
+        const courseId = params.get('courseId');
+        const batchId = params.get('batchId');
+
+        let questions = [];
+        let answers = [];
+        let currentIndex = 0;
+        let submitted = false;
+        let startTime = null;
+        let elapsedSeconds = 0;
+        let timerInterval = null;
+        let batchName = '';
+
+        function getAuthToken() {
+            return localStorage.getItem('auth_token');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text == null ? '' : String(text);
+            return div.innerHTML;
+        }
+
+        function showStatus(message, isError = false) {
+            const box = document.getElementById('statusBox');
+            box.classList.remove('hidden');
+            box.innerHTML = `<div class="${isError ? 'text-red-500' : 'text-slate-500'} text-sm">${escapeHtml(message)}</div>`;
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
+        }
+
+        function formatDuration(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = seconds % 60;
+            return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            document.getElementById('timerBadge').classList.remove('hidden');
+            document.getElementById('timerBadge').classList.add('flex');
+            timerInterval = setInterval(() => {
+                elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                document.getElementById('timerText').textContent = formatDuration(elapsedSeconds);
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        async function init() {
+            if (!courseId || batchId === null) {
+                showStatus('链接参数缺失（需要 courseId 和 batchId）', true);
+                return;
+            }
+            if (!getAuthToken()) {
+                showStatus('请先登录后再做题', true);
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api/courses/${courseId}`, {
+                    headers: { 'Authorization': `Bearer ${getAuthToken()}` }
+                });
+                if (res.status === 401) {
+                    showStatus('登录已过期，请重新登录', true);
+                    return;
+                }
+                if (!res.ok) throw new Error(`加载失败 (${res.status})`);
+                const result = await res.json();
+
+                const all = (result.questions || []).map(q => ({ ...q, id: String(q.id), batch_id: q.batch_id ? String(q.batch_id) : null }));
+                questions = all.filter(q => batchId === 'null' ? !q.batch_id : q.batch_id === batchId);
+
+                if (questions.length === 0) {
+                    showStatus('该题目窗口中没有题目', true);
+                    return;
+                }
+
+                const batch = (result.batches || []).find(b => String(b.id) === batchId);
+                batchName = batch ? batch.name : '未分组题目';
+                document.getElementById('quizTitle').textContent = batchName;
+                document.title = `${batchName} - 做题`;
+
+                // 保持原始顺序（按 id 升序）
+                questions.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+                answers = new Array(questions.length).fill(null);
+
+                document.getElementById('statusBox').classList.add('hidden');
+                document.getElementById('quizArea').classList.remove('hidden');
+                renderQuestion();
+                startTimer();
+            } catch (e) {
+                console.error(e);
+                showStatus('加载题目失败：' + e.message, true);
+            }
+        }
+
+        function parseQuestion(q) {
+            try {
+                const c = JSON.parse(q.content);
+                if (c && typeof c === 'object') return c;
+            } catch (e) {}
+            return { question: q.content || '', options: {} };
+        }
+
+        function renderQuestion() {
+            const q = questions[currentIndex];
+            const parsed = parseQuestion(q);
+            const options = parsed.options && typeof parsed.options === 'object' ? parsed.options : {};
+            const optionKeys = Object.keys(options);
+
+            document.getElementById('questionStem').textContent = parsed.question || q.title || '（无题干）';
+            document.getElementById('progressText').textContent = `第 ${currentIndex + 1} / ${questions.length} 题`;
+            document.getElementById('progressBar').style.width = `${((currentIndex + 1) / questions.length) * 100}%`;
+
+            const optionList = document.getElementById('optionList');
+            const fillArea = document.getElementById('fillArea');
+
+            if (optionKeys.length > 0) {
+                optionList.classList.remove('hidden');
+                fillArea.classList.add('hidden');
+                optionList.innerHTML = optionKeys.map(key => `
+                    <button onclick="selectOption('${escapeHtml(key)}')"
+                            class="option-btn w-full text-left px-4 py-3 rounded-xl border border-slate-200 bg-white/60 text-sm text-slate-700 ${answers[currentIndex] === key ? 'selected' : ''}">
+                        <span class="font-semibold mr-2">${escapeHtml(key)}.</span>${escapeHtml(options[key])}
+                    </button>
+                `).join('');
+            } else {
+                optionList.classList.add('hidden');
+                optionList.innerHTML = '';
+                fillArea.classList.remove('hidden');
+                const fillInput = document.getElementById('fillInput');
+                fillInput.value = answers[currentIndex] || '';
+                fillInput.oninput = () => { answers[currentIndex] = fillInput.value.trim() || null; };
+            }
+
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === questions.length - 1;
+        }
+
+        function selectOption(key) {
+            answers[currentIndex] = key;
+            renderQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentIndex < questions.length - 1) {
+                currentIndex++;
+                renderQuestion();
+            }
+        }
+
+        function isCorrect(q, userAnswer) {
+            if (userAnswer == null || userAnswer === '') return false;
+            const correct = (q.answer || '').trim();
+            if (!correct) return false;
+            return userAnswer.trim().toLowerCase() === correct.toLowerCase();
+        }
+
+        function submitQuiz() {
+            if (submitted) return;
+            const unanswered = answers.filter(a => a == null || a === '').length;
+            if (unanswered > 0 && !confirm(`还有 ${unanswered} 道题未作答，确定要提交吗？`)) return;
+
+            submitted = true;
+            stopTimer();
+            elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+
+            let correctCount = 0;
+            const rows = questions.map((q, i) => {
+                const parsed = parseQuestion(q);
+                const ok = isCorrect(q, answers[i]);
+                if (ok) correctCount++;
+                return { q, parsed, ok, userAnswer: answers[i] };
+            });
+
+            document.getElementById('quizArea').classList.add('hidden');
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('resultSummary').textContent =
+                `做题时长 ${formatDuration(elapsedSeconds)} · 共 ${questions.length} 题，答对 ${correctCount} 题（正确率 ${Math.round((correctCount / questions.length) * 100)}%）`;
+
+            document.getElementById('resultList').innerHTML = rows.map((r, i) => {
+                const options = r.parsed.options && typeof r.parsed.options === 'object' ? r.parsed.options : {};
+                const optionKeys = Object.keys(options);
+                const optionsHtml = optionKeys.length > 0
+                    ? `<div class="mt-2 space-y-1">${optionKeys.map(k => {
+                        let cls = 'text-slate-600';
+                        if (k === (r.q.answer || '').trim()) cls = 'text-emerald-700 font-medium';
+                        else if (k === r.userAnswer && !r.ok) cls = 'text-red-600 line-through';
+                        return `<div class="text-sm ${cls}"><span class="font-medium">${escapeHtml(k)}.</span> ${escapeHtml(options[k])}</div>`;
+                    }).join('')}</div>`
+                    : '';
+                return `
+                <div class="glass-card rounded-2xl p-5">
+                    <div class="flex items-start gap-3">
+                        <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${r.ok ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-600'}">
+                            ${r.ok ? '✓' : '✗'}
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-slate-900 whitespace-pre-wrap">${escapeHtml(r.parsed.question || r.q.title || '')}</div>
+                            ${optionsHtml}
+                            <div class="text-xs text-slate-500 mt-2">你的答案：<span class="${r.ok ? 'text-emerald-700' : 'text-red-600'} font-medium">${escapeHtml(r.userAnswer || '未作答')}</span></div>
+                            ${!r.ok ? `
+                                <div class="mt-3 p-3 rounded-lg bg-slate-50 text-sm">
+                                    <div class="text-slate-700"><span class="font-medium">正确答案：</span><span class="text-emerald-700 font-medium">${escapeHtml(r.q.answer || '无')}</span></div>
+                                    ${r.q.explanation ? `<div class="text-slate-600 mt-1.5 whitespace-pre-wrap"><span class="font-medium text-slate-700">解析：</span>${escapeHtml(r.q.explanation)}</div>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function restartQuiz() {
+            submitted = false;
+            answers = new Array(questions.length).fill(null);
+            currentIndex = 0;
+            elapsedSeconds = 0;
+            document.getElementById('timerText').textContent = '00:00';
+            document.getElementById('resultArea').classList.add('hidden');
+            document.getElementById('quizArea').classList.remove('hidden');
+            renderQuestion();
+            startTimer();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -1153,10 +1153,14 @@ async function handleGetCourse(request, env, courseId) {
   ).bind(courseId).all();
 
   const { results: questions } = await env.DB.prepare(
-    'SELECT id, course_id, type, title, content, answer, explanation, difficulty, tags, source_material_id, created_at FROM course_questions WHERE course_id = ? ORDER BY created_at DESC'
+    'SELECT id, course_id, type, title, content, answer, explanation, difficulty, tags, source_material_id, batch_id, created_at FROM course_questions WHERE course_id = ? ORDER BY created_at DESC'
   ).bind(courseId).all();
 
-  return createResponse(JSON.stringify({ course, materials, questions }));
+  const { results: batches } = await env.DB.prepare(
+    'SELECT id, course_id, name, created_at FROM course_question_batches WHERE course_id = ? ORDER BY created_at DESC'
+  ).bind(courseId).all();
+
+  return createResponse(JSON.stringify({ course, materials, questions, batches }));
 }
 
 async function handleDeleteCourse(request, env, courseId) {
@@ -1416,6 +1420,7 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
 
   let combinedText = '';
   const textMaterialIds = [];
+  const textMaterialNames = [];
   for (const m of materials) {
     if (isPdfType(m.type, m.name)) continue;
     let text = '';
@@ -1427,6 +1432,7 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
     if (text) {
       combinedText += `\n\n--- 资料：${m.name} ---\n\n${text}`;
       textMaterialIds.push(m.id);
+      textMaterialNames.push(m.name);
     }
   }
 
@@ -1521,7 +1527,14 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
       }
 
       try {
-        await saveGeneratedQuestionsToCourse(env, courseId, allResults);
+        // 创建题目批次（窗口），默认名称为本次资料名（多个用顿号连接）
+        const batchName = [...pdfMaterials.map(m => m.name), ...textMaterialNames].filter(Boolean).join('、') || '未命名批次';
+        const batchResult = await env.DB.prepare(
+          'INSERT INTO course_question_batches (course_id, name) VALUES (?, ?)'
+        ).bind(courseId, batchName.slice(0, 200)).run();
+        const batchId = batchResult.meta.last_row_id;
+
+        await saveGeneratedQuestionsToCourse(env, courseId, allResults, null, batchId);
 
         // 标记本次成功处理的资料为已解析，避免下次重复生成
         const analyzedIds = hasText ? [...processedPdfIds, ...textMaterialIds] : processedPdfIds;
@@ -1673,11 +1686,11 @@ async function handleDeleteCourseQuestion(request, env, courseId, questionId) {
 }
 
 // Helper: persist AI-generated questions to a course
-async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMaterialId = null) {
+async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMaterialId = null, batchId = null) {
   if (!Array.isArray(questions) || questions.length === 0) return;
 
   const stmt = env.DB.prepare(
-    'INSERT INTO course_questions (course_id, type, title, content, answer, explanation, difficulty, tags, source_material_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO course_questions (course_id, type, title, content, answer, explanation, difficulty, tags, source_material_id, batch_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
   );
 
   const batch = questions.map(q => {
@@ -1694,7 +1707,8 @@ async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMa
       q.explanation || '',
       q.difficulty || 1,
       JSON.stringify([]),
-      sourceMaterialId
+      sourceMaterialId,
+      batchId
     );
   });
 
@@ -5115,10 +5129,13 @@ export default {
               sendSSE
             );
 
-            // 如果关联了课程，保存生成的题目到课程
+            // 如果关联了课程，保存生成的题目到课程（建批次，名称为文件名）
             if (validatedCourseId) {
               try {
-                await saveGeneratedQuestionsToCourse(env, validatedCourseId, allResults);
+                const batchResult = await env.DB.prepare(
+                  'INSERT INTO course_question_batches (course_id, name) VALUES (?, ?)'
+                ).bind(validatedCourseId, (fileName || 'document').slice(0, 200)).run();
+                await saveGeneratedQuestionsToCourse(env, validatedCourseId, allResults, null, batchResult.meta.last_row_id);
                 console.log(`[DEBUG] Saved ${allResults.length} questions to course ${validatedCourseId}`);
               } catch (saveErr) {
                 console.error('[DEBUG] Failed to save generated questions to course:', saveErr);
@@ -5736,10 +5753,13 @@ export default {
             await sendSSE({ type: 'final_result', data: allResults, tokenCount: totalTokenCount, generatedCount, requestedCount: questionCount, partial });
             await sendSSE({ type: 'done' });
 
-            // 如果关联了课程，保存生成的题目到课程
+            // 如果关联了课程，保存生成的题目到课程（建批次，名称为 PDF 文件名）
             if (validatedCourseId) {
               try {
-                await saveGeneratedQuestionsToCourse(env, validatedCourseId, allResults);
+                const batchResult = await env.DB.prepare(
+                  'INSERT INTO course_question_batches (course_id, name) VALUES (?, ?)'
+                ).bind(validatedCourseId, (originalFileName || 'document').slice(0, 200)).run();
+                await saveGeneratedQuestionsToCourse(env, validatedCourseId, allResults, null, batchResult.meta.last_row_id);
                 console.log(`[DEBUG] Saved ${allResults.length} questions to course ${validatedCourseId}`);
               } catch (saveErr) {
                 console.error('[DEBUG] Failed to save generated questions to course:', saveErr);

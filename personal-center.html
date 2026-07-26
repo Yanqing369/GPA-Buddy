@@ -405,7 +405,7 @@
             : '0x4AAAAAACyCQq1B6IXFL27N'; // Production key
 
 
-        let data = { courses: [], materials: [], questions: [] };
+        let data = { courses: [], materials: [], questions: [], batches: [] };
         let currentCourseId = null;
         let currentTab = 'materials';
         let isGenerating = false;
@@ -517,7 +517,8 @@
                 if (!res.ok) throw new Error('Failed to load course detail');
                 const result = await res.json();
                 data.materials = (result.materials || []).map(m => ({ ...m, id: String(m.id), course_id: String(m.course_id) }));
-                data.questions = (result.questions || []).map(q => ({ ...q, id: String(q.id), course_id: String(q.course_id) }));
+                data.questions = (result.questions || []).map(q => ({ ...q, id: String(q.id), course_id: String(q.course_id), batch_id: q.batch_id ? String(q.batch_id) : null }));
+                data.batches = (result.batches || []).map(b => ({ ...b, id: String(b.id), course_id: String(b.course_id) }));
                 renderCourseDetail();
             } catch (e) {
                 console.error(e);
@@ -958,59 +959,57 @@
             }
         }
 
+        // D1 datetime('now') 存的是 UTC，显式按 UTC 解析后转 UTC+8 显示
+        function formatDateTimeCN(isoString) {
+            if (!isoString) return '';
+            const d = new Date(String(isoString).replace(' ', 'T') + 'Z');
+            if (isNaN(d)) return String(isoString);
+            return d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        }
+
         function renderQuestions() {
             const container = document.getElementById('questionList');
             const questions = data.questions.filter(q => q.course_id === currentCourseId);
 
             if (questions.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题目，点击上方按钮添加</div>';
+                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题目，上传资料后点击「开始解析」生成</div>';
                 return;
             }
 
-            container.innerHTML = questions.map((q, index) => {
-                let contentHtml = '';
-                let parsedContent = null;
-                try {
-                    parsedContent = JSON.parse(q.content);
-                } catch (e) {}
+            // 按生成批次整合为题目窗口；无批次的旧题/手动题归入「未分组题目」
+            const windows = (data.batches || []).map(b => ({
+                id: String(b.id),
+                name: b.name,
+                created_at: b.created_at,
+                count: questions.filter(q => q.batch_id === String(b.id)).length
+            })).filter(w => w.count > 0);
 
-                if (parsedContent && parsedContent.question) {
-                    contentHtml += `<p class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(parsedContent.question)}</p>`;
-                    if (parsedContent.options && Object.keys(parsedContent.options).length > 0) {
-                        contentHtml += `<div class="mt-2 space-y-1">`;
-                        for (const [key, val] of Object.entries(parsedContent.options)) {
-                            contentHtml += `<div class="text-sm text-slate-600"><span class="font-medium">${escapeHtml(key)}.</span> ${escapeHtml(val)}</div>`;
-                        }
-                        contentHtml += `</div>`;
-                    }
-                } else {
-                    contentHtml = `<p class="text-sm text-slate-700 whitespace-pre-wrap">${escapeHtml(q.content)}</p>`;
-                }
+            const ungrouped = questions.filter(q => !q.batch_id);
+            if (ungrouped.length > 0) {
+                windows.push({ id: 'null', name: '未分组题目', created_at: ungrouped[0].created_at, count: ungrouped.length });
+            }
 
-                return `
-                <div class="p-4 rounded-xl bg-white/60 border border-white/80">
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 mb-2">
-                                <span class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-medium">题 ${index + 1}</span>
-                                <h4 class="font-semibold text-slate-900 text-sm">${escapeHtml(q.title || '未命名题目')}</h4>
-                            </div>
-                            ${contentHtml}
-                            ${q.answer ? `
-                                <div class="mt-3 p-3 rounded-lg bg-slate-50 text-sm text-slate-600">
-                                    <span class="font-medium text-slate-700">答案 / 解析：</span>
-                                    <p class="mt-1 whitespace-pre-wrap">${escapeHtml(q.answer)}</p>
-                                </div>
-                            ` : ''}
+            container.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' + windows.map(w => `
+                <div onclick="openQuiz('${w.id}')" class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(w.name)}</h4>
+                            <div class="text-xs text-slate-500 mt-1.5">${w.count} 道题目</div>
+                            <div class="text-xs text-slate-400 mt-0.5">生成于 ${formatDateTimeCN(w.created_at)}</div>
                         </div>
-                        <button onclick="deleteQuestion('${q.id}')" class="flex-shrink-0 p-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-100 transition-colors">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
-                        </button>
+                        </div>
                     </div>
                 </div>
-            `}).join('');
+            `).join('') + '</div>';
+        }
+
+        function openQuiz(batchId) {
+            if (!currentCourseId) return;
+            window.location.href = `quiz.html?courseId=${encodeURIComponent(currentCourseId)}&batchId=${encodeURIComponent(batchId)}`;
         }
 
         async function deleteQuestion(questionId) {
