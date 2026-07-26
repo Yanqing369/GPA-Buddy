@@ -1015,9 +1015,11 @@
             }
             if (isGenerating) return;
 
-            const textMaterials = data.materials.filter(m => m.content_text && m.content_text.trim().length > 0);
-            if (textMaterials.length === 0) {
-                showToast('请先上传可提取文本的资料（如 .txt / .md），再使用开始解析', 'info');
+            const isPdfMaterial = (m) => (m.type || '').toLowerCase() === 'application/pdf' || (m.name || '').toLowerCase().endsWith('.pdf');
+            const analyzableMaterials = data.materials.filter(m =>
+                (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m));
+            if (analyzableMaterials.length === 0) {
+                showToast('请先上传可解析的资料（PDF、.txt / .md 等），再使用开始解析', 'info');
                 return;
             }
 
