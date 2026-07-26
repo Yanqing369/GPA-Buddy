@@ -1149,7 +1149,7 @@ async function handleGetCourse(request, env, courseId) {
   if (!course) return createResponse(JSON.stringify({ error: 'Course not found' }), 404);
 
   const { results: materials } = await env.DB.prepare(
-    'SELECT id, course_id, name, size, type, content_text, r2_key, created_at FROM course_materials WHERE course_id = ? ORDER BY created_at DESC'
+    'SELECT id, course_id, name, size, type, content_text, r2_key, analyzed_at, created_at FROM course_materials WHERE course_id = ? ORDER BY created_at DESC'
   ).bind(courseId).all();
 
   const { results: questions } = await env.DB.prepare(
@@ -1408,13 +1408,14 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
   }
 
   const { results: materials } = await env.DB.prepare(
-    'SELECT id, name, type, content_text, r2_key FROM course_materials WHERE course_id = ? ORDER BY created_at DESC'
+    'SELECT id, name, type, content_text, r2_key FROM course_materials WHERE course_id = ? AND analyzed_at IS NULL ORDER BY created_at DESC'
   ).bind(courseId).all();
 
   // PDF 资料走 Vertex（R2 → GCS → Gemini），文本资料走 DeepSeek
   const pdfMaterials = materials.filter(m => m.r2_key && isPdfType(m.type, m.name));
 
   let combinedText = '';
+  const textMaterialIds = [];
   for (const m of materials) {
     if (isPdfType(m.type, m.name)) continue;
     let text = '';
@@ -1425,11 +1426,12 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
     }
     if (text) {
       combinedText += `\n\n--- 资料：${m.name} ---\n\n${text}`;
+      textMaterialIds.push(m.id);
     }
   }
 
   if (combinedText.trim().length === 0 && pdfMaterials.length === 0) {
-    return createResponse(JSON.stringify({ error: 'No text or PDF content available in course materials' }), 400);
+    return createResponse(JSON.stringify({ error: 'No new materials to analyze' }), 400);
   }
   if (combinedText.length > 500000) {
     return createResponse(JSON.stringify({ error: 'Combined text too long (max 500KB)' }), 400);
@@ -1458,6 +1460,7 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
   ctx.waitUntil((async () => {
     try {
       const allResults = [];
+      const processedPdfIds = [];
 
       // 1) PDF 资料：R2 → GCS → Vertex Gemini（复用 /pdf_generate 的现成路径）
       if (hasPdfs) {
@@ -1482,6 +1485,7 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
             }
             const result = await parseBatchResponse(vertexRes);
             allResults.push(...result.questions);
+            processedPdfIds.push(m.id);
             await sendSSE({ type: 'batch_done', batchIndex: i, count: result.questions.length });
           } catch (pdfErr) {
             console.error(`[Analyze] PDF material ${m.id} failed:`, pdfErr);
@@ -1518,6 +1522,16 @@ async function handleAnalyzeCourse(request, env, ctx, courseId) {
 
       try {
         await saveGeneratedQuestionsToCourse(env, courseId, allResults);
+
+        // 标记本次成功处理的资料为已解析，避免下次重复生成
+        const analyzedIds = hasText ? [...processedPdfIds, ...textMaterialIds] : processedPdfIds;
+        if (analyzedIds.length > 0) {
+          const placeholders = analyzedIds.map(() => '?').join(',');
+          await env.DB.prepare(
+            `UPDATE course_materials SET analyzed_at = datetime('now') WHERE id IN (${placeholders})`
+          ).bind(...analyzedIds).run();
+        }
+
         await sendSSE({ type: 'saved', count: allResults.length });
       } catch (saveErr) {
         console.error('[Analyze] Failed to save generated questions:', saveErr);

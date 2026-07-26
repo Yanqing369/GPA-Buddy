@@ -744,7 +744,7 @@
 
         // 课程里已有的 Office 资料（如转换功能上线前上传的）下载后浏览器端转 PDF 并替换
         async function convertOfficeMaterialsToPdf() {
-            const officeMaterials = data.materials.filter(isOfficeMaterial);
+            const officeMaterials = data.materials.filter(m => isOfficeMaterial(m) && !m.analyzed_at);
             for (const m of officeMaterials) {
                 try {
                     showToast(`正在将 ${m.name} 转换为 PDF...`, 'info');
@@ -831,17 +831,23 @@
                 return;
             }
 
-            container.innerHTML = materials.map(m => `
-                <div class="flex items-center justify-between p-4 rounded-xl bg-white/60 border border-white/80 hover:bg-white/90 transition-colors">
+            // 按是否已解析分区：已解析的资料不会再参与生成，避免重复出题
+            const pending = materials.filter(m => !m.analyzed_at);
+            const analyzed = materials.filter(m => m.analyzed_at);
+
+            const renderItem = (m, isAnalyzed) => `
+                <div class="flex items-center justify-between p-4 rounded-xl ${isAnalyzed ? 'bg-slate-50/60 border border-slate-100 opacity-70' : 'bg-white/60 border border-white/80 hover:bg-white/90'} transition-colors">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-10 h-10 rounded-xl ${isAnalyzed ? 'bg-slate-100' : 'bg-emerald-50'} flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 ${isAnalyzed ? 'text-slate-400' : 'text-emerald-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <div class="font-medium text-sm text-slate-900 truncate">${escapeHtml(m.name)}</div>
-                            <div class="text-xs text-slate-500">${formatFileSize(m.size)} · ${formatDate(m.created_at)}</div>
+                            <div class="font-medium text-sm ${isAnalyzed ? 'text-slate-500' : 'text-slate-900'} truncate">${escapeHtml(m.name)}</div>
+                            <div class="text-xs text-slate-500">
+                                ${formatFileSize(m.size)} · ${formatDate(m.created_at)}${isAnalyzed ? ' · <span class="text-emerald-600 font-medium">✓ 已解析</span>' : ''}
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
@@ -849,7 +855,18 @@
                         <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+
+            let html = '';
+            if (pending.length > 0) {
+                html += `<div class="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-2">待解析资料 <span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">${pending.length}</span></div>`;
+                html += `<div class="space-y-3">${pending.map(m => renderItem(m, false)).join('')}</div>`;
+            }
+            if (analyzed.length > 0) {
+                html += `<div class="text-xs font-semibold text-slate-400 ${pending.length > 0 ? 'mt-5' : ''} mb-2 flex items-center gap-2">已解析资料（不会重复生成题目） <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">${analyzed.length}</span></div>`;
+                html += `<div class="space-y-3">${analyzed.map(m => renderItem(m, true)).join('')}</div>`;
+            }
+            container.innerHTML = html;
         }
 
         async function downloadMaterial(materialId) {
@@ -1183,7 +1200,11 @@
                 showToast(`解析完成，已生成 ${generatedCount} 道题目`, 'success');
             } catch (e) {
                 console.error(e);
-                showToast('解析失败：' + e.message, 'error');
+                if ((e.message || '').includes('No new materials')) {
+                    showToast('没有新的待解析资料：课程资料都已生成过题目', 'info');
+                } else {
+                    showToast('解析失败：' + e.message, 'error');
+                }
             } finally {
                 isGenerating = false;
                 setAnalysisButtonLoading(false);
