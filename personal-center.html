@@ -732,6 +732,51 @@
             return new File([blob], pdfFileName, { type: 'application/pdf' });
         }
 
+        function isPdfMaterial(m) {
+            return (m.type || '').toLowerCase() === 'application/pdf' || (m.name || '').toLowerCase().endsWith('.pdf');
+        }
+
+        function isOfficeMaterial(m) {
+            if (isPdfMaterial(m) || !m.r2_key) return false;
+            const ext = ((m.name || '').split('.').pop() || '').toLowerCase();
+            return OFFICE_EXTS.includes(ext);
+        }
+
+        // 课程里已有的 Office 资料（如转换功能上线前上传的）下载后浏览器端转 PDF 并替换
+        async function convertOfficeMaterialsToPdf() {
+            const officeMaterials = data.materials.filter(isOfficeMaterial);
+            for (const m of officeMaterials) {
+                try {
+                    showToast(`正在将 ${m.name} 转换为 PDF...`, 'info');
+                    const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${m.id}/download`);
+                    if (!res.ok) throw new Error('下载原文件失败');
+                    const blob = await res.blob();
+                    const file = new File([blob], m.name, { type: m.type || 'application/octet-stream' });
+                    const pdfFile = await convertOfficeToPdf(file);
+
+                    const form = new FormData();
+                    form.append('file', pdfFile);
+                    form.append('name', pdfFile.name);
+                    const upRes = await apiFetch(`/api/courses/${currentCourseId}/materials`, { method: 'POST', body: form });
+                    if (!upRes.ok) throw new Error('上传转换后的 PDF 失败');
+
+                    // 用转换后的 PDF 替换原 Office 资料（与上传时转换的行为一致）
+                    const delRes = await apiFetch(`/api/courses/${currentCourseId}/materials/${m.id}`, { method: 'DELETE' });
+                    if (!delRes.ok) console.warn('删除原始资料失败', m.id);
+
+                    showToast(`${m.name} 已转换为 PDF`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    showToast(`转换 ${m.name} 失败：` + e.message, 'error');
+                }
+            }
+            if (officeMaterials.length > 0) {
+                await loadCourseDetail(currentCourseId);
+                renderCourseList();
+                updateCountBadges();
+            }
+        }
+
         async function uploadFiles(files) {
             if (!currentCourseId) {
                 showToast('请先选择课程', 'error');
@@ -1064,21 +1109,10 @@
             }
             if (isGenerating) return;
 
-            const isPdfMaterial = (m) => (m.type || '').toLowerCase() === 'application/pdf' || (m.name || '').toLowerCase().endsWith('.pdf');
-            const analyzableMaterials = data.materials.filter(m =>
-                (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m));
-            if (analyzableMaterials.length === 0) {
-                showToast('请先上传可解析的资料（PDF、.txt / .md 等），再使用开始解析', 'info');
-                return;
-            }
-
-            // 获取 Turnstile 验证 token
-            let turnstileToken = null;
-            if (typeof turnstile !== 'undefined') {
-                turnstileToken = turnstile.getResponse();
-            }
-            if (!turnstileToken) {
-                showToast('请先完成人机验证', 'error');
+            const hasAnalyzable = data.materials.some(m =>
+                (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m) || isOfficeMaterial(m));
+            if (!hasAnalyzable) {
+                showToast('请先上传可解析的资料（PDF、Word、PPT、Excel、.txt / .md 等），再使用开始解析', 'info');
                 return;
             }
 
@@ -1086,9 +1120,28 @@
 
             isGenerating = true;
             setAnalysisButtonLoading(true);
-            showToast('正在解析资料并生成题目，请稍候...', 'info');
 
             try {
+                // 课程里已有的 Office 资料（如转换功能上线前上传的）先转成 PDF 再解析
+                await convertOfficeMaterialsToPdf();
+
+                const analyzableMaterials = data.materials.filter(m =>
+                    (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m));
+                if (analyzableMaterials.length === 0) {
+                    throw new Error('没有可解析的资料（Office 资料转换失败或为不支持的旧格式，.ppt/.doc 请另存为 .pptx/.docx）');
+                }
+
+                // 获取 Turnstile 验证 token（转换可能耗时，放在转换后获取）
+                let turnstileToken = null;
+                if (typeof turnstile !== 'undefined') {
+                    turnstileToken = turnstile.getResponse();
+                }
+                if (!turnstileToken) {
+                    throw new Error('请先完成人机验证');
+                }
+
+                showToast('正在解析资料并生成题目，请稍候...', 'info');
+
                 const res = await apiFetch(`/api/courses/${currentCourseId}/analyze`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
