@@ -6,6 +6,7 @@
     <title>个人中心 - GPA-Buddy</title>
     <link rel="icon" href="resources/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- document-converter.js 依赖（Office 文件浏览器端转 PDF，本地化避免 CDN 不可达） -->
     <script src="js/vendor/pdf-lib.min.js"></script>
@@ -276,6 +277,25 @@
                             <p class="text-slate-700 font-medium">点击或拖拽上传资料</p>
                             <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件将自动转为 PDF）</p>
                         </div>
+
+                        <!-- 批量生成题库工具栏 -->
+                        <div id="batchGenerateToolbar" class="hidden mt-6 flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="selectAllMaterials" onchange="toggleSelectAllMaterials()" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                                <label for="selectAllMaterials" class="text-sm font-medium text-slate-700">全选</label>
+                            </div>
+                            <span id="selectedMaterialCount" class="text-xs px-2 py-1 rounded-full bg-white text-slate-600">已选 0 个</span>
+                            <button onclick="openGenerateBankModal()" class="ml-auto px-4 py-2 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                                批量生成题库
+                            </button>
+                        </div>
+
+                        <!-- 生成进度区域 -->
+                        <div id="generateProgressArea" class="hidden mt-6 space-y-3"></div>
+
                         <div id="materialList" class="mt-6 space-y-3"></div>
 
                         <!-- 解析区域 -->
@@ -292,13 +312,8 @@
 
                     <!-- 我的题目 -->
                     <div id="questionsSection" class="hidden">
-                        <div class="flex flex-wrap items-center gap-3 mb-4">
-                            <button onclick="showAddQuestionModal()" class="px-4 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                添加题目
-                            </button>
+                        <div class="mb-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-sm text-slate-600">
+                            这里展示你从课程资料生成的题库。点击题库即可使用 practice.html 原界面练习。
                         </div>
                         <div id="questionList" class="space-y-4"></div>
                     </div>
@@ -368,6 +383,37 @@
         </div>
     </div>
 
+    <!-- 生成题库模态框 -->
+    <div id="generateBankModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-md modal-enter">
+            <h3 id="generateBankModalTitle" class="text-lg font-bold text-slate-900 mb-4">生成题库</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">每份文件出题数量</label>
+                    <input type="number" id="generateBankQuestionCount" value="20" min="1" max="200"
+                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目语言</label>
+                    <select id="generateBankLang" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
+                        <option value="zh">简体中文</option>
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
+                <div class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
+                    <p>将基于选中的资料各生成一个题库，生成结果先保存到本地，并同步到云端以便跨设备使用。</p>
+                    <p class="mt-1">生成过程可能耗时，请保持页面打开。</p>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="hideGenerateBankModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
+                <button id="generateBankConfirmBtn" onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">开始生成</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 解析完成模态框 -->
     <div id="analysisCompleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-card rounded-2xl p-6 w-full max-w-sm modal-enter text-center">
@@ -409,6 +455,21 @@
         let currentCourseId = null;
         let currentTab = 'materials';
         let isGenerating = false;
+        let selectedMaterialIds = new Set();
+        let generateBankSingleId = null; // 单文件生成时记录 id
+
+        // 本地 IndexedDB：与 practice.html / manage.html 共用同一数据库
+        const DB_NAME = 'ExamBuddyDB_Clean_v2';
+        const db = new Dexie(DB_NAME);
+        db.version(8).stores({
+            questionBanks: '++id, name, createdAt, updatedAt',
+            practiceProgress: '++id, bankId, lastPracticeAt',
+            sourceFiles: '++id, name, fileName, markerFileName, bankId, graphId, data, createdAt, [graphId+name]',
+            settings: 'key',
+            knowledgeGraphs: '++id, name, createdAt, updatedAt',
+            graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
+            graphEdges: '++id, graphId, source, target, [graphId+source+target]'
+        });
 
         function getAuthToken() {
             return localStorage.getItem('auth_token');
@@ -482,10 +543,13 @@
         }
 
         async function init() {
+            // 打开本地数据库
+            try { await db.open(); } catch (e) { console.warn('Open IndexedDB failed:', e); }
+
             if (!getAuthToken()) {
                 showToast('请先登录以使用个人中心', 'error');
             } else {
-                await loadCourses();
+                await Promise.all([loadCourses(), loadCloudBanks()]);
             }
             setupDragDrop();
         }
@@ -548,13 +612,12 @@
             container.innerHTML = data.courses.map(course => {
                 const isActive = course.id === currentCourseId;
                 const materialCount = course.material_count || 0;
-                const questionCount = course.question_count || 0;
                 return `
                     <div onclick="selectCourse('${course.id}')" 
                          class="course-item cursor-pointer rounded-xl p-3 ${isActive ? 'active' : 'text-slate-700'}">
                         <div class="font-medium text-sm truncate">${escapeHtml(course.name)}</div>
                         <div class="text-xs mt-1 ${isActive ? 'text-emerald-600' : 'text-slate-400'}">
-                            ${materialCount} 份资料 · ${questionCount} 道题目
+                            ${materialCount} 份资料
                         </div>
                     </div>
                 `;
@@ -590,9 +653,8 @@
 
         function updateCountBadges() {
             const materialCount = data.materials.filter(m => m.course_id === currentCourseId).length;
-            const questionCount = data.questions.filter(q => q.course_id === currentCourseId).length;
             document.getElementById('materialCountBadge').textContent = materialCount;
-            document.getElementById('questionCountBadge').textContent = questionCount;
+            document.getElementById('questionCountBadge').textContent = cloudBanks.length;
         }
 
         function showAddCourseModal() {
@@ -662,7 +724,7 @@
             }
         }
 
-        function switchTab(tab) {
+        async function switchTab(tab) {
             currentTab = tab;
             document.getElementById('tab-materials').className = tab === 'materials' 
                 ? 'tab-btn pb-3 border-b-2 border-emerald-500 font-semibold text-emerald-700 flex items-center gap-2'
@@ -673,6 +735,7 @@
             document.getElementById('materialsSection').classList.toggle('hidden', tab !== 'materials');
             document.getElementById('questionsSection').classList.toggle('hidden', tab !== 'questions');
             if (tab === 'materials') renderTurnstile();
+            if (tab === 'questions') await loadCloudBanks();
             renderCourseDetail();
         }
 
@@ -826,48 +889,90 @@
         function renderMaterials() {
             const container = document.getElementById('materialList');
             const materials = data.materials.filter(m => m.course_id === currentCourseId);
+            const toolbar = document.getElementById('batchGenerateToolbar');
+
+            // 显示/隐藏批量生成工具栏
+            if (materials.length > 0) {
+                toolbar.classList.remove('hidden');
+            } else {
+                toolbar.classList.add('hidden');
+            }
+            updateSelectedMaterialCount();
 
             if (materials.length === 0) {
                 container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无资料，点击上方区域上传</div>';
                 return;
             }
 
-            // 按是否已解析分区：已解析的资料不会再参与生成，避免重复出题
-            const pending = materials.filter(m => !m.analyzed_at);
-            const analyzed = materials.filter(m => m.analyzed_at);
-
-            const renderItem = (m, isAnalyzed) => `
-                <div class="flex items-center justify-between p-4 rounded-xl ${isAnalyzed ? 'bg-slate-50/60 border border-slate-100 opacity-70' : 'bg-white/60 border border-white/80 hover:bg-white/90'} transition-colors">
+            const renderItem = (m) => {
+                const isSelected = selectedMaterialIds.has(m.id);
+                return `
+                <div class="flex items-center justify-between p-4 rounded-xl bg-white/60 border border-white/80 hover:bg-white/90 transition-colors">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-10 h-10 rounded-xl ${isAnalyzed ? 'bg-slate-100' : 'bg-emerald-50'} flex items-center justify-center flex-shrink-0">
-                            <svg class="w-5 h-5 ${isAnalyzed ? 'text-slate-400' : 'text-emerald-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <input type="checkbox" value="${m.id}" ${isSelected ? 'checked' : ''} onchange="toggleMaterialSelection('${m.id}')"
+                               class="material-select w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 flex-shrink-0">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                         </div>
                         <div class="min-w-0">
-                            <div class="font-medium text-sm ${isAnalyzed ? 'text-slate-500' : 'text-slate-900'} truncate">${escapeHtml(m.name)}</div>
+                            <div class="font-medium text-sm text-slate-900 truncate">${escapeHtml(m.name)}</div>
                             <div class="text-xs text-slate-500">
-                                ${formatFileSize(m.size)} · ${formatDate(m.created_at)}${isAnalyzed ? ' · <span class="text-emerald-600 font-medium">✓ 已解析</span>' : ''}
+                                ${formatFileSize(m.size)} · ${formatDate(m.created_at)}
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        <button onclick="openGenerateBankModal('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">生成题库</button>
                         <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</button>
                         <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
                     </div>
                 </div>
             `;
+            };
 
-            let html = '';
-            if (pending.length > 0) {
-                html += `<div class="text-xs font-semibold text-slate-500 mb-2 flex items-center gap-2">待解析资料 <span class="px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">${pending.length}</span></div>`;
-                html += `<div class="space-y-3">${pending.map(m => renderItem(m, false)).join('')}</div>`;
+            container.innerHTML = `<div class="space-y-3">${materials.map(m => renderItem(m)).join('')}</div>`;
+        }
+
+        function toggleMaterialSelection(materialId) {
+            if (selectedMaterialIds.has(materialId)) {
+                selectedMaterialIds.delete(materialId);
+            } else {
+                selectedMaterialIds.add(materialId);
             }
-            if (analyzed.length > 0) {
-                html += `<div class="text-xs font-semibold text-slate-400 ${pending.length > 0 ? 'mt-5' : ''} mb-2 flex items-center gap-2">已解析资料（不会重复生成题目） <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">${analyzed.length}</span></div>`;
-                html += `<div class="space-y-3">${analyzed.map(m => renderItem(m, true)).join('')}</div>`;
+            updateSelectedMaterialCount();
+            updateSelectAllCheckbox();
+        }
+
+        function updateSelectAllCheckbox() {
+            const materials = data.materials.filter(m => m.course_id === currentCourseId);
+            const checkbox = document.getElementById('selectAllMaterials');
+            if (materials.length === 0) {
+                checkbox.checked = false;
+                checkbox.indeterminate = false;
+                return;
             }
-            container.innerHTML = html;
+            const allSelected = materials.every(m => selectedMaterialIds.has(m.id));
+            const someSelected = materials.some(m => selectedMaterialIds.has(m.id));
+            checkbox.checked = allSelected;
+            checkbox.indeterminate = someSelected && !allSelected;
+        }
+
+        function toggleSelectAllMaterials() {
+            const materials = data.materials.filter(m => m.course_id === currentCourseId);
+            const checkbox = document.getElementById('selectAllMaterials');
+            if (checkbox.checked) {
+                materials.forEach(m => selectedMaterialIds.add(m.id));
+            } else {
+                materials.forEach(m => selectedMaterialIds.delete(m.id));
+            }
+            renderMaterials();
+        }
+
+        function updateSelectedMaterialCount() {
+            const count = selectedMaterialIds.size;
+            document.getElementById('selectedMaterialCount').textContent = `已选 ${count} 个`;
         }
 
         async function downloadMaterial(materialId) {
@@ -912,6 +1017,235 @@
             } catch (e) {
                 console.error(e);
                 showToast('删除资料失败', 'error');
+            }
+        }
+
+        function openGenerateBankModal(materialId = null) {
+            generateBankSingleId = materialId;
+            const modal = document.getElementById('generateBankModal');
+            const title = document.getElementById('generateBankModalTitle');
+            const btn = document.getElementById('generateBankConfirmBtn');
+
+            if (materialId) {
+                const material = data.materials.find(m => m.id === materialId);
+                title.textContent = `生成题库：${material ? material.name : ''}`;
+            } else {
+                const count = selectedMaterialIds.size;
+                title.textContent = `批量生成题库（${count} 个文件）`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function hideGenerateBankModal() {
+            document.getElementById('generateBankModal').classList.add('hidden');
+            generateBankSingleId = null;
+        }
+
+        async function confirmGenerateBanks() {
+            let materialIds = [];
+            if (generateBankSingleId) {
+                materialIds = [generateBankSingleId];
+            } else {
+                materialIds = Array.from(selectedMaterialIds);
+            }
+
+            if (materialIds.length === 0) {
+                showToast('请先选择资料', 'error');
+                return;
+            }
+
+            const questionCount = parseInt(document.getElementById('generateBankQuestionCount').value) || 20;
+            const lang = document.getElementById('generateBankLang').value;
+
+            // 获取 Turnstile token
+            let turnstileToken = null;
+            if (typeof turnstile !== 'undefined') {
+                turnstileToken = turnstile.getResponse();
+            }
+            if (!turnstileToken) {
+                showToast('请先完成人机验证', 'error');
+                return;
+            }
+
+            hideGenerateBankModal();
+            await generateBanksForMaterials(materialIds, { questionCount, lang, turnstileToken });
+        }
+
+        async function generateBanksForMaterials(materialIds, options) {
+            if (isGenerating) return;
+            isGenerating = true;
+
+            const progressArea = document.getElementById('generateProgressArea');
+            progressArea.classList.remove('hidden');
+            progressArea.innerHTML = '<div class="text-sm text-slate-600 mb-2">正在生成题库...</div>';
+
+            const progressMap = new Map(); // fileId -> { status, count, total }
+
+            function updateProgressUI() {
+                const items = Array.from(progressMap.values());
+                if (items.length === 0) return;
+                progressArea.innerHTML = items.map(item => `
+                    <div class="p-3 rounded-xl bg-white/60 border border-white/80 text-sm">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-slate-700 truncate flex-1">${escapeHtml(item.name)}</span>
+                            <span class="text-xs ${item.error ? 'text-red-500' : item.done ? 'text-emerald-600' : 'text-indigo-600'}">${item.status}</span>
+                        </div>
+                        ${!item.error && !item.done ? `
+                        <div class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-indigo-500 rounded-full transition-all" style="width: ${item.progress || 0}%"></div>
+                        </div>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            try {
+                const res = await apiFetch(`/api/courses/${currentCourseId}/generate-banks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        materialIds: materialIds.map(id => parseInt(id)),
+                        questionCount: options.questionCount,
+                        lang: options.lang,
+                        turnstileToken: options.turnstileToken
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `请求失败 (${res.status})`);
+                }
+
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let allDoneReceived = false;
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const payload = line.slice(6).trim();
+                        if (!payload || payload === '[DONE]') continue;
+                        try {
+                            const event = JSON.parse(payload);
+                            const fileId = event.fileId ? String(event.fileId) : null;
+
+                            if (fileId && !progressMap.has(fileId)) {
+                                progressMap.set(fileId, { name: event.fileName || fileId, status: '等待中', progress: 0 });
+                            }
+
+                            if (event.type === 'file_start') {
+                                progressMap.get(fileId).status = '生成中';
+                            } else if (event.type === 'batch0_done' || event.type === 'batch_done') {
+                                const item = progressMap.get(fileId);
+                                item.count = event.count || item.count || 0;
+                                item.status = `已生成 ${item.count} 题`;
+                                item.progress = 50;
+                            } else if (event.type === 'final_result') {
+                                const item = progressMap.get(fileId);
+                                item.count = event.generatedCount || event.data?.length || 0;
+                                item.status = `共 ${item.count} 题`;
+                                item.progress = 90;
+                            } else if (event.type === 'done') {
+                                // 单个文件完成
+                            } else if (event.type === 'file_done') {
+                                const item = progressMap.get(fileId);
+                                item.done = true;
+                                item.status = '已保存';
+                                item.progress = 100;
+                                item.count = event.generatedCount || 0;
+
+                                // 保存到本地并上传云端
+                                await saveGeneratedBankToLocalAndCloud(event.fileId, event.fileName, event.questions, options.lang);
+                            } else if (event.type === 'file_error') {
+                                const item = progressMap.get(fileId);
+                                item.error = true;
+                                item.status = `失败：${event.message || '未知错误'}`;
+                            } else if (event.type === 'all_done') {
+                                allDoneReceived = true;
+                            } else if (event.type === 'error') {
+                                throw new Error(event.message || '生成失败');
+                            }
+                            updateProgressUI();
+                        } catch (e) {
+                            console.error('Parse SSE error:', e, line);
+                        }
+                    }
+                }
+
+                showToast(`题库生成完成，成功 ${Array.from(progressMap.values()).filter(i => i.done).length} 个`, 'success');
+                selectedMaterialIds.clear();
+                renderMaterials();
+            } catch (e) {
+                console.error(e);
+                showToast('生成题库失败：' + e.message, 'error');
+            } finally {
+                isGenerating = false;
+                if (typeof turnstile !== 'undefined') turnstile.reset();
+                setTimeout(() => {
+                    progressArea.classList.add('hidden');
+                    progressArea.innerHTML = '';
+                }, 3000);
+            }
+        }
+
+        async function saveGeneratedBankToLocalAndCloud(materialId, materialName, questions, lang) {
+            if (!Array.isArray(questions) || questions.length === 0) return;
+
+            const bankName = `${materialName} 题库`;
+            const bank = {
+                name: bankName,
+                questions: questions,
+                favorites: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // 1. 保存到本地 IndexedDB
+            const localBankId = await db.questionBanks.add(bank);
+
+            // 2. 下载源文件到本地 sourceFiles（如果 R2 有）
+            const material = data.materials.find(m => m.id === String(materialId));
+            if (material && material.r2_key) {
+                try {
+                    const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${materialId}/download`);
+                    if (res.ok) {
+                        const blob = await res.blob();
+                        await db.sourceFiles.add({
+                            name: material.name,
+                            fileName: material.name,
+                            bankId: localBankId,
+                            data: blob,
+                            createdAt: new Date().toISOString()
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Download source file to local failed:', e);
+                }
+            }
+
+            // 3. 上传到云端 D1
+            try {
+                await apiFetch('/api/cloud-banks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: bankName,
+                        content: JSON.stringify(bank),
+                        is_public: false,
+                        source_r2_key: material?.r2_key || null,
+                        source_name: material?.name || materialName,
+                        source_type: material?.type || 'application/octet-stream',
+                        source_size: material?.size || 0
+                    })
+                });
+            } catch (e) {
+                console.warn('Upload bank to cloud failed:', e);
             }
         }
 
@@ -967,44 +1301,50 @@
             return d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
         }
 
+        let cloudBanks = []; // 当前用户的云端题库列表
+
+        async function loadCloudBanks() {
+            if (!getAuthToken()) return;
+            try {
+                const res = await apiFetch('/api/cloud-banks');
+                if (!res.ok) throw new Error('Failed to load cloud banks');
+                const result = await res.json();
+                cloudBanks = result.banks || [];
+            } catch (e) {
+                console.error(e);
+                cloudBanks = [];
+            }
+        }
+
         function renderQuestions() {
             const container = document.getElementById('questionList');
-            const questions = data.questions.filter(q => q.course_id === currentCourseId);
 
-            if (questions.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题目，上传资料后点击「开始解析」生成</div>';
+            if (cloudBanks.length === 0) {
+                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题库，在「课程资料」页选择资料生成题库</div>';
                 return;
             }
 
-            // 按生成批次整合为题目窗口；无批次的旧题/手动题归入「未分组题目」
-            const windows = (data.batches || []).map(b => ({
-                id: String(b.id),
-                name: b.name,
-                created_at: b.created_at,
-                count: questions.filter(q => q.batch_id === String(b.id)).length
-            })).filter(w => w.count > 0);
-
-            const ungrouped = questions.filter(q => !q.batch_id);
-            if (ungrouped.length > 0) {
-                windows.push({ id: 'null', name: '未分组题目', created_at: ungrouped[0].created_at, count: ungrouped.length });
-            }
-
-            container.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' + windows.map(w => `
-                <div onclick="openQuiz('${w.id}')" class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
+            container.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' + cloudBanks.map(bank => `
+                <div class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
                     <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(w.name)}</h4>
-                            <div class="text-xs text-slate-500 mt-1.5">${w.count} 道题目</div>
-                            <div class="text-xs text-slate-400 mt-0.5">生成于 ${formatDateTimeCN(w.created_at)}</div>
+                        <div class="min-w-0 flex-1" onclick="practiceCloudBank(${bank.id})">
+                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(bank.title)}</h4>
+                            <div class="text-xs text-slate-500 mt-1.5">${bank.questions_count} 道题目</div>
+                            <div class="text-xs text-slate-400 mt-0.5">创建于 ${formatDateTimeCN(bank.created_at)}</div>
                         </div>
                         <div class="flex items-center gap-1.5 flex-shrink-0">
-                            ${w.id !== 'null' ? `
-                            <button onclick="event.stopPropagation(); renameBatch('${w.id}')" title="重命名" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
+                            ${bank.has_source_file ? `
+                            <button onclick="event.stopPropagation(); downloadCloudBankSource(${bank.id})" title="下载源文件" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                 </svg>
                             </button>` : ''}
-                            <div class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                            <button onclick="event.stopPropagation(); deleteCloudBank(${bank.id})" title="删除题库" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                            <div onclick="practiceCloudBank(${bank.id})" class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
                                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
@@ -1015,38 +1355,87 @@
             `).join('') + '</div>';
         }
 
-        function openQuiz(batchId) {
-            if (!currentCourseId) return;
-            window.location.href = `quiz.html?courseId=${encodeURIComponent(currentCourseId)}&batchId=${encodeURIComponent(batchId)}`;
-        }
-
-        async function renameBatch(batchId) {
-            const batch = (data.batches || []).find(b => b.id === batchId);
-            if (!batch) return;
-            const input = prompt('重命名题目窗口：', batch.name);
-            if (input === null) return;
-            const name = input.trim();
-            if (!name) {
-                showToast('名称不能为空', 'error');
-                return;
-            }
-            if (name === batch.name) return;
+        async function practiceCloudBank(bankId) {
             try {
-                const res = await apiFetch(`/api/courses/${currentCourseId}/batches/${batchId}`, {
-                    method: 'PUT',
+                // 1. 下载题库 JSON
+                const res = await apiFetch(`/api/share/${bankId}/download`, {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name })
+                    body: JSON.stringify({ password: '' })
                 });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `重命名失败 (${res.status})`);
+                if (!res.ok) throw new Error('Failed to download bank');
+                const data = await res.json();
+                const bankData = JSON.parse(data.content);
+
+                // 2. 写入本地 IndexedDB
+                const localBankId = await db.questionBanks.add({
+                    name: bankData.name || data.title || '题库',
+                    questions: bankData.questions || [],
+                    favorites: bankData.favorites || [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+
+                // 3. 下载源文件到 sourceFiles
+                const bankMeta = cloudBanks.find(b => b.id === bankId);
+                if (bankMeta && bankMeta.has_source_file) {
+                    try {
+                        const sourceRes = await apiFetch(`/api/cloud-banks/${bankId}/source-file`);
+                        if (sourceRes.ok) {
+                            const blob = await sourceRes.blob();
+                            await db.sourceFiles.add({
+                                name: bankMeta.source_name || 'source',
+                                fileName: bankMeta.source_name || 'source',
+                                bankId: localBankId,
+                                data: blob,
+                                createdAt: new Date().toISOString()
+                            });
+                        }
+                    } catch (e) {
+                        console.warn('Download source file failed:', e);
+                    }
                 }
-                batch.name = name;
-                renderQuestions();
-                showToast('已重命名');
+
+                // 4. 跳转 practice.html
+                window.location.href = `practice.html?id=${localBankId}`;
             } catch (e) {
                 console.error(e);
-                showToast(e.message, 'error');
+                showToast('加载题库失败：' + e.message, 'error');
+            }
+        }
+
+        async function deleteCloudBank(bankId) {
+            if (!confirm('确定要删除这个题库吗？本地已下载的副本不会被删除。')) return;
+            try {
+                const res = await apiFetch(`/api/cloud-banks/${bankId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete cloud bank');
+                cloudBanks = cloudBanks.filter(b => b.id !== bankId);
+                renderQuestions();
+                showToast('题库已删除');
+            } catch (e) {
+                console.error(e);
+                showToast('删除题库失败', 'error');
+            }
+        }
+
+        async function downloadCloudBankSource(bankId) {
+            try {
+                const bank = cloudBanks.find(b => b.id === bankId);
+                const fileName = bank?.source_name || 'source';
+                const res = await apiFetch(`/api/cloud-banks/${bankId}/source-file`);
+                if (!res.ok) throw new Error('Failed to download source file');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error(e);
+                showToast('下载源文件失败', 'error');
             }
         }
 
@@ -1279,8 +1668,9 @@
             document.getElementById('analysisCompleteModal').classList.add('hidden');
         }
 
-        function goToQuestionsTab() {
+        async function goToQuestionsTab() {
             hideAnalysisCompleteModal();
+            await loadCloudBanks();
             switchTab('questions');
         }
 
@@ -1289,6 +1679,9 @@
         });
         document.getElementById('addQuestionModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddQuestionModal();
+        });
+        document.getElementById('generateBankModal').addEventListener('click', function(e) {
+            if (e.target === this) hideGenerateBankModal();
         });
         document.getElementById('moodleImportModal').addEventListener('click', function(e) {
             if (e.target === this) hideMoodleImportModal();

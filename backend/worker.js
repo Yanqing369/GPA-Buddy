@@ -1742,6 +1742,271 @@ async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMa
   await env.DB.prepare('UPDATE courses SET updated_at = datetime("now") WHERE id = ?').bind(courseId).run();
 }
 
+// 为单个课程资料生成题库（PDF/文本均支持），结果与 /pdf_generate 格式一致
+async function generateQuestionsForMaterial(material, options, env, onEvent) {
+  const { questionCount, lang } = options;
+  const isPdf = isPdfType(material.type, material.name);
+  const isText = isTextType(material.type, material.name);
+  const fileName = material.name || 'document';
+
+  const hasContentText = material.content_text && material.content_text.trim().length > 0;
+  const hasR2Text = isText && material.r2_key;
+  if (!isPdf && !hasContentText && !hasR2Text) {
+    throw new Error('Unsupported material type');
+  }
+
+  if (isPdf) {
+    // PDF：R2 → GCS → Vertex Gemini
+    if (!(env.GCP_PRIVATE_KEY && env.GCP_CLIENT_EMAIL && env.GCP_PROJECT_ID && env.GCS_BUCKET)) {
+      throw new Error('PDF processing not configured');
+    }
+
+    const obj = await readR2Object(material.r2_key, env);
+    if (!obj) {
+      throw new Error(`Material not found in storage: ${fileName}`);
+    }
+
+    const token = await getAccessToken(env);
+    const gcsName = `course_${material.course_id}_${Date.now()}_${sanitizeForR2Key(fileName)}`;
+    let fileUri = null;
+
+    try {
+      const buffer = await obj.arrayBuffer();
+      fileUri = await uploadToGCS(buffer, gcsName, token, env);
+
+      const totalBatches = Math.ceil(questionCount / 20);
+      const allResults = [];
+      let totalTokenCount = 0;
+
+      // batch0 流式返回
+      const batch0Prompt = buildBatchPrompt(0, totalBatches, lang, fileName, 0, '');
+      const vertexRes0 = await streamVertex(fileUri, batch0Prompt, env, token);
+      if (!vertexRes0.ok) {
+        throw new Error(`VERTEX_ERROR|Batch 0 failed: ${await vertexRes0.text()}`);
+      }
+      const batch0Result = await streamBatchToClient(vertexRes0, onEvent, 'batch0');
+      allResults.push(...batch0Result.questions);
+      totalTokenCount += batch0Result.totalTokenCount || 0;
+      onEvent({ type: 'batch0_done', count: batch0Result.questions.length });
+
+      // 并行执行其他批次
+      if (totalBatches > 1) {
+        const otherBatchPromises = [];
+        for (let i = 1; i < totalBatches; i++) {
+          const prompt = buildBatchPrompt(i, totalBatches, lang, fileName, 0, '');
+          otherBatchPromises.push(
+            streamVertex(fileUri, prompt, env, token)
+              .then(res => parseBatchResponse(res))
+              .catch(err => {
+                console.error(`[GenerateBank] Batch ${i} failed:`, err);
+                return { questions: [], totalTokenCount: 0 };
+              })
+          );
+        }
+        const otherResults = await Promise.all(otherBatchPromises);
+        otherResults.forEach(result => {
+          allResults.push(...result.questions);
+          totalTokenCount += result.totalTokenCount || 0;
+        });
+      }
+
+      allResults.forEach((q, idx) => { q.id = idx + 1; });
+      const generatedCount = allResults.length;
+      const threshold = Math.ceil(questionCount * 0.95);
+      const partial = generatedCount < threshold;
+
+      onEvent({ type: 'final_result', data: allResults, tokenCount: totalTokenCount, generatedCount, requestedCount: questionCount, partial });
+      onEvent({ type: 'done' });
+
+      return { questions: allResults, totalTokenCount, partial };
+    } finally {
+      try { if (fileUri) await deleteFromGCS(gcsName, token, env); } catch (e) { console.error('[GenerateBank] GCS cleanup failed:', e); }
+    }
+  } else {
+    // 文本：走 Vertex Gemini（复用 /text_generate 路径）
+    if (!env.GCP_PRIVATE_KEY) {
+      throw new Error('Text generation not configured');
+    }
+
+    let text = '';
+    if (material.content_text && material.content_text.trim().length > 0) {
+      text = material.content_text.trim();
+    } else if (material.r2_key) {
+      text = (await readR2Text(material.r2_key, env)).trim();
+    }
+
+    if (!text) {
+      throw new Error(`No text content available: ${fileName}`);
+    }
+
+    return await generateQuestionsFromText(
+      text,
+      { questionCount, lang, fileName, fileType: material.type || 'txt' },
+      env,
+      onEvent
+    );
+  }
+}
+
+// 批量为课程资料生成题库（每个文件一个题库），内部限并发
+async function handleGenerateCourseBanks(request, env, ctx, courseId) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+
+  const course = await env.DB.prepare(
+    'SELECT id, name FROM courses WHERE id = ? AND user_id = ?'
+  ).bind(courseId, user.id).first();
+  if (!course) return createResponse(JSON.stringify({ error: 'Course not found' }), 404);
+
+  let body = {};
+  try { body = await request.json(); } catch (e) { body = {}; }
+
+  const materialIds = body?.materialIds;
+  if (!Array.isArray(materialIds) || materialIds.length === 0) {
+    return createResponse(JSON.stringify({ error: 'materialIds array is required' }), 400);
+  }
+  if (materialIds.length > 10) {
+    return createResponse(JSON.stringify({ error: 'Too many materials (max 10 per request)' }), 400);
+  }
+
+  const questionCount = Math.min(Math.max(parseInt(body?.questionCount) || 20, 1), 200);
+  const lang = ['zh', 'zh-TW', 'en', 'ko'].includes(body?.lang) ? body.lang : 'zh';
+  const turnstileToken = body?.turnstileToken;
+
+  // Turnstile verification
+  if (env.TURNSTILE_SECRET_KEY) {
+    if (!turnstileToken) {
+      return createResponse(JSON.stringify({ error: 'Turnstile token required' }), 403);
+    }
+    const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        secret: env.TURNSTILE_SECRET_KEY,
+        response: turnstileToken,
+      }),
+    });
+    const verifyData = await verifyRes.json();
+    if (!verifyData.success) {
+      return createResponse(JSON.stringify({ error: 'Turnstile verification failed' }), 403);
+    }
+  }
+
+  // 校验额度：每个文件扣 1 点
+  const quota = await peekUserQuota(user.id, env, materialIds.length);
+  if (!quota.allowed) {
+    return createResponse(JSON.stringify({ error: quota.reason || 'Insufficient quota' }), 402);
+  }
+
+  // 查询资料并校验归属
+  const placeholders = materialIds.map(() => '?').join(',');
+  const { results: materials } = await env.DB.prepare(
+    `SELECT id, course_id, name, type, content_text, r2_key FROM course_materials WHERE course_id = ? AND id IN (${placeholders})`
+  ).bind(courseId, ...materialIds).all();
+
+  if (materials.length === 0) {
+    return createResponse(JSON.stringify({ error: 'No materials found' }), 404);
+  }
+
+  // 保持请求顺序
+  const materialMap = new Map(materials.map(m => [m.id, m]));
+  const orderedMaterials = materialIds.map(id => materialMap.get(id)).filter(Boolean);
+
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const encoder = new TextEncoder();
+
+  const sendSSE = async (obj) => {
+    await writer.write(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+  };
+
+  ctx.waitUntil((async () => {
+    try {
+      const CONCURRENCY = 2;
+      const queue = orderedMaterials.map((m, index) => ({ ...m, index }));
+      const running = new Set();
+      let completedCount = 0;
+      let failedCount = 0;
+
+      async function runOne(item) {
+        const onFileEvent = async (ev) => {
+          await sendSSE({ ...ev, fileId: item.id, fileName: item.name, fileIndex: item.index });
+        };
+
+        try {
+          await sendSSE({ type: 'file_start', fileId: item.id, fileName: item.name, fileIndex: item.index });
+          const result = await generateQuestionsForMaterial(
+            item,
+            { questionCount, lang },
+            env,
+            onFileEvent
+          );
+          completedCount++;
+          await sendSSE({
+            type: 'file_done',
+            fileId: item.id,
+            fileName: item.name,
+            fileIndex: item.index,
+            questions: result.questions,
+            generatedCount: result.questions.length,
+            requestedCount: questionCount,
+            partial: result.partial
+          });
+        } catch (err) {
+          failedCount++;
+          console.error(`[GenerateCourseBanks] Material ${item.id} failed:`, err);
+          await sendSSE({
+            type: 'file_error',
+            fileId: item.id,
+            fileName: item.name,
+            fileIndex: item.index,
+            message: err.message
+          });
+        }
+      }
+
+      while (queue.length > 0 || running.size > 0) {
+        while (running.size < CONCURRENCY && queue.length > 0) {
+          const item = queue.shift();
+          const p = runOne(item).finally(() => running.delete(p));
+          running.add(p);
+        }
+        if (running.size > 0) {
+          await Promise.race(running);
+        }
+      }
+
+      // 扣费：只有成功生成的文件才扣
+      const cost = completedCount;
+      if (cost > 0) {
+        for (let i = 0; i < cost; i++) {
+          await deductUserQuota(user.id, env, 'Generate course bank', 1);
+        }
+      }
+
+      await sendSSE({
+        type: 'all_done',
+        completedCount,
+        failedCount,
+        totalCount: orderedMaterials.length
+      });
+    } catch (err) {
+      console.error('[GenerateCourseBanks] error:', err);
+      await sendSSE({ type: 'error', message: err.message });
+    } finally {
+      await writer.close();
+    }
+  })());
+
+  return new Response(readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      ...getCorsHeaders(request),
+    },
+  });
+}
+
 /* ==================== CLOUD BANK ROUTES ==================== */
 
 // 上传本地题库到云端
@@ -1753,6 +2018,10 @@ async function handleUploadCloudBank(request, env) {
   
   const body = await request.json();
   const { title, content, is_public, password } = body;
+  const sourceR2Key = body?.source_r2_key || body?.sourceR2Key || null;
+  const sourceName = body?.source_name || body?.sourceName || null;
+  const sourceType = body?.source_type || body?.sourceType || null;
+  const sourceSize = parseInt(body?.source_size || body?.sourceSize) || 0;
   
   if (!title || !content) {
     return createResponse(JSON.stringify({ error: 'Title and content are required' }), 400);
@@ -1777,8 +2046,8 @@ async function handleUploadCloudBank(request, env) {
   }
   
   const result = await env.DB.prepare(
-    'INSERT INTO question_banks (user_id, title, content, is_public, password_hash, password_salt, questions_count) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(user.id, title, content, is_public ? 1 : 0, passwordHash, passwordSalt, questionsCount).run();
+    'INSERT INTO question_banks (user_id, title, content, is_public, password_hash, password_salt, questions_count, source_r2_key, source_name, source_type, source_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(user.id, title, content, is_public ? 1 : 0, passwordHash, passwordSalt, questionsCount, sourceR2Key, sourceName, sourceType, sourceSize).run();
   
   const bank = await env.DB.prepare('SELECT * FROM question_banks WHERE id = ?')
     .bind(result.meta.last_row_id)
@@ -1791,6 +2060,10 @@ async function handleUploadCloudBank(request, env) {
       is_public: bank.is_public,
       has_password: !!bank.password_hash,
       questions_count: bank.questions_count,
+      source_r2_key: bank.source_r2_key,
+      source_name: bank.source_name,
+      source_type: bank.source_type,
+      source_size: bank.source_size,
       created_at: bank.created_at
     }
   }));
@@ -1804,7 +2077,7 @@ async function handleGetCloudBanks(request, env) {
   }
   
   const { results } = await env.DB.prepare(
-    'SELECT id, title, questions_count, is_public, password_hash, download_count, created_at FROM question_banks WHERE user_id = ? ORDER BY updated_at DESC'
+    'SELECT id, title, questions_count, is_public, password_hash, download_count, source_r2_key, source_name, source_type, source_size, created_at FROM question_banks WHERE user_id = ? ORDER BY updated_at DESC'
   ).bind(user.id).all();
   
   const banks = results.map(b => ({
@@ -1814,10 +2087,49 @@ async function handleGetCloudBanks(request, env) {
     is_public: b.is_public,
     has_password: !!b.password_hash,
     download_count: b.download_count,
+    has_source_file: !!b.source_r2_key,
+    source_name: b.source_name,
+    source_type: b.source_type,
+    source_size: b.source_size,
     created_at: b.created_at
   }));
   
   return createResponse(JSON.stringify({ banks }));
+}
+
+// 下载云端题库的源文件（仅 owner）
+async function handleDownloadCloudBankSourceFile(request, env, bankId) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) {
+    return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+  }
+  
+  const bank = await env.DB.prepare(
+    'SELECT * FROM question_banks WHERE id = ? AND user_id = ?'
+  ).bind(bankId, user.id).first();
+  
+  if (!bank) {
+    return createResponse(JSON.stringify({ error: 'Bank not found' }), 404);
+  }
+  
+  if (!bank.source_r2_key) {
+    return createResponse(JSON.stringify({ error: 'No source file for this bank' }), 404);
+  }
+  
+  const object = await readR2Object(bank.source_r2_key, env);
+  if (!object) {
+    return createResponse(JSON.stringify({ error: 'Source file not found in storage' }), 404);
+  }
+  
+  const headers = new Headers();
+  const contentType = object.httpMetadata?.contentType || bank.source_type || 'application/octet-stream';
+  headers.set('Content-Type', contentType);
+  headers.set('Content-Disposition', `attachment; filename="${encodeURIComponent(bank.source_name || 'source')}"`);
+  
+  return new Response(object.body, {
+    status: 200,
+    headers: { ...getCorsHeaders(request), ...Object.fromEntries(headers) }
+  });
 }
 
 // 删除云端题库
@@ -4661,6 +4973,11 @@ export default {
       return handleAnalyzeCourse(request, env, ctx, courseAnalyzeMatch[1]);
     }
 
+    const courseGenerateBanksMatch = url.pathname.match(/^\/api\/courses\/(\d+)\/generate-banks$/);
+    if (courseGenerateBanksMatch && request.method === 'POST') {
+      return handleGenerateCourseBanks(request, env, ctx, courseGenerateBanksMatch[1]);
+    }
+
     const courseQuestionsMatch = url.pathname.match(/^\/api\/courses\/(\d+)\/questions$/);
     if (courseQuestionsMatch && request.method === 'POST') {
       return handleSaveCourseQuestions(request, env, courseQuestionsMatch[1]);
@@ -4687,6 +5004,11 @@ export default {
     const cloudBankMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)$/);
     if (cloudBankMatch && request.method === 'DELETE') {
       return handleDeleteCloudBank(request, env, cloudBankMatch[1]);
+    }
+
+    const cloudBankSourceMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)\/source-file$/);
+    if (cloudBankSourceMatch && request.method === 'GET') {
+      return handleDownloadCloudBankSourceFile(request, env, cloudBankSourceMatch[1]);
     }
     
     /* ===== SHARE ROUTES ===== */
