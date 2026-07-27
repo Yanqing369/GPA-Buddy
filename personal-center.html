@@ -527,6 +527,22 @@
             return div.innerHTML;
         }
 
+        // 从流式累积的文本中统计已完整解析的题目数（与 DocGenerate.js 的 extractCompleteObjects 同思路）
+        function countCompleteQuestions(buffer) {
+            const regex = /\{(?:[^{}]|\{(?:[^{}]|\{[^{}]*\})*\})*\}/g;
+            let match;
+            let count = 0;
+            while ((match = regex.exec(buffer)) !== null) {
+                try {
+                    const obj = JSON.parse(match[0]);
+                    if (obj.question && obj.options && obj.correctAnswer) count++;
+                } catch (e) {
+                    // 不完整的对象，跳过
+                }
+            }
+            return count;
+        }
+
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const msg = document.getElementById('toastMessage');
@@ -1145,16 +1161,27 @@
 
                             if (event.type === 'file_start') {
                                 progressMap.get(fileId).status = '生成中';
+                            } else if (event.type === 'batch0_chunk') {
+                                // 流式逐题更新进度（与 DocGenerate 一致）
+                                const item = progressMap.get(fileId);
+                                item.chunkBuffer = (item.chunkBuffer || '') + (event.data || '');
+                                const n = countCompleteQuestions(item.chunkBuffer);
+                                if (n > (item.count || 0)) {
+                                    item.count = n;
+                                    item.status = `已生成 ${n} 题`;
+                                    // 流式阶段最多走到 89%，之后由 final_result / file_done 推进
+                                    item.progress = Math.max(item.progress || 0, Math.min(89, Math.round(n / options.questionCount * 100)));
+                                }
                             } else if (event.type === 'batch0_done' || event.type === 'batch_done') {
                                 const item = progressMap.get(fileId);
-                                item.count = event.count || item.count || 0;
+                                item.count = Math.max(event.count || 0, item.count || 0);
                                 item.status = `已生成 ${item.count} 题`;
-                                item.progress = 50;
+                                item.progress = Math.max(item.progress || 0, 50);
                             } else if (event.type === 'final_result') {
                                 const item = progressMap.get(fileId);
                                 item.count = event.generatedCount || event.data?.length || 0;
                                 item.status = `共 ${item.count} 题`;
-                                item.progress = 90;
+                                item.progress = Math.max(item.progress || 0, 90);
                             } else if (event.type === 'done') {
                                 // 单个文件完成
                             } else if (event.type === 'file_done') {
@@ -1235,7 +1262,7 @@
 
             // 3. 上传到云端 D1
             try {
-                await apiFetch('/api/cloud-banks', {
+                const res = await apiFetch('/api/cloud-banks', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -1248,8 +1275,13 @@
                         source_size: material?.size || 0
                     })
                 });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `请求失败 (${res.status})`);
+                }
             } catch (e) {
                 console.warn('Upload bank to cloud failed:', e);
+                showToast(`「${bankName}」已保存到本地，但云端同步失败：${e.message}`, 'error');
             }
         }
 
