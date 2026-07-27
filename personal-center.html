@@ -468,7 +468,11 @@
             settings: 'key',
             knowledgeGraphs: '++id, name, createdAt, updatedAt',
             graphNodes: '++id, graphId, nodeId, [graphId+nodeId]',
-            graphEdges: '++id, graphId, source, target, [graphId+source+target]'
+            graphProgress: '++id, graphId, nodeId, [graphId+nodeId]'
+        }).upgrade(tx => {
+            return tx.table('sourceFiles').toCollection().modify(file => {
+                if (!file.graphId) file.graphId = null;
+            });
         });
 
         function getAuthToken() {
