@@ -40,6 +40,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <script src="js/bank-migration.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
@@ -1048,8 +1049,8 @@
                 <p class="text-xs sm:text-sm text-slate-500 leading-relaxed relative z-10"><span class="hidden sm:inline" data-i18n="organizeDesc">把各种格式的题目快速整理成规范题库，自动添加答案解析</span><span class="sm:hidden" data-i18n="organizeDescShort">开刷手里的杂乱题库</span></p>
             </a>
 
-            <!-- 管理卡片 - 液态玻璃 -->
-            <a href="manage.html" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
+            <!-- 管理卡片 - 液态玻璃（visitor 进 manage.html，登录用户进个人中心默认课程） -->
+            <a href="manage.html" id="practiceCard" class="group glass-card squircle p-4 sm:p-8 spring-hover spring-active flex flex-col items-center text-center cursor-pointer relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-100/40 via-transparent to-teal-50/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div class="absolute -top-20 -right-20 w-40 h-40 bg-emerald-200/20 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
                 
@@ -1432,6 +1433,10 @@
                     currentUser = await res.json();
                     console.log('User loaded:', currentUser);
                     updateUserUI();
+                    // 已登录：把 visitor 时代的本地零散题库迁移到云端 default 课程（幂等，后台执行）
+                    if (window.BankMigration) {
+                        BankMigration.migrate({ apiBase: API_BASE, onStatus: (msg) => showToast(msg, 'success') });
+                    }
                     const bal = currentUser.balance;
                     const total = bal ? (bal.amount || 0) + (bal.freeQuotaLeft || 0) : 0;
                     if (typeof Visitor !== 'undefined') Visitor.setUserBalance(total);
@@ -1567,7 +1572,11 @@
                 // 已登录
                 loginBtn.classList.add('hidden');
                 userMenu.classList.remove('hidden');
-                
+
+                // 「开始练习」卡片：登录用户跳到个人中心的默认课程
+                const practiceCard = document.getElementById('practiceCard');
+                if (practiceCard) practiceCard.href = 'personal-center.html?course=default';
+
                 document.getElementById('userAvatar').src = currentUser.avatar || '';
                 document.getElementById('userEmail').textContent = currentUser.email;
                 document.getElementById('accountType').textContent = currentUser.accountType === 'free' ? 'Free' : currentUser.accountType;
@@ -1582,6 +1591,8 @@
                 // 未登录
                 loginBtn.classList.remove('hidden');
                 userMenu.classList.add('hidden');
+                const practiceCard = document.getElementById('practiceCard');
+                if (practiceCard) practiceCard.href = 'manage.html';
             }
         }
         

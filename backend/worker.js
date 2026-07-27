@@ -5,7 +5,7 @@
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Visitor-ID',
 };
 
@@ -13,7 +13,7 @@ function getCorsHeaders(request) {
   const origin = request?.headers?.get('Origin') || '*';
   return {
     'Access-Control-Allow-Origin': origin,
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Visitor-ID',
     'Access-Control-Allow-Credentials': 'true',
   };
@@ -2022,9 +2022,20 @@ async function handleUploadCloudBank(request, env) {
   const sourceName = body?.source_name || body?.sourceName || null;
   const sourceType = body?.source_type || body?.sourceType || null;
   const sourceSize = parseInt(body?.source_size || body?.sourceSize) || 0;
-  
+  const courseId = parseInt(body?.course_id || body?.courseId) || null;
+
   if (!title || !content) {
     return createResponse(JSON.stringify({ error: 'Title and content are required' }), 400);
+  }
+
+  // 校验课程归属（防止把题库挂到别人的课程下）
+  if (courseId) {
+    const ownedCourse = await env.DB.prepare(
+      'SELECT id FROM courses WHERE id = ? AND user_id = ?'
+    ).bind(courseId, user.id).first();
+    if (!ownedCourse) {
+      return createResponse(JSON.stringify({ error: 'Course not found' }), 400);
+    }
   }
   
   let passwordHash = null;
@@ -2046,13 +2057,13 @@ async function handleUploadCloudBank(request, env) {
   }
   
   const result = await env.DB.prepare(
-    'INSERT INTO question_banks (user_id, title, content, is_public, password_hash, password_salt, questions_count, source_r2_key, source_name, source_type, source_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(user.id, title, content, is_public ? 1 : 0, passwordHash, passwordSalt, questionsCount, sourceR2Key, sourceName, sourceType, sourceSize).run();
-  
+    'INSERT INTO question_banks (user_id, title, content, is_public, password_hash, password_salt, questions_count, source_r2_key, source_name, source_type, source_size, course_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(user.id, title, content, is_public ? 1 : 0, passwordHash, passwordSalt, questionsCount, sourceR2Key, sourceName, sourceType, sourceSize, courseId).run();
+
   const bank = await env.DB.prepare('SELECT * FROM question_banks WHERE id = ?')
     .bind(result.meta.last_row_id)
     .first();
-  
+
   return createResponse(JSON.stringify({
     bank: {
       id: bank.id,
@@ -2064,6 +2075,7 @@ async function handleUploadCloudBank(request, env) {
       source_name: bank.source_name,
       source_type: bank.source_type,
       source_size: bank.source_size,
+      course_id: bank.course_id,
       created_at: bank.created_at
     }
   }));
@@ -2077,9 +2089,9 @@ async function handleGetCloudBanks(request, env) {
   }
   
   const { results } = await env.DB.prepare(
-    'SELECT id, title, questions_count, is_public, password_hash, download_count, source_r2_key, source_name, source_type, source_size, created_at FROM question_banks WHERE user_id = ? ORDER BY updated_at DESC'
+    'SELECT id, title, questions_count, is_public, password_hash, download_count, source_r2_key, source_name, source_type, source_size, course_id, created_at FROM question_banks WHERE user_id = ? ORDER BY updated_at DESC'
   ).bind(user.id).all();
-  
+
   const banks = results.map(b => ({
     id: b.id,
     title: b.title,
@@ -2091,10 +2103,58 @@ async function handleGetCloudBanks(request, env) {
     source_name: b.source_name,
     source_type: b.source_type,
     source_size: b.source_size,
+    course_id: b.course_id,
     created_at: b.created_at
   }));
-  
+
   return createResponse(JSON.stringify({ banks }));
+}
+
+// 更新云端题库元信息（仅 owner）：回填源文件 source_*，或把无课程题库归入某课程
+async function handleUpdateCloudBankSource(request, env, bankId) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) {
+    return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const sourceR2Key = body?.source_r2_key || body?.sourceR2Key || null;
+  const sourceName = body?.source_name || body?.sourceName || null;
+  const sourceType = body?.source_type || body?.sourceType || null;
+  const sourceSize = body?.source_size != null || body?.sourceSize != null
+    ? (parseInt(body?.source_size || body?.sourceSize) || 0)
+    : null;
+  const courseId = parseInt(body?.course_id || body?.courseId) || null;
+
+  if (!sourceR2Key && !courseId) {
+    return createResponse(JSON.stringify({ error: 'Nothing to update' }), 400);
+  }
+
+  // 校验课程归属（防止把题库挂到别人的课程下）
+  if (courseId) {
+    const ownedCourse = await env.DB.prepare(
+      'SELECT id FROM courses WHERE id = ? AND user_id = ?'
+    ).bind(courseId, user.id).first();
+    if (!ownedCourse) {
+      return createResponse(JSON.stringify({ error: 'Course not found' }), 400);
+    }
+  }
+
+  const result = await env.DB.prepare(
+    `UPDATE question_banks SET
+       source_r2_key = COALESCE(?, source_r2_key),
+       source_name = COALESCE(?, source_name),
+       source_type = COALESCE(?, source_type),
+       source_size = COALESCE(?, source_size),
+       course_id = COALESCE(?, course_id)
+     WHERE id = ? AND user_id = ?`
+  ).bind(sourceR2Key, sourceName, sourceType, sourceSize, courseId, bankId, user.id).run();
+
+  if (!result.meta.changes) {
+    return createResponse(JSON.stringify({ error: 'Bank not found' }), 404);
+  }
+
+  return createResponse(JSON.stringify({ success: true }));
 }
 
 // 下载云端题库的源文件（仅 owner）
@@ -5009,6 +5069,11 @@ export default {
     const cloudBankSourceMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)\/source-file$/);
     if (cloudBankSourceMatch && request.method === 'GET') {
       return handleDownloadCloudBankSourceFile(request, env, cloudBankSourceMatch[1]);
+    }
+
+    const cloudBankSourceUpdateMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)\/source$/);
+    if (cloudBankSourceUpdateMatch && request.method === 'POST') {
+      return handleUpdateCloudBankSource(request, env, cloudBankSourceUpdateMatch[1]);
     }
     
     /* ===== SHARE ROUTES ===== */

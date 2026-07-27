@@ -7,6 +7,7 @@
     <link rel="icon" href="resources/logo.png" type="image/png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <script src="js/bank-migration.js"></script>
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <!-- document-converter.js 依赖（Office 文件浏览器端转 PDF，本地化避免 CDN 不可达） -->
     <script src="js/vendor/pdf-lib.min.js"></script>
@@ -569,9 +570,48 @@
             if (!getAuthToken()) {
                 showToast('请先登录以使用个人中心', 'error');
             } else {
+                // 把 visitor 时代的本地零散题库迁移到云端 default 课程（幂等，后台执行）
+                if (window.BankMigration) {
+                    BankMigration.migrate({
+                        apiBase: API_BASE,
+                        onStatus: async (msg) => {
+                            showToast(msg, 'success');
+                            // 迁移可能新建了 default 课程和题库，刷新列表
+                            await Promise.all([loadCourses(), loadCloudBanks()]);
+                            if (pendingDefaultSelect) {
+                                pendingDefaultSelect = !selectDefaultCourseIfExists();
+                            }
+                        }
+                    });
+                }
                 await Promise.all([loadCourses(), loadCloudBanks()]);
+                applyCourseParam();
             }
             setupDragDrop();
+        }
+
+        // 首页「开始练习」带 ?course=default 进来时，自动选中默认课程
+        let pendingDefaultSelect = false;
+
+        function selectDefaultCourseIfExists() {
+            const storedId = parseInt(localStorage.getItem('default_course_id'));
+            let course = storedId ? data.courses.find(c => c.id === String(storedId)) : null;
+            if (!course) course = data.courses.find(c => /^default \d{6}$/.test(c.name));
+            if (course) {
+                selectCourse(course.id);
+                return true;
+            }
+            return false;
+        }
+
+        function applyCourseParam() {
+            const courseParam = new URLSearchParams(location.search).get('course');
+            if (!courseParam) return;
+            if (courseParam === 'default') {
+                pendingDefaultSelect = !selectDefaultCourseIfExists();
+            } else if (data.courses.some(c => c.id === courseParam)) {
+                selectCourse(courseParam);
+            }
         }
 
         async function loadCourses() {
@@ -671,10 +711,15 @@
             }
         }
 
+        // 只显示当前课程的云题库（course_id 为空的旧题库/手动上传题库不属于任何课程）
+        function currentCourseBanks() {
+            return cloudBanks.filter(b => String(b.course_id || '') === String(currentCourseId));
+        }
+
         function updateCountBadges() {
             const materialCount = data.materials.filter(m => m.course_id === currentCourseId).length;
             document.getElementById('materialCountBadge').textContent = materialCount;
-            document.getElementById('questionCountBadge').textContent = cloudBanks.length;
+            document.getElementById('questionCountBadge').textContent = currentCourseBanks().length;
         }
 
         function showAddCourseModal() {
@@ -1109,9 +1154,9 @@
                     <div class="p-3 rounded-xl bg-white/60 border border-white/80 text-sm">
                         <div class="flex items-center justify-between">
                             <span class="font-medium text-slate-700 truncate flex-1">${escapeHtml(item.name)}</span>
-                            <span class="text-xs ${item.error ? 'text-red-500' : item.done ? 'text-emerald-600' : 'text-indigo-600'}">${item.status}</span>
+                            <span class="text-xs flex items-center gap-1.5 ${item.error ? 'text-red-500' : item.done ? 'text-emerald-600' : 'text-indigo-600'}">${item.parsing && !item.error && !item.done ? '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>' : ''}${item.status}</span>
                         </div>
-                        ${!item.error && !item.done ? `
+                        ${!item.error && !item.done && !item.parsing ? `
                         <div class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div class="h-full bg-indigo-500 rounded-full transition-all" style="width: ${item.progress || 0}%"></div>
                         </div>` : ''}
@@ -1160,10 +1205,13 @@
                             }
 
                             if (event.type === 'file_start') {
-                                progressMap.get(fileId).status = '生成中';
+                                const item = progressMap.get(fileId);
+                                item.status = '正在解析文件';
+                                item.parsing = true;
                             } else if (event.type === 'batch0_chunk') {
                                 // 流式逐题更新进度（与 DocGenerate 一致）
                                 const item = progressMap.get(fileId);
+                                item.parsing = false;
                                 item.chunkBuffer = (item.chunkBuffer || '') + (event.data || '');
                                 const n = countCompleteQuestions(item.chunkBuffer);
                                 if (n > (item.count || 0)) {
@@ -1174,11 +1222,13 @@
                                 }
                             } else if (event.type === 'batch0_done' || event.type === 'batch_done') {
                                 const item = progressMap.get(fileId);
+                                item.parsing = false;
                                 item.count = Math.max(event.count || 0, item.count || 0);
                                 item.status = `已生成 ${item.count} 题`;
                                 item.progress = Math.max(item.progress || 0, 50);
                             } else if (event.type === 'final_result') {
                                 const item = progressMap.get(fileId);
+                                item.parsing = false;
                                 item.count = event.generatedCount || event.data?.length || 0;
                                 item.status = `共 ${item.count} 题`;
                                 item.progress = Math.max(item.progress || 0, 90);
@@ -1269,6 +1319,7 @@
                         title: bankName,
                         content: JSON.stringify(bank),
                         is_public: false,
+                        course_id: currentCourseId,
                         source_r2_key: material?.r2_key || null,
                         source_name: material?.name || materialName,
                         source_type: material?.type || 'application/octet-stream',
@@ -1278,6 +1329,11 @@
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
                     throw new Error(err.error || `请求失败 (${res.status})`);
+                }
+                // 回写云端 id，避免被 BankMigration 当成待迁移的本地题库重复上云
+                const uploaded = await res.json().catch(() => null);
+                if (uploaded?.bank?.id) {
+                    await db.questionBanks.update(localBankId, { migratedCloudId: uploaded.bank.id });
                 }
             } catch (e) {
                 console.warn('Upload bank to cloud failed:', e);
@@ -1354,13 +1410,14 @@
 
         function renderQuestions() {
             const container = document.getElementById('questionList');
+            const banks = currentCourseBanks();
 
-            if (cloudBanks.length === 0) {
+            if (banks.length === 0) {
                 container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题库，在「课程资料」页选择资料生成题库</div>';
                 return;
             }
 
-            container.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' + cloudBanks.map(bank => `
+            container.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' + banks.map(bank => `
                 <div class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 flex-1" onclick="practiceCloudBank(${bank.id})">
@@ -1403,13 +1460,14 @@
                 const data = await res.json();
                 const bankData = JSON.parse(data.content);
 
-                // 2. 写入本地 IndexedDB
+                // 2. 写入本地 IndexedDB（标记 migratedCloudId，避免被 BankMigration 当成待迁移的本地题库重复上云）
                 const localBankId = await db.questionBanks.add({
                     name: bankData.name || data.title || '题库',
                     questions: bankData.questions || [],
                     favorites: bankData.favorites || [],
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    migratedCloudId: bankId
                 });
 
                 // 3. 下载源文件到 sourceFiles

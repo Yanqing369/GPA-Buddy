@@ -972,6 +972,11 @@
                     })
                 });
                 if (res.ok) {
+                    // 回写云端 id，避免 BankMigration 把该本地题库重复上云
+                    const uploaded = await res.json().catch(() => null);
+                    if (uploaded?.bank?.id) {
+                        await db.questionBanks.update(uploadBankId, { migratedCloudId: uploaded.bank.id });
+                    }
                     showToast(t('cloudUploadSuccess'), 'success');
                     renderCloudBankList();
                 } else {
@@ -1102,7 +1107,9 @@
                     questions: bankData.questions || [],
                     favorites: bankData.favorites || [],
                     createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
+                    updatedAt: new Date().toISOString(),
+                    // 已存在于云端，标记以避免 BankMigration 重复上云
+                    migratedCloudId: cloudBankId
                 };
                 await db.questionBanks.add(newBank);
                 showToast(t('cloudDownloadSuccess'), 'success');

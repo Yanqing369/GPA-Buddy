@@ -1845,6 +1845,11 @@ async function saveAndPractice() {
         if (processedFileName) {
             await db.sourceFiles.where('name').equals(processedFileName).modify({ bankId: id });
         }
+
+        // 已登录用户：立即把新题库迁移到云端 default 课程（幂等，后台执行）
+        if (window.BankMigration && localStorage.getItem('auth_token')) {
+            BankMigration.migrate({ apiBase: API_BASE });
+        }
         
         const modal = document.getElementById('resultModal');
         if (modal) modal.classList.add('hidden');
