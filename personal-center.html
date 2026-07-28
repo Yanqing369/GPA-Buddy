@@ -279,26 +279,19 @@
                             <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件将自动转为 PDF）</p>
                         </div>
 
-                        <!-- 资料选择工具栏 -->
+                        <!-- 批量生成题库工具栏 -->
                         <div id="batchGenerateToolbar" class="hidden mt-6 flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
                             <div class="flex items-center gap-2">
                                 <input type="checkbox" id="selectAllMaterials" onchange="toggleSelectAllMaterials()" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                 <label for="selectAllMaterials" class="text-sm font-medium text-slate-700">全选</label>
                             </div>
                             <span id="selectedMaterialCount" class="text-xs px-2 py-1 rounded-full bg-white text-slate-600">已选 0 个</span>
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" id="separateBankMode" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                                <label for="separateBankMode" class="text-sm font-medium text-slate-700">每份资料单独生成题库</label>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm font-medium text-slate-700">生题数量</span>
-                                <div class="flex items-center gap-1">
-                                    <button type="button" data-qc="5" onclick="setQuestionCount(5)" class="qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors">5题</button>
-                                    <button type="button" data-qc="10" onclick="setQuestionCount(10)" class="qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors">10题</button>
-                                    <button type="button" data-qc="20" onclick="setQuestionCount(20)" class="qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors">20题</button>
-                                </div>
-                            </div>
-                            <span class="ml-auto text-xs text-slate-500">勾选资料后点击下方「开始解析」生成题目</span>
+                            <button onclick="openGenerateBankModal()" class="ml-auto px-4 py-2 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                                批量生成题库
+                            </button>
                         </div>
 
                         <!-- 生成进度区域 -->
@@ -391,6 +384,54 @@
         </div>
     </div>
 
+    <!-- 生成题库模态框 -->
+    <div id="generateBankModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-md modal-enter">
+            <h3 id="generateBankModalTitle" class="text-lg font-bold text-slate-900 mb-4">生成题库</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">每份文件出题数量</label>
+                    <input type="number" id="generateBankQuestionCount" value="20" min="1" max="200"
+                           class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目语言</label>
+                    <select id="generateBankLang" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
+                        <option value="zh">简体中文</option>
+                        <option value="zh-TW">繁體中文</option>
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                    </select>
+                </div>
+                <div class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
+                    <p>将基于选中的资料各生成一个题库，生成结果先保存到本地，并同步到云端以便跨设备使用。</p>
+                    <p class="mt-1">生成过程可能耗时，请保持页面打开。</p>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button onclick="hideGenerateBankModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
+                <button id="generateBankConfirmBtn" onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">开始生成</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 解析完成模态框 -->
+    <div id="analysisCompleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div class="glass-card rounded-2xl p-6 w-full max-w-sm modal-enter text-center">
+            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-bold text-slate-900 mb-2">解析完成</h3>
+            <p class="text-slate-600 text-sm mb-6">题目已生成，请在「我的题目」中查看。</p>
+            <div class="flex gap-3">
+                <button onclick="hideAnalysisCompleteModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">留在资料页</button>
+                <button onclick="goToQuestionsTab()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">查看题目</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast 提示 -->
     <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 translate-y-20 opacity-0 transition-all duration-300">
         <div class="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl shadow-lg flex items-center gap-3 text-sm font-medium border border-emerald-200">
@@ -416,7 +457,7 @@
         let currentTab = 'materials';
         let isGenerating = false;
         let selectedMaterialIds = new Set();
-        let selectedQuestionCount = 20; // 生题数量（每份资料），可选 5/10/20
+        let generateBankSingleId = null; // 单文件生成时记录 id
 
         // 本地 IndexedDB：与 practice.html / manage.html 共用同一数据库
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
@@ -820,6 +861,51 @@
             return new File([blob], pdfFileName, { type: 'application/pdf' });
         }
 
+        function isPdfMaterial(m) {
+            return (m.type || '').toLowerCase() === 'application/pdf' || (m.name || '').toLowerCase().endsWith('.pdf');
+        }
+
+        function isOfficeMaterial(m) {
+            if (isPdfMaterial(m) || !m.r2_key) return false;
+            const ext = ((m.name || '').split('.').pop() || '').toLowerCase();
+            return OFFICE_EXTS.includes(ext);
+        }
+
+        // 课程里已有的 Office 资料（如转换功能上线前上传的）下载后浏览器端转 PDF 并替换
+        async function convertOfficeMaterialsToPdf() {
+            const officeMaterials = data.materials.filter(m => isOfficeMaterial(m) && !m.analyzed_at);
+            for (const m of officeMaterials) {
+                try {
+                    showToast(`正在将 ${m.name} 转换为 PDF...`, 'info');
+                    const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${m.id}/download`);
+                    if (!res.ok) throw new Error('下载原文件失败');
+                    const blob = await res.blob();
+                    const file = new File([blob], m.name, { type: m.type || 'application/octet-stream' });
+                    const pdfFile = await convertOfficeToPdf(file);
+
+                    const form = new FormData();
+                    form.append('file', pdfFile);
+                    form.append('name', pdfFile.name);
+                    const upRes = await apiFetch(`/api/courses/${currentCourseId}/materials`, { method: 'POST', body: form });
+                    if (!upRes.ok) throw new Error('上传转换后的 PDF 失败');
+
+                    // 用转换后的 PDF 替换原 Office 资料（与上传时转换的行为一致）
+                    const delRes = await apiFetch(`/api/courses/${currentCourseId}/materials/${m.id}`, { method: 'DELETE' });
+                    if (!delRes.ok) console.warn('删除原始资料失败', m.id);
+
+                    showToast(`${m.name} 已转换为 PDF`, 'success');
+                } catch (e) {
+                    console.error(e);
+                    showToast(`转换 ${m.name} 失败：` + e.message, 'error');
+                }
+            }
+            if (officeMaterials.length > 0) {
+                await loadCourseDetail(currentCourseId);
+                renderCourseList();
+                updateCountBadges();
+            }
+        }
+
         async function uploadFiles(files) {
             if (!currentCourseId) {
                 showToast('请先选择课程', 'error');
@@ -870,7 +956,7 @@
             const materials = data.materials.filter(m => m.course_id === currentCourseId);
             const toolbar = document.getElementById('batchGenerateToolbar');
 
-            // 显示/隐藏资料选择工具栏
+            // 显示/隐藏批量生成工具栏
             if (materials.length > 0) {
                 toolbar.classList.remove('hidden');
             } else {
@@ -903,6 +989,7 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
+                        <button onclick="openGenerateBankModal('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">生成题库</button>
                         <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</button>
                         <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
                     </div>
@@ -953,16 +1040,6 @@
             document.getElementById('selectedMaterialCount').textContent = `已选 ${count} 个`;
         }
 
-        // 生题数量胶囊按钮（5/10/20，每份资料）
-        function setQuestionCount(n) {
-            selectedQuestionCount = n;
-            document.querySelectorAll('.qc-btn').forEach(btn => {
-                const active = parseInt(btn.dataset.qc) === n;
-                btn.className = `qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors ${active ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`;
-            });
-        }
-        setQuestionCount(20);
-
         async function downloadMaterial(materialId) {
             if (!currentCourseId) {
                 showToast('请先选择课程', 'error');
@@ -1008,13 +1085,61 @@
             }
         }
 
+        function openGenerateBankModal(materialId = null) {
+            generateBankSingleId = materialId;
+            const modal = document.getElementById('generateBankModal');
+            const title = document.getElementById('generateBankModalTitle');
+            const btn = document.getElementById('generateBankConfirmBtn');
+
+            if (materialId) {
+                const material = data.materials.find(m => m.id === materialId);
+                title.textContent = `生成题库：${material ? material.name : ''}`;
+            } else {
+                const count = selectedMaterialIds.size;
+                title.textContent = `批量生成题库（${count} 个文件）`;
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function hideGenerateBankModal() {
+            document.getElementById('generateBankModal').classList.add('hidden');
+            generateBankSingleId = null;
+        }
+
+        async function confirmGenerateBanks() {
+            let materialIds = [];
+            if (generateBankSingleId) {
+                materialIds = [generateBankSingleId];
+            } else {
+                materialIds = Array.from(selectedMaterialIds);
+            }
+
+            if (materialIds.length === 0) {
+                showToast('请先选择资料', 'error');
+                return;
+            }
+
+            const questionCount = parseInt(document.getElementById('generateBankQuestionCount').value) || 20;
+            const lang = document.getElementById('generateBankLang').value;
+
+            // 获取 Turnstile token
+            let turnstileToken = null;
+            if (typeof turnstile !== 'undefined') {
+                turnstileToken = turnstile.getResponse();
+            }
+            if (!turnstileToken) {
+                showToast('请先完成人机验证', 'error');
+                return;
+            }
+
+            hideGenerateBankModal();
+            await generateBanksForMaterials(materialIds, { questionCount, lang, turnstileToken });
+        }
+
         async function generateBanksForMaterials(materialIds, options) {
             if (isGenerating) return;
             isGenerating = true;
-
-            // merge 模式：各文件仍各出 20 题，但题目合并保存为一个题库
-            const mergeMode = !!options.merge;
-            const mergedQuestions = [];
 
             const progressArea = document.getElementById('generateProgressArea');
             progressArea.classList.remove('hidden');
@@ -1112,17 +1237,12 @@
                             } else if (event.type === 'file_done') {
                                 const item = progressMap.get(fileId);
                                 item.done = true;
-                                item.status = mergeMode ? '待合并' : '已保存';
+                                item.status = '已保存';
                                 item.progress = 100;
                                 item.count = event.generatedCount || 0;
 
-                                if (mergeMode) {
-                                    // 合并模式：题目先收拢，全部生成完后统一保存为一个题库
-                                    if (Array.isArray(event.questions)) mergedQuestions.push(...event.questions);
-                                } else {
-                                    // 保存到本地并上传云端
-                                    await saveGeneratedBankToLocalAndCloud(event.fileId, event.fileName, event.questions, options.lang);
-                                }
+                                // 保存到本地并上传云端
+                                await saveGeneratedBankToLocalAndCloud(event.fileId, event.fileName, event.questions, options.lang);
                             } else if (event.type === 'file_error') {
                                 const item = progressMap.get(fileId);
                                 item.error = true;
@@ -1139,17 +1259,7 @@
                     }
                 }
 
-                if (mergeMode && mergedQuestions.length > 0) {
-                    // 合并模式：所有资料的题目保存为一个题库（本地 + 云端，带课程归属）
-                    const course = data.courses.find(c => c.id === currentCourseId);
-                    const mergedName = `${course ? course.name : '勾选资料'} 综合`;
-                    await saveGeneratedBankToLocalAndCloud(null, mergedName, mergedQuestions, options.lang);
-                    showToast(`题库生成完成，已将 ${mergedQuestions.length} 题合并保存为「${mergedName} 题库」`, 'success');
-                } else if (!mergeMode) {
-                    showToast(`题库生成完成，成功 ${Array.from(progressMap.values()).filter(i => i.done).length} 个`, 'success');
-                } else {
-                    showToast('生成失败：没有生成任何题目', 'error');
-                }
+                showToast(`题库生成完成，成功 ${Array.from(progressMap.values()).filter(i => i.done).length} 个`, 'success');
                 selectedMaterialIds.clear();
                 renderMaterials();
             } catch (e) {
@@ -1536,34 +1646,89 @@
             }
             if (isGenerating) return;
 
-            // 必须勾选资料后才能生成题目
-            const materialIds = Array.from(selectedMaterialIds);
-            if (materialIds.length === 0) {
-                showToast('请勾选资料后再生成题目', 'error');
-                return;
-            }
+            if (!confirm('将基于课程资料解析生成约 20 道选择题，是否继续？')) return;
 
-            if (!confirm(`将基于勾选的 ${materialIds.length} 份资料生成题目（每份 ${selectedQuestionCount} 道选择题），是否继续？`)) return;
-
-            // 获取 Turnstile 验证 token
-            let turnstileToken = null;
-            if (typeof turnstile !== 'undefined') {
-                turnstileToken = turnstile.getResponse();
-            }
-            if (!turnstileToken) {
-                showToast('请先完成人机验证', 'error');
-                return;
-            }
-
-            // 复用按文件生成题库的流程（每份题量由胶囊按钮选择、简体中文），
-            // isGenerating 与 turnstile.reset 由 generateBanksForMaterials 内部管理；
-            // 不勾选「每份资料单独生成题库」时，把所有资料的题目合并保存为一个题库
-            const merge = !document.getElementById('separateBankMode').checked;
+            isGenerating = true;
             setAnalysisButtonLoading(true);
+
             try {
-                await generateBanksForMaterials(materialIds, { questionCount: selectedQuestionCount, lang: 'zh', turnstileToken, merge });
+                // 课程里已有的 Office 资料（如转换功能上线前上传的）先转成 PDF 再解析
+                await convertOfficeMaterialsToPdf();
+
+                const analyzableMaterials = data.materials.filter(m =>
+                    (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m));
+                if (analyzableMaterials.length === 0) {
+                    throw new Error('没有可解析的资料（Office 资料转换失败或为不支持的旧格式，.ppt/.doc 请另存为 .pptx/.docx）');
+                }
+
+                // 获取 Turnstile 验证 token（转换可能耗时，放在转换后获取）
+                let turnstileToken = null;
+                if (typeof turnstile !== 'undefined') {
+                    turnstileToken = turnstile.getResponse();
+                }
+                if (!turnstileToken) {
+                    throw new Error('请先完成人机验证');
+                }
+
+                showToast('正在解析资料并生成题目，请稍候...', 'info');
+
+                const res = await apiFetch(`/api/courses/${currentCourseId}/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ turnstileToken })
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.error || `请求失败 (${res.status})`);
+                }
+
+                // Parse SSE stream
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let generatedCount = 0;
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop();
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        const payload = line.slice(6).trim();
+                        if (!payload || payload === '[DONE]') continue;
+                        try {
+                            const event = JSON.parse(payload);
+                            if (event.type === 'error') throw new Error(event.message || '生成失败');
+                            if (event.type === 'final_result') {
+                                generatedCount = event.data?.length || generatedCount;
+                            }
+                            if (event.type === 'saved') {
+                                generatedCount = event.count || generatedCount;
+                            }
+                            if (event.type === 'done') break;
+                        } catch (e) {
+                            // ignore malformed lines
+                        }
+                    }
+                }
+
+                await loadCourseDetail(currentCourseId);
+                updateCountBadges();
+                renderCourseList();
+                showAnalysisCompleteModal();
+                showToast(`解析完成，已生成 ${generatedCount} 道题目`, 'success');
+            } catch (e) {
+                console.error(e);
+                if ((e.message || '').includes('No new materials')) {
+                    showToast('没有新的待解析资料：课程资料都已生成过题目', 'info');
+                } else {
+                    showToast('解析失败：' + e.message, 'error');
+                }
             } finally {
+                isGenerating = false;
                 setAnalysisButtonLoading(false);
+                if (typeof turnstile !== 'undefined') turnstile.reset();
             }
         }
 
@@ -1576,7 +1741,7 @@
                     <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
-                    生成中...
+                    解析中...
                 `;
             } else {
                 btn.disabled = false;
@@ -1589,14 +1754,34 @@
             }
         }
 
+        function showAnalysisCompleteModal() {
+            document.getElementById('analysisCompleteModal').classList.remove('hidden');
+        }
+
+        function hideAnalysisCompleteModal() {
+            document.getElementById('analysisCompleteModal').classList.add('hidden');
+        }
+
+        async function goToQuestionsTab() {
+            hideAnalysisCompleteModal();
+            await loadCloudBanks();
+            switchTab('questions');
+        }
+
         document.getElementById('addCourseModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddCourseModal();
         });
         document.getElementById('addQuestionModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddQuestionModal();
         });
+        document.getElementById('generateBankModal').addEventListener('click', function(e) {
+            if (e.target === this) hideGenerateBankModal();
+        });
         document.getElementById('moodleImportModal').addEventListener('click', function(e) {
             if (e.target === this) hideMoodleImportModal();
+        });
+        document.getElementById('analysisCompleteModal').addEventListener('click', function(e) {
+            if (e.target === this) hideAnalysisCompleteModal();
         });
 
         document.addEventListener('DOMContentLoaded', init);
