@@ -290,6 +290,14 @@
                                 <input type="checkbox" id="separateBankMode" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                 <label for="separateBankMode" class="text-sm font-medium text-slate-700">每份资料单独生成题库</label>
                             </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-slate-700">生题数量</span>
+                                <div class="flex items-center gap-1">
+                                    <button type="button" data-qc="5" onclick="setQuestionCount(5)" class="qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors">5题</button>
+                                    <button type="button" data-qc="10" onclick="setQuestionCount(10)" class="qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors">10题</button>
+                                    <button type="button" data-qc="20" onclick="setQuestionCount(20)" class="qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors">20题</button>
+                                </div>
+                            </div>
                             <span class="ml-auto text-xs text-slate-500">勾选资料后点击下方「开始解析」生成题目</span>
                         </div>
 
@@ -408,6 +416,7 @@
         let currentTab = 'materials';
         let isGenerating = false;
         let selectedMaterialIds = new Set();
+        let selectedQuestionCount = 20; // 生题数量（每份资料），可选 5/10/20
 
         // 本地 IndexedDB：与 practice.html / manage.html 共用同一数据库
         const DB_NAME = 'ExamBuddyDB_Clean_v2';
@@ -943,6 +952,16 @@
             const count = selectedMaterialIds.size;
             document.getElementById('selectedMaterialCount').textContent = `已选 ${count} 个`;
         }
+
+        // 生题数量胶囊按钮（5/10/20，每份资料）
+        function setQuestionCount(n) {
+            selectedQuestionCount = n;
+            document.querySelectorAll('.qc-btn').forEach(btn => {
+                const active = parseInt(btn.dataset.qc) === n;
+                btn.className = `qc-btn px-3 py-1 rounded-full text-xs font-medium transition-colors ${active ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100'}`;
+            });
+        }
+        setQuestionCount(20);
 
         async function downloadMaterial(materialId) {
             if (!currentCourseId) {
@@ -1524,7 +1543,7 @@
                 return;
             }
 
-            if (!confirm(`将基于勾选的 ${materialIds.length} 份资料生成题目（每份约 20 道选择题），是否继续？`)) return;
+            if (!confirm(`将基于勾选的 ${materialIds.length} 份资料生成题目（每份 ${selectedQuestionCount} 道选择题），是否继续？`)) return;
 
             // 获取 Turnstile 验证 token
             let turnstileToken = null;
@@ -1536,13 +1555,13 @@
                 return;
             }
 
-            // 复用按文件生成题库的流程（默认每份 20 题、简体中文），
+            // 复用按文件生成题库的流程（每份题量由胶囊按钮选择、简体中文），
             // isGenerating 与 turnstile.reset 由 generateBanksForMaterials 内部管理；
             // 不勾选「每份资料单独生成题库」时，把所有资料的题目合并保存为一个题库
             const merge = !document.getElementById('separateBankMode').checked;
             setAnalysisButtonLoading(true);
             try {
-                await generateBanksForMaterials(materialIds, { questionCount: 20, lang: 'zh', turnstileToken, merge });
+                await generateBanksForMaterials(materialIds, { questionCount: selectedQuestionCount, lang: 'zh', turnstileToken, merge });
             } finally {
                 setAnalysisButtonLoading(false);
             }
