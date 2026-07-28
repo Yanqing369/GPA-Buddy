@@ -299,15 +299,9 @@
 
                         <div id="materialList" class="mt-6 space-y-3"></div>
 
-                        <!-- 解析区域 -->
+                        <!-- 人机验证区域（生成题库需要） -->
                         <div id="parseSection" class="mt-6 pt-6 border-t border-slate-200">
                             <div id="turnstileWidget" class="cf-turnstile mb-4"></div>
-                            <button id="startAnalysisBtn" onclick="startAnalysis()" class="w-full px-4 py-3 rounded-xl border border-dashed border-purple-300 bg-purple-50/50 text-purple-700 hover:bg-purple-50 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                                </svg>
-                                开始解析
-                            </button>
                         </div>
                     </div>
 
@@ -411,23 +405,6 @@
             <div class="flex gap-3 mt-6">
                 <button onclick="hideGenerateBankModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
                 <button id="generateBankConfirmBtn" onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">开始生成</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 解析完成模态框 -->
-    <div id="analysisCompleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-        <div class="glass-card rounded-2xl p-6 w-full max-w-sm modal-enter text-center">
-            <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-emerald-50 flex items-center justify-center">
-                <svg class="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                </svg>
-            </div>
-            <h3 class="text-lg font-bold text-slate-900 mb-2">解析完成</h3>
-            <p class="text-slate-600 text-sm mb-6">题目已生成，请在「我的题目」中查看。</p>
-            <div class="flex gap-3">
-                <button onclick="hideAnalysisCompleteModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">留在资料页</button>
-                <button onclick="goToQuestionsTab()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">查看题目</button>
             </div>
         </div>
     </div>
@@ -859,51 +836,6 @@
             const blob = await converter.convert(file, { download: false });
             const pdfFileName = file.name.replace(/\.[^/.]+$/, '.pdf');
             return new File([blob], pdfFileName, { type: 'application/pdf' });
-        }
-
-        function isPdfMaterial(m) {
-            return (m.type || '').toLowerCase() === 'application/pdf' || (m.name || '').toLowerCase().endsWith('.pdf');
-        }
-
-        function isOfficeMaterial(m) {
-            if (isPdfMaterial(m) || !m.r2_key) return false;
-            const ext = ((m.name || '').split('.').pop() || '').toLowerCase();
-            return OFFICE_EXTS.includes(ext);
-        }
-
-        // 课程里已有的 Office 资料（如转换功能上线前上传的）下载后浏览器端转 PDF 并替换
-        async function convertOfficeMaterialsToPdf() {
-            const officeMaterials = data.materials.filter(m => isOfficeMaterial(m) && !m.analyzed_at);
-            for (const m of officeMaterials) {
-                try {
-                    showToast(`正在将 ${m.name} 转换为 PDF...`, 'info');
-                    const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${m.id}/download`);
-                    if (!res.ok) throw new Error('下载原文件失败');
-                    const blob = await res.blob();
-                    const file = new File([blob], m.name, { type: m.type || 'application/octet-stream' });
-                    const pdfFile = await convertOfficeToPdf(file);
-
-                    const form = new FormData();
-                    form.append('file', pdfFile);
-                    form.append('name', pdfFile.name);
-                    const upRes = await apiFetch(`/api/courses/${currentCourseId}/materials`, { method: 'POST', body: form });
-                    if (!upRes.ok) throw new Error('上传转换后的 PDF 失败');
-
-                    // 用转换后的 PDF 替换原 Office 资料（与上传时转换的行为一致）
-                    const delRes = await apiFetch(`/api/courses/${currentCourseId}/materials/${m.id}`, { method: 'DELETE' });
-                    if (!delRes.ok) console.warn('删除原始资料失败', m.id);
-
-                    showToast(`${m.name} 已转换为 PDF`, 'success');
-                } catch (e) {
-                    console.error(e);
-                    showToast(`转换 ${m.name} 失败：` + e.message, 'error');
-                }
-            }
-            if (officeMaterials.length > 0) {
-                await loadCourseDetail(currentCourseId);
-                renderCourseList();
-                updateCountBadges();
-            }
         }
 
         async function uploadFiles(files) {
@@ -1639,135 +1571,6 @@
             }
         }
 
-        async function startAnalysis() {
-            if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
-                return;
-            }
-            if (isGenerating) return;
-
-            if (!confirm('将基于课程资料解析生成约 20 道选择题，是否继续？')) return;
-
-            isGenerating = true;
-            setAnalysisButtonLoading(true);
-
-            try {
-                // 课程里已有的 Office 资料（如转换功能上线前上传的）先转成 PDF 再解析
-                await convertOfficeMaterialsToPdf();
-
-                const analyzableMaterials = data.materials.filter(m =>
-                    (m.content_text && m.content_text.trim().length > 0) || isPdfMaterial(m));
-                if (analyzableMaterials.length === 0) {
-                    throw new Error('没有可解析的资料（Office 资料转换失败或为不支持的旧格式，.ppt/.doc 请另存为 .pptx/.docx）');
-                }
-
-                // 获取 Turnstile 验证 token（转换可能耗时，放在转换后获取）
-                let turnstileToken = null;
-                if (typeof turnstile !== 'undefined') {
-                    turnstileToken = turnstile.getResponse();
-                }
-                if (!turnstileToken) {
-                    throw new Error('请先完成人机验证');
-                }
-
-                showToast('正在解析资料并生成题目，请稍候...', 'info');
-
-                const res = await apiFetch(`/api/courses/${currentCourseId}/analyze`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ turnstileToken })
-                });
-                if (!res.ok) {
-                    const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `请求失败 (${res.status})`);
-                }
-
-                // Parse SSE stream
-                const reader = res.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-                let generatedCount = 0;
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop();
-                    for (const line of lines) {
-                        if (!line.startsWith('data: ')) continue;
-                        const payload = line.slice(6).trim();
-                        if (!payload || payload === '[DONE]') continue;
-                        try {
-                            const event = JSON.parse(payload);
-                            if (event.type === 'error') throw new Error(event.message || '生成失败');
-                            if (event.type === 'final_result') {
-                                generatedCount = event.data?.length || generatedCount;
-                            }
-                            if (event.type === 'saved') {
-                                generatedCount = event.count || generatedCount;
-                            }
-                            if (event.type === 'done') break;
-                        } catch (e) {
-                            // ignore malformed lines
-                        }
-                    }
-                }
-
-                await loadCourseDetail(currentCourseId);
-                updateCountBadges();
-                renderCourseList();
-                showAnalysisCompleteModal();
-                showToast(`解析完成，已生成 ${generatedCount} 道题目`, 'success');
-            } catch (e) {
-                console.error(e);
-                if ((e.message || '').includes('No new materials')) {
-                    showToast('没有新的待解析资料：课程资料都已生成过题目', 'info');
-                } else {
-                    showToast('解析失败：' + e.message, 'error');
-                }
-            } finally {
-                isGenerating = false;
-                setAnalysisButtonLoading(false);
-                if (typeof turnstile !== 'undefined') turnstile.reset();
-            }
-        }
-
-        function setAnalysisButtonLoading(loading) {
-            const btn = document.getElementById('startAnalysisBtn');
-            if (!btn) return;
-            if (loading) {
-                btn.disabled = true;
-                btn.innerHTML = `
-                    <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                    </svg>
-                    解析中...
-                `;
-            } else {
-                btn.disabled = false;
-                btn.innerHTML = `
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                    </svg>
-                    开始解析
-                `;
-            }
-        }
-
-        function showAnalysisCompleteModal() {
-            document.getElementById('analysisCompleteModal').classList.remove('hidden');
-        }
-
-        function hideAnalysisCompleteModal() {
-            document.getElementById('analysisCompleteModal').classList.add('hidden');
-        }
-
-        async function goToQuestionsTab() {
-            hideAnalysisCompleteModal();
-            await loadCloudBanks();
-            switchTab('questions');
-        }
-
         document.getElementById('addCourseModal').addEventListener('click', function(e) {
             if (e.target === this) hideAddCourseModal();
         });
@@ -1779,9 +1582,6 @@
         });
         document.getElementById('moodleImportModal').addEventListener('click', function(e) {
             if (e.target === this) hideMoodleImportModal();
-        });
-        document.getElementById('analysisCompleteModal').addEventListener('click', function(e) {
-            if (e.target === this) hideAnalysisCompleteModal();
         });
 
         document.addEventListener('DOMContentLoaded', init);
