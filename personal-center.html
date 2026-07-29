@@ -1093,6 +1093,13 @@
 
             const progressMap = new Map(); // fileId -> { status, count, total }
 
+            // 先把所有待生成文件放入进度区，未轮到的显示「正在排队...」
+            for (const id of materialIds) {
+                const material = data.materials.find(m => m.id === String(id));
+                progressMap.set(String(id), { name: material?.name || String(id), status: '正在排队...', progress: 0, queued: true });
+            }
+            updateProgressUI();
+
             function updateProgressUI() {
                 const items = Array.from(progressMap.values());
                 if (items.length === 0) return;
@@ -1100,9 +1107,9 @@
                     <div class="p-3 rounded-xl bg-white/60 border border-white/80 text-sm">
                         <div class="flex items-center justify-between">
                             <span class="font-medium text-slate-700 truncate flex-1">${escapeHtml(item.name)}</span>
-                            <span class="text-xs flex items-center gap-1.5 ${item.error ? 'text-red-500' : item.done ? 'text-emerald-600' : 'text-indigo-600'}">${item.parsing && !item.error && !item.done ? '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>' : ''}${item.status}</span>
+                            <span class="text-xs flex items-center gap-1.5 ${item.error ? 'text-red-500' : item.done ? 'text-emerald-600' : item.queued ? 'text-slate-400' : 'text-indigo-600'}">${item.parsing && !item.error && !item.done ? '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>' : ''}${item.status}</span>
                         </div>
-                        ${!item.error && !item.done && !item.parsing ? `
+                        ${!item.error && !item.done && !item.parsing && !item.queued ? `
                         <div class="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                             <div class="h-full bg-indigo-500 rounded-full transition-all" style="width: ${item.progress || 0}%"></div>
                         </div>` : ''}
@@ -1152,6 +1159,7 @@
 
                             if (event.type === 'file_start') {
                                 const item = progressMap.get(fileId);
+                                item.queued = false;
                                 item.status = '正在解析文件';
                                 item.parsing = true;
                             } else if (event.type === 'batch0_chunk') {

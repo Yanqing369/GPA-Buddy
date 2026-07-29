@@ -1932,7 +1932,7 @@ async function handleGenerateCourseBanks(request, env, ctx, courseId) {
 
   ctx.waitUntil((async () => {
     try {
-      const CONCURRENCY = 2;
+      const CONCURRENCY = 3;
       const queue = orderedMaterials.map((m, index) => ({ ...m, index }));
       const running = new Set();
       let completedCount = 0;
