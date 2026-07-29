@@ -1745,17 +1745,19 @@ async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMa
 // 为单个课程资料生成题库（PDF/文本均支持），结果与 /pdf_generate 格式一致
 async function generateQuestionsForMaterial(material, options, env, onEvent) {
   const { questionCount, lang } = options;
-  const isPdf = isPdfType(material.type, material.name);
+  let isPdf = isPdfType(material.type, material.name);
   const isText = isTextType(material.type, material.name);
   const fileName = material.name || 'document';
 
   const hasContentText = material.content_text && material.content_text.trim().length > 0;
   const hasR2Text = isText && material.r2_key;
-  if (!isPdf && !hasContentText && !hasR2Text) {
+  // 类型未知但有 R2 文件且无文本内容的（如无扩展名/octet-stream），读文件头嗅探 %PDF-
+  const canSniffPdf = !isPdf && !isText && !hasContentText && !!material.r2_key;
+  if (!isPdf && !hasContentText && !hasR2Text && !canSniffPdf) {
     throw new Error('Unsupported material type');
   }
 
-  if (isPdf) {
+  if (isPdf || canSniffPdf) {
     // PDF：R2 → GCS → Vertex Gemini
     if (!(env.GCP_PRIVATE_KEY && env.GCP_CLIENT_EMAIL && env.GCP_PROJECT_ID && env.GCS_BUCKET)) {
       throw new Error('PDF processing not configured');
@@ -1772,6 +1774,14 @@ async function generateQuestionsForMaterial(material, options, env, onEvent) {
 
     try {
       const buffer = await obj.arrayBuffer();
+      // 未知类型：嗅探文件头，不是 PDF 则不支持
+      if (!isPdf) {
+        const head = new TextDecoder().decode(buffer.slice(0, 5));
+        if (head !== '%PDF-') {
+          throw new Error('Unsupported material type');
+        }
+        isPdf = true;
+      }
       fileUri = await uploadToGCS(buffer, gcsName, token, env);
 
       const totalBatches = Math.ceil(questionCount / 20);

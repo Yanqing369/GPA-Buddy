@@ -528,7 +528,17 @@ const fileViewer = (function() {
         const container = document.getElementById('viewerContent');
         const controls = document.getElementById('viewerControls');
         if (!container || !controls) return;
-        
+
+        // 统一数据格式：有的来源存的是 Blob（个人中心下载），有的是 ArrayBuffer（DocGenerate）
+        // 渲染器都按 ArrayBuffer 处理（new Uint8Array(Blob) 会得到 0 字节空数组）
+        if (currentSourceFile.data instanceof Blob) {
+            try {
+                currentSourceFile.data = await currentSourceFile.data.arrayBuffer();
+            } catch (e) {
+                console.error('Failed to read source file blob:', e);
+            }
+        }
+
         container.innerHTML = '';
         controls.innerHTML = '';
         const ext = currentSourceFile.filename.split('.').pop().toLowerCase();

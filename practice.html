@@ -635,7 +635,7 @@
             document.getElementById('viewerTitle').textContent = fileRecord.name;
             const locationText = sourceInfo.location ? `${t(sourceInfo.locationType)} ${sourceInfo.location}` : t('unknownSource');
             document.getElementById('viewerLocation').textContent = locationText;
-            document.getElementById('viewerFileInfo').textContent = `Size: ${(fileRecord.data.byteLength / 1024).toFixed(1)} KB`;
+            document.getElementById('viewerFileInfo').textContent = `Size: ${((fileRecord.data.byteLength ?? fileRecord.data.size ?? 0) / 1024).toFixed(1)} KB`;
             document.getElementById('sourceViewerModal').classList.remove('hidden');
             
             await window.fileViewer.render();
