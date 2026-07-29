@@ -286,7 +286,7 @@
                                 <label for="selectAllMaterials" class="text-sm font-medium text-slate-700">全选</label>
                             </div>
                             <span id="selectedMaterialCount" class="text-xs px-2 py-1 rounded-full bg-white text-slate-600">已选 0 个</span>
-                            <button onclick="openGenerateBankModal()" class="ml-auto px-4 py-2 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
+                            <button data-generate-btn onclick="openGenerateBankModal()" class="ml-auto px-4 py-2 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                 </svg>
@@ -404,7 +404,7 @@
             </div>
             <div class="flex gap-3 mt-6">
                 <button onclick="hideGenerateBankModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
-                <button id="generateBankConfirmBtn" onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">开始生成</button>
+                <button id="generateBankConfirmBtn" data-generate-btn onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">开始生成</button>
             </div>
         </div>
     </div>
@@ -921,7 +921,7 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <button onclick="openGenerateBankModal('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">生成题库</button>
+                        <button data-generate-btn onclick="openGenerateBankModal('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">生成题库</button>
                         <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</button>
                         <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
                     </div>
@@ -1017,7 +1017,20 @@
             }
         }
 
+        // 生成期间禁用所有出题入口按钮
+        function setGenerateButtonsDisabled(disabled) {
+            document.querySelectorAll('[data-generate-btn]').forEach(btn => {
+                btn.disabled = disabled;
+                btn.classList.toggle('opacity-50', disabled);
+                btn.classList.toggle('cursor-not-allowed', disabled);
+            });
+        }
+
         function openGenerateBankModal(materialId = null) {
+            if (isGenerating) {
+                showToast('正在生成题库，请等待完成', 'info');
+                return;
+            }
             generateBankSingleId = materialId;
             const modal = document.getElementById('generateBankModal');
             const title = document.getElementById('generateBankModalTitle');
@@ -1072,6 +1085,7 @@
         async function generateBanksForMaterials(materialIds, options) {
             if (isGenerating) return;
             isGenerating = true;
+            setGenerateButtonsDisabled(true);
 
             const progressArea = document.getElementById('generateProgressArea');
             progressArea.classList.remove('hidden');
@@ -1199,6 +1213,7 @@
                 showToast('生成题库失败：' + e.message, 'error');
             } finally {
                 isGenerating = false;
+                setGenerateButtonsDisabled(false);
                 if (typeof turnstile !== 'undefined') turnstile.reset();
                 setTimeout(() => {
                     progressArea.classList.add('hidden');
