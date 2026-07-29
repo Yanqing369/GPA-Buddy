@@ -1017,6 +1017,15 @@
             }
         }
 
+        // 生成失败信息的用户友好化：429/限流只显示「服务器繁忙」，不暴露原始报错
+        function friendlyGenerateError(message) {
+            const m = String(message || '未知错误');
+            if (m.includes('429') || m.includes('RESOURCE_EXHAUSTED') || m.includes('Resource exhausted')) {
+                return '服务器繁忙，请稍后重试';
+            }
+            return m;
+        }
+
         // 生成期间禁用所有出题入口按钮
         function setGenerateButtonsDisabled(disabled) {
             document.querySelectorAll('[data-generate-btn]').forEach(btn => {
@@ -1200,11 +1209,11 @@
                             } else if (event.type === 'file_error') {
                                 const item = progressMap.get(fileId);
                                 item.error = true;
-                                item.status = `失败：${event.message || '未知错误'}`;
+                                item.status = `失败：${friendlyGenerateError(event.message)}`;
                             } else if (event.type === 'all_done') {
                                 allDoneReceived = true;
                             } else if (event.type === 'error') {
-                                throw new Error(event.message || '生成失败');
+                                throw new Error(friendlyGenerateError(event.message));
                             }
                             updateProgressUI();
                         } catch (e) {
@@ -1222,7 +1231,7 @@
                 if (currentTab === 'questions') renderQuestions();
             } catch (e) {
                 console.error(e);
-                showToast('生成题库失败：' + e.message, 'error');
+                showToast('生成题库失败：' + friendlyGenerateError(e.message), 'error');
             } finally {
                 isGenerating = false;
                 setGenerateButtonsDisabled(false);
