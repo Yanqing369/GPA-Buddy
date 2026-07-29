@@ -41,3 +41,6 @@ openfp-api.md
 
 # Temporary files
 worker_diff.txt
+
+# Local test scripts (may contain keys)
+api-test.py
