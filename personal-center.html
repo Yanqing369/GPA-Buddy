@@ -1216,6 +1216,10 @@
                 showToast(`题库生成完成，成功 ${Array.from(progressMap.values()).filter(i => i.done).length} 个`, 'success');
                 selectedMaterialIds.clear();
                 renderMaterials();
+                // 重新拉取云题库，刷新「我的题目」数量徽标（当前在该标签页时也同步刷新列表）
+                await loadCloudBanks();
+                updateCountBadges();
+                if (currentTab === 'questions') renderQuestions();
             } catch (e) {
                 console.error(e);
                 showToast('生成题库失败：' + e.message, 'error');
