@@ -720,7 +720,12 @@
             else await db.practiceProgress.add(progress);
         }
         
-        async function saveProgressAndExit() { await saveProgress(); window.location.href = 'manage.html'; }
+        // 登录用户退出练习回个人中心，visitor 回 manage
+        function practiceExitUrl() {
+            return localStorage.getItem('auth_token') ? 'personal-center.html' : 'manage.html';
+        }
+
+        async function saveProgressAndExit() { await saveProgress(); window.location.href = practiceExitUrl(); }
 
         let asciiMathParser = null;
         function getAsciiMathParser() {
@@ -885,7 +890,7 @@
             modal.classList.add('flex');
         }
         
-        function closeCompletionModal() { window.location.href = 'manage.html'; }
+        function closeCompletionModal() { window.location.href = practiceExitUrl(); }
         
         async function restartPractice() { 
             await db.practiceProgress.where('bankId').equals(practiceState.bankId).delete(); 
