@@ -86,6 +86,11 @@
             position: relative;
             overflow: hidden;
         }
+
+        /* 头像下拉弹窗：覆盖 .glass-card 的 position:relative，确保绝对定位于头像下方 */
+        #userDropdown {
+            position: absolute;
+        }
         
         /* 液态玻璃光泽效果 */
         .glass-card::before {
