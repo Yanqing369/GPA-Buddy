@@ -1386,7 +1386,7 @@
             }
 
             container.innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">' + banks.map(bank => `
-                <div class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
+                <div id="bankCard-${bank.id}" class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 flex-1" onclick="practiceCloudBank(${bank.id})">
                             <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(bank.title)}</h4>
@@ -1405,7 +1405,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
                             </button>
-                            <div onclick="practiceCloudBank(${bank.id})" class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
+                            <div id="practiceBtn-${bank.id}" onclick="practiceCloudBank(${bank.id})" class="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center group-hover:bg-emerald-100 transition-colors">
                                 <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                 </svg>
@@ -1416,8 +1416,34 @@
             `).join('') + '</div>';
         }
 
+        const practicingBankIds = new Set(); // 正在下载/跳转中的题库，防重复点击
+
+        // 在题库卡片上标注"下载中"状态
+        function setBankDownloading(bankId, downloading) {
+            const btn = document.getElementById(`practiceBtn-${bankId}`);
+            const card = document.getElementById(`bankCard-${bankId}`);
+            if (btn) {
+                btn.innerHTML = downloading
+                    ? '<svg class="w-4 h-4 text-emerald-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>'
+                    : '<svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>';
+            }
+            if (card) card.classList.toggle('opacity-60', downloading);
+        }
+
         async function practiceCloudBank(bankId) {
+            if (practicingBankIds.has(bankId)) return;
             try {
+                // 本地已有该云端题库的副本：直接跳转，resume=1 继续上次进度
+                const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId).last();
+                if (existing) {
+                    window.location.href = `practice.html?id=${existing.id}&resume=1`;
+                    return;
+                }
+
+                practicingBankIds.add(bankId);
+                setBankDownloading(bankId, true);
+                showToast('正在下载题库，请稍候…');
+
                 // 1. 下载题库 JSON
                 const res = await apiFetch(`/api/share/${bankId}/download`, {
                     method: 'POST',
@@ -1463,6 +1489,9 @@
             } catch (e) {
                 console.error(e);
                 showToast('加载题库失败：' + e.message, 'error');
+            } finally {
+                practicingBankIds.delete(bankId);
+                setBankDownloading(bankId, false);
             }
         }
 
