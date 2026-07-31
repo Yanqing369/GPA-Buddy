@@ -588,7 +588,7 @@
         function toggleLangDropdown() { document.getElementById('langDropdown').classList.toggle('show'); }
         function changeLanguage(lang) { currentLang = lang; localStorage.setItem('language', currentLang); updateLanguage(); document.getElementById('langDropdown').classList.remove('show'); if (practiceState.questions.length > 0) renderQuestion(); }
         window.onclick = function(event) { if (!event.target.matches('.lang-dropdown button') && !event.target.closest('.lang-dropdown')) document.getElementById('langDropdown').classList.remove('show'); }
-        function getUrlParams() { const params = new URLSearchParams(window.location.search); return { id: parseInt(params.get('id')), favorites: params.get('favorites') === '1', resume: params.get('resume') === '1' }; }
+        function getUrlParams() { const params = new URLSearchParams(window.location.search); return { id: parseInt(params.get('id')), favorites: params.get('favorites') === '1', resume: params.get('resume') === '1', shuffle: params.get('shuffle') === '1' }; }
 
         function parseSource(sourceStr) {
             if (!sourceStr) return null;
@@ -641,6 +641,116 @@
             await window.fileViewer.render();
         }
 
+        /* ==================== 错题本（课程共享） ==================== */
+        const API_BASE = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+            ? 'http://localhost:8787'
+            : 'https://moyuxiaowu.org';
+
+        function getAuthToken() { return localStorage.getItem('auth_token'); }
+        function apiFetch(path, options = {}) {
+            const token = getAuthToken();
+            options.headers = options.headers || {};
+            if (token) options.headers['Authorization'] = `Bearer ${token}`;
+            return fetch(`${API_BASE}${path}`, options);
+        }
+
+        function mistakeBookTitle() {
+            if (currentLang === 'zh-TW') return '錯題本';
+            if (currentLang && currentLang.startsWith('zh')) return '错题本';
+            return 'Mistake Book';
+        }
+
+        // 会话内缓存：ready 后 addToMistakeBook 才生效；queue 串行化写回，防快速连答竞态
+        const mistakeBook = { ready: false, courseId: null, cloudId: null, data: null, isMistakeBank: false, queue: Promise.resolve() };
+
+        async function initMistakeBook() {
+            try {
+                if (!getAuthToken() || !currentBank || !currentBank.migratedCloudId) return;
+                const res = await apiFetch('/api/cloud-banks');
+                if (!res.ok) return;
+                const { banks } = await res.json();
+                const current = (banks || []).find(b => b.id === currentBank.migratedCloudId);
+                if (!current || !current.course_id) return; // 无课程关联的题库不建错题本
+                if (current.bank_type === 'mistake') mistakeBook.isMistakeBank = true;
+                mistakeBook.courseId = current.course_id;
+
+                let book = banks.find(b => b.course_id === current.course_id && b.bank_type === 'mistake');
+                if (!book) {
+                    const title = mistakeBookTitle();
+                    const content = JSON.stringify({ name: title, questions: [], favorites: [], isMistakeBook: true });
+                    const createRes = await apiFetch('/api/cloud-banks', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, content, course_id: current.course_id, bank_type: 'mistake' })
+                    });
+                    if (!createRes.ok) return;
+                    book = (await createRes.json()).bank;
+                }
+                mistakeBook.cloudId = book.id;
+
+                // 载入错题本内容到内存（owner 免密下载）
+                const dlRes = await apiFetch(`/api/share/${book.id}/download`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: '' })
+                });
+                if (!dlRes.ok) return;
+                mistakeBook.data = JSON.parse((await dlRes.json()).content);
+                if (!Array.isArray(mistakeBook.data.questions)) mistakeBook.data.questions = [];
+                mistakeBook.ready = true;
+            } catch (e) {
+                console.warn('initMistakeBook failed:', e);
+            }
+        }
+
+        function queueMistakeBookUpdate(q, opts) {
+            mistakeBook.queue = mistakeBook.queue
+                .then(() => addToMistakeBook(q, opts))
+                .catch(e => console.warn('addToMistakeBook failed:', e));
+        }
+
+        async function addToMistakeBook(q, { mistake }) {
+            if (!mistakeBook.ready) return;
+            const questions = mistakeBook.data.questions;
+
+            // 去重键：题目首次入簿时写入 origin 字段；在错题本里刷题时沿用其 origin 字段
+            const originCloudBankId = (mistakeBook.isMistakeBank && q.originCloudBankId) ? q.originCloudBankId : currentBank.migratedCloudId;
+            const originQuestionId = (mistakeBook.isMistakeBank && q.originQuestionId) ? q.originQuestionId : q.id;
+            const existing = questions.find(item => item.originCloudBankId === originCloudBankId && item.originQuestionId === originQuestionId);
+
+            if (existing) {
+                if (!mistake) return; // 已入簿的题重复精选：忽略
+                const m = (existing.source || '').match(/\[(\d+)-times mistake\]$/);
+                const count = m ? parseInt(m[1]) + 1 : 1;
+                existing.source = (existing.source || '').replace(/\s*\[(\d+)-times mistake\]$/, '') + ` [${count}-times mistake]`;
+            } else {
+                const newId = questions.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
+                const clone = { ...q, id: newId, originCloudBankId, originQuestionId };
+                // 来源字段不写文件名，写【题库名称 #题目编号】
+                const originIndex = currentBank.questions.findIndex(item => item.id === q.id);
+                clone.source = `【${currentBank.name} #${originIndex >= 0 ? originIndex + 1 : q.id}】`;
+                if (mistake) clone.source += ' [1-times mistake]';
+                questions.push(clone);
+            }
+
+            // 写回云端
+            const putRes = await apiFetch(`/api/cloud-banks/${mistakeBook.cloudId}/content`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: JSON.stringify(mistakeBook.data) })
+            });
+            if (!putRes.ok) throw new Error('Failed to sync mistake book');
+
+            // 同步本地镜像（若本机已下载过错题本）
+            const localMirror = await db.questionBanks.filter(b => b.migratedCloudId === mistakeBook.cloudId).last();
+            if (localMirror) {
+                await db.questionBanks.update(localMirror.id, {
+                    questions: mistakeBook.data.questions,
+                    updatedAt: new Date().toISOString()
+                });
+            }
+        }
+
         async function init() {
             currentLang = localStorage.getItem('language') || detectBrowserLanguage();
             updateLanguage();
@@ -649,7 +759,7 @@
             
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
             await db.open();
-            const { id, favorites, resume } = getUrlParams();
+            const { id, favorites, resume, shuffle } = getUrlParams();
             if (!id) { alert(t('invalidBankId')); window.location.href = 'index.html'; return; }
             const bank = await db.questionBanks.get(id);
             if (!bank) { alert(t('bankNotFound')); window.location.href = 'index.html'; return; }
@@ -662,6 +772,15 @@
                 document.getElementById('practiceTitle').textContent = `[${t('favorites')}] ` + bank.name;
             } else {
                 document.getElementById('practiceTitle').textContent = bank.name;
+            }
+            
+            // 智能练题：随机打乱题目顺序
+            if (shuffle) {
+                questions = [...questions];
+                for (let i = questions.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [questions[i], questions[j]] = [questions[j], questions[i]];
+                }
             }
             
             practiceState = { 
@@ -689,6 +808,8 @@
             
             bindProgressControls();
             renderQuestion();
+            // 非阻塞：错题本初始化失败不影响刷题；写入操作会排在初始化之后执行
+            mistakeBook.queue = initMistakeBook();
         }
 
         async function saveProgress() {
@@ -905,7 +1026,11 @@
                 if (practiceState.isFavoriteMode && !confirm(t('confirmRemoveFavorite'))) return; 
                 practiceState.favorites.splice(index, 1); 
             }
-            else practiceState.favorites.push(q.id);
+            else {
+                practiceState.favorites.push(q.id);
+                // 手动精选 → 写入课程错题本（不计答错次数）
+                queueMistakeBookUpdate(q, { mistake: false });
+            }
             
             await db.questionBanks.update(currentBank.id, { favorites: practiceState.favorites, updatedAt: new Date().toISOString() });
             
@@ -939,6 +1064,11 @@
                 selected: selected.dataset.option, 
                 timestamp: new Date().toISOString() 
             };
+            // 答错 → 写入课程错题本（累加答错次数）
+            const answeredQ = practiceState.questions[practiceState.currentIndex];
+            if (answeredQ && selected.dataset.option !== answeredQ.correctAnswer) {
+                queueMistakeBookUpdate(answeredQ, { mistake: true });
+            }
             await saveProgress();
             renderQuestion();
             

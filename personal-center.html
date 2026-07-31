@@ -240,12 +240,20 @@
                             <h2 id="currentCourseName" class="text-2xl font-bold text-slate-900"></h2>
                             <p class="text-sm text-slate-500 mt-1">管理该课程的资料与题目</p>
                         </div>
-                        <button onclick="deleteCurrentCourse()" class="px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm font-medium flex items-center gap-2 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                            删除课程
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button onclick="smartPractice()" class="px-4 py-2 rounded-xl liquid-btn-emerald text-white text-sm font-semibold flex items-center gap-2 spring-active shadow-lg shadow-emerald-200/50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                                智能练题
+                            </button>
+                            <button onclick="deleteCurrentCourse()" class="px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm font-medium flex items-center gap-2 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                                删除课程
+                            </button>
+                        </div>
                     </div>
 
                     <!-- 标签页 -->
@@ -1378,7 +1386,8 @@
 
         function renderQuestions() {
             const container = document.getElementById('questionList');
-            const banks = currentCourseBanks();
+            // 错题本排在最前
+            const banks = [...currentCourseBanks()].sort((a, b) => (b.bank_type === 'mistake') - (a.bank_type === 'mistake'));
 
             if (banks.length === 0) {
                 container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题库，在「课程资料」页选择资料生成题库</div>';
@@ -1389,7 +1398,7 @@
                 <div id="bankCard-${bank.id}" class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 flex-1" onclick="practiceCloudBank(${bank.id})">
-                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(bank.title)}</h4>
+                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(bank.title)}${bank.bank_type === 'mistake' ? '<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold align-middle whitespace-nowrap">错题本</span>' : ''}</h4>
                             <div class="text-xs text-slate-500 mt-1.5">${bank.questions_count} 道题目</div>
                             <div class="text-xs text-slate-400 mt-0.5">创建于 ${formatDateTimeCN(bank.created_at)}</div>
                         </div>
@@ -1430,32 +1439,33 @@
             if (card) card.classList.toggle('opacity-60', downloading);
         }
 
-        async function practiceCloudBank(bankId) {
-            if (practicingBankIds.has(bankId)) return;
-            try {
-                // 本地已有该云端题库的副本：直接跳转，resume=1 继续上次进度
-                const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId).last();
-                if (existing) {
-                    window.location.href = `practice.html?id=${existing.id}&resume=1`;
-                    return;
-                }
+        // 下载云端题库到本地（forceRefresh 时原地刷新已有副本），返回本地题库 id
+        async function downloadCloudBankToLocal(bankId, { forceRefresh = false } = {}) {
+            const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId).last();
+            if (existing && !forceRefresh) return existing.id;
 
-                practicingBankIds.add(bankId);
-                setBankDownloading(bankId, true);
-                showToast('正在下载题库，请稍候…');
+            // 1. 下载题库 JSON
+            const res = await apiFetch(`/api/share/${bankId}/download`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: '' })
+            });
+            if (!res.ok) throw new Error('Failed to download bank');
+            const data = await res.json();
+            const bankData = JSON.parse(data.content);
 
-                // 1. 下载题库 JSON
-                const res = await apiFetch(`/api/share/${bankId}/download`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: '' })
+            // 2. 写入/刷新本地 IndexedDB（标记 migratedCloudId，避免被 BankMigration 当成待迁移的本地题库重复上云）
+            let localBankId;
+            if (existing) {
+                await db.questionBanks.update(existing.id, {
+                    name: bankData.name || data.title || '题库',
+                    questions: bankData.questions || [],
+                    favorites: bankData.favorites || [],
+                    updatedAt: new Date().toISOString()
                 });
-                if (!res.ok) throw new Error('Failed to download bank');
-                const data = await res.json();
-                const bankData = JSON.parse(data.content);
-
-                // 2. 写入本地 IndexedDB（标记 migratedCloudId，避免被 BankMigration 当成待迁移的本地题库重复上云）
-                const localBankId = await db.questionBanks.add({
+                localBankId = existing.id;
+            } else {
+                localBankId = await db.questionBanks.add({
                     name: bankData.name || data.title || '题库',
                     questions: bankData.questions || [],
                     favorites: bankData.favorites || [],
@@ -1464,7 +1474,7 @@
                     migratedCloudId: bankId
                 });
 
-                // 3. 下载源文件到 sourceFiles
+                // 3. 首次下载时同步源文件到 sourceFiles
                 const bankMeta = cloudBanks.find(b => b.id === bankId);
                 if (bankMeta && bankMeta.has_source_file) {
                     try {
@@ -1483,15 +1493,57 @@
                         console.warn('Download source file failed:', e);
                     }
                 }
+            }
+            return localBankId;
+        }
 
-                // 4. 跳转 practice.html
-                window.location.href = `practice.html?id=${localBankId}`;
+        async function practiceCloudBank(bankId) {
+            if (practicingBankIds.has(bankId)) return;
+            const bankMeta = cloudBanks.find(b => b.id === bankId);
+            const isMistakeBook = bankMeta && bankMeta.bank_type === 'mistake';
+            try {
+                practicingBankIds.add(bankId);
+                setBankDownloading(bankId, true);
+
+                if (!isMistakeBook) {
+                    // 普通题库：本地已有副本则直接跳转，resume=1 继续上次进度
+                    const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId).last();
+                    if (existing) {
+                        window.location.href = `practice.html?id=${existing.id}&resume=1`;
+                        return;
+                    }
+                    showToast('正在下载题库，请稍候…');
+                } else {
+                    // 错题本内容会持续更新，每次都从云端刷新
+                    showToast('正在同步错题本，请稍候…');
+                }
+
+                const localBankId = await downloadCloudBankToLocal(bankId, { forceRefresh: isMistakeBook });
+                window.location.href = `practice.html?id=${localBankId}&resume=1`;
             } catch (e) {
                 console.error(e);
                 showToast('加载题库失败：' + e.message, 'error');
             } finally {
                 practicingBankIds.delete(bankId);
                 setBankDownloading(bankId, false);
+            }
+        }
+
+        // 智能练题：随机练习本课程错题本里的题
+        async function smartPractice() {
+            if (!currentCourseId) return;
+            const book = cloudBanks.find(b => String(b.course_id || '') === String(currentCourseId) && b.bank_type === 'mistake');
+            if (!book || !book.questions_count) {
+                showToast('还没有收录错题，刷题答错或精选题目后会自动加入错题本', 'error');
+                return;
+            }
+            showToast('正在准备错题本，请稍候…');
+            try {
+                const localBankId = await downloadCloudBankToLocal(book.id, { forceRefresh: true });
+                window.location.href = `practice.html?id=${localBankId}&shuffle=1`;
+            } catch (e) {
+                console.error(e);
+                showToast('加载错题本失败：' + e.message, 'error');
             }
         }
 

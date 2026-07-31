@@ -2033,6 +2033,7 @@ async function handleUploadCloudBank(request, env) {
   const sourceType = body?.source_type || body?.sourceType || null;
   const sourceSize = parseInt(body?.source_size || body?.sourceSize) || 0;
   const courseId = parseInt(body?.course_id || body?.courseId) || null;
+  const bankType = typeof body?.bank_type === 'string' && body.bank_type ? body.bank_type : null;
 
   if (!title || !content) {
     return createResponse(JSON.stringify({ error: 'Title and content are required' }), 400);
@@ -2067,8 +2068,8 @@ async function handleUploadCloudBank(request, env) {
   }
   
   const result = await env.DB.prepare(
-    'INSERT INTO question_banks (user_id, title, content, is_public, password_hash, password_salt, questions_count, source_r2_key, source_name, source_type, source_size, course_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-  ).bind(user.id, title, content, is_public ? 1 : 0, passwordHash, passwordSalt, questionsCount, sourceR2Key, sourceName, sourceType, sourceSize, courseId).run();
+    'INSERT INTO question_banks (user_id, title, content, is_public, password_hash, password_salt, questions_count, source_r2_key, source_name, source_type, source_size, course_id, bank_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(user.id, title, content, is_public ? 1 : 0, passwordHash, passwordSalt, questionsCount, sourceR2Key, sourceName, sourceType, sourceSize, courseId, bankType).run();
 
   const bank = await env.DB.prepare('SELECT * FROM question_banks WHERE id = ?')
     .bind(result.meta.last_row_id)
@@ -2086,6 +2087,7 @@ async function handleUploadCloudBank(request, env) {
       source_type: bank.source_type,
       source_size: bank.source_size,
       course_id: bank.course_id,
+      bank_type: bank.bank_type,
       created_at: bank.created_at
     }
   }));
@@ -2099,7 +2101,7 @@ async function handleGetCloudBanks(request, env) {
   }
   
   const { results } = await env.DB.prepare(
-    'SELECT id, title, questions_count, is_public, password_hash, download_count, source_r2_key, source_name, source_type, source_size, course_id, created_at FROM question_banks WHERE user_id = ? ORDER BY updated_at DESC'
+    'SELECT id, title, questions_count, is_public, password_hash, download_count, source_r2_key, source_name, source_type, source_size, course_id, bank_type, created_at FROM question_banks WHERE user_id = ? ORDER BY updated_at DESC'
   ).bind(user.id).all();
 
   const banks = results.map(b => ({
@@ -2114,10 +2116,43 @@ async function handleGetCloudBanks(request, env) {
     source_type: b.source_type,
     source_size: b.source_size,
     course_id: b.course_id,
+    bank_type: b.bank_type,
     created_at: b.created_at
   }));
 
   return createResponse(JSON.stringify({ banks }));
+}
+
+// 更新云端题库内容（仅 owner）：错题本等需要增量写回整包 JSON 的场景
+async function handleUpdateCloudBankContent(request, env, bankId) {
+  const user = await getUserFromRequest(request, env);
+  if (!user) {
+    return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const content = body?.content;
+  if (!content || typeof content !== 'string') {
+    return createResponse(JSON.stringify({ error: 'Content is required' }), 400);
+  }
+
+  let questionsCount = 0;
+  try {
+    const bankData = JSON.parse(content);
+    questionsCount = bankData.questions?.length || 0;
+  } catch (e) {
+    return createResponse(JSON.stringify({ error: 'Invalid content JSON' }), 400);
+  }
+
+  const result = await env.DB.prepare(
+    "UPDATE question_banks SET content = ?, questions_count = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?"
+  ).bind(content, questionsCount, bankId, user.id).run();
+
+  if (!result.meta.changes) {
+    return createResponse(JSON.stringify({ error: 'Bank not found' }), 404);
+  }
+
+  return createResponse(JSON.stringify({ success: true, questions_count: questionsCount }));
 }
 
 // 更新云端题库元信息（仅 owner）：回填源文件 source_*，或把无课程题库归入某课程
@@ -5084,6 +5119,11 @@ export default {
     const cloudBankSourceUpdateMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)\/source$/);
     if (cloudBankSourceUpdateMatch && request.method === 'POST') {
       return handleUpdateCloudBankSource(request, env, cloudBankSourceUpdateMatch[1]);
+    }
+
+    const cloudBankContentMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)\/content$/);
+    if (cloudBankContentMatch && request.method === 'PUT') {
+      return handleUpdateCloudBankContent(request, env, cloudBankContentMatch[1]);
     }
     
     /* ===== SHARE ROUTES ===== */
