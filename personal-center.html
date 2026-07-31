@@ -272,6 +272,12 @@
                             我的题目
                             <span id="questionCountBadge" class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
                         </button>
+                        <button onclick="switchTab('tutor')" id="tab-tutor" class="tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                            </svg>
+                            图谱导学
+                        </button>
                     </div>
 
                     <!-- 课程资料 -->
@@ -319,6 +325,11 @@
                             这里展示你从课程资料生成的题库。点击题库即可使用 practice.html 原界面练习。
                         </div>
                         <div id="questionList" class="space-y-4"></div>
+                    </div>
+
+                    <!-- 图谱导学（iframe 嵌入 tutor.html，与功能文件夹中的图谱导学保持一致） -->
+                    <div id="tutorSection" class="hidden">
+                        <iframe id="tutorFrame" title="图谱导学" class="w-full border-0 rounded-2xl" style="height: calc(100vh - 220px); min-height: 600px;"></iframe>
                     </div>
                 </div>
             </div>
@@ -672,6 +683,11 @@
         async function selectCourse(courseId) {
             currentCourseId = courseId;
             renderCourseList();
+            // 图谱导学 iframe 已加载时，同步切换课程
+            const frame = document.getElementById('tutorFrame');
+            if (frame && frame.src) {
+                frame.src = 'tutor.html?embed=1&course=' + encodeURIComponent(courseId);
+            }
             await loadCourseDetail(courseId);
         }
 
@@ -782,10 +798,19 @@
             document.getElementById('tab-questions').className = tab === 'questions'
                 ? 'tab-btn pb-3 border-b-2 border-emerald-500 font-semibold text-emerald-700 flex items-center gap-2'
                 : 'tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2';
+            document.getElementById('tab-tutor').className = tab === 'tutor'
+                ? 'tab-btn pb-3 border-b-2 border-emerald-500 font-semibold text-emerald-700 flex items-center gap-2'
+                : 'tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2';
             document.getElementById('materialsSection').classList.toggle('hidden', tab !== 'materials');
             document.getElementById('questionsSection').classList.toggle('hidden', tab !== 'questions');
+            document.getElementById('tutorSection').classList.toggle('hidden', tab !== 'tutor');
             if (tab === 'materials') renderTurnstile();
             if (tab === 'questions') await loadCloudBanks();
+            if (tab === 'tutor') {
+                // 懒加载：首次切换到图谱导学时才加载 tutor.html（携带当前课程 id）
+                const frame = document.getElementById('tutorFrame');
+                if (frame && !frame.src) frame.src = 'tutor.html?embed=1&course=' + encodeURIComponent(currentCourseId);
+            }
             renderCourseDetail();
         }
 

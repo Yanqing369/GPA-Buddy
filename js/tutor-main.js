@@ -484,6 +484,7 @@ const TutorApp = {
         updateLogo();
         this.setupDropZone();
         this.setupEventListeners();
+        this.initCourseMode();
         TutorGraph.init('graphContainer');
         TutorPanel.init();
         TutorPanel.onComplete = (nodeId) => this.markNodeComplete(nodeId);
@@ -513,6 +514,100 @@ const TutorApp = {
             });
         }
         window.addEventListener('resize', updateLogo);
+    },
+
+    // ===== 课程模式（embed + course）：直接使用课程资料，隐藏上传区 =====
+    initCourseMode() {
+        const params = new URLSearchParams(location.search);
+        const courseId = params.get('course');
+        if (!courseId) return;
+        this.courseId = courseId;
+        this.courseMaterials = [];
+        this.selectedMaterialId = null;
+
+        // 隐藏拖拽上传区和移动端上传按钮
+        const dropZone = document.getElementById('dropZone');
+        if (dropZone) dropZone.style.display = 'none';
+        const mobileUpload = document.getElementById('mobileUploadArea');
+        if (mobileUpload) mobileUpload.style.display = 'none';
+
+        this.loadCourseMaterials();
+    },
+
+    async loadCourseMaterials() {
+        const section = document.getElementById('courseFileSection');
+        const list = document.getElementById('courseFileList');
+        if (!section || !list) return;
+        section.classList.remove('hidden');
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            list.innerHTML = '<p class="text-sm text-slate-400 py-6 text-center">登录后可使用课程资料生成图谱</p>';
+            return;
+        }
+
+        list.innerHTML = '<p class="text-sm text-slate-400 py-6 text-center">加载课程资料中...</p>';
+        try {
+            const res = await fetch(`${API_BASE}/api/courses/${this.courseId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to load course materials');
+            const result = await res.json();
+            // 过滤 0 字节资料
+            this.courseMaterials = (result.materials || []).filter(m => m.size == null || m.size > 0);
+            this.renderCourseMaterials();
+        } catch (e) {
+            console.error(e);
+            list.innerHTML = '<p class="text-sm text-red-400 py-6 text-center">课程资料加载失败，请稍后重试</p>';
+        }
+    },
+
+    renderCourseMaterials() {
+        const list = document.getElementById('courseFileList');
+        if (!list) return;
+
+        if (!this.courseMaterials.length) {
+            list.innerHTML = '<p class="text-sm text-slate-400 py-6 text-center">该课程暂无资料，请先在「课程资料」栏上传</p>';
+            return;
+        }
+
+        list.innerHTML = '';
+        this.courseMaterials.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200 cursor-pointer hover:border-emerald-300 transition-colors';
+            const checked = this.selectedMaterialId === String(m.id) ? 'checked' : '';
+            item.innerHTML = `
+                <input type="checkbox" ${checked} class="w-4 h-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 flex-shrink-0 pointer-events-none">
+                <span class="text-sm text-slate-700 truncate flex-1">${escapeHtml(m.name)}</span>
+                <span class="text-xs text-slate-400 flex-shrink-0">${m.size ? (m.size / 1024 / 1024).toFixed(2) + 'MB' : ''}</span>
+            `;
+            item.addEventListener('click', () => this.selectCourseMaterial(m));
+            list.appendChild(item);
+        });
+    },
+
+    async selectCourseMaterial(material) {
+        if (this.selectedMaterialId === String(material.id)) return;
+        this.selectedMaterialId = String(material.id);
+        this.renderCourseMaterials();
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/api/courses/${this.courseId}/materials/${material.id}/download`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('Failed to download material');
+            const blob = await res.blob();
+            const file = new File([blob], material.name, { type: material.type || blob.type || 'application/pdf' });
+            await this.handleFile(file);
+        } catch (e) {
+            console.error(e);
+            this.selectedMaterialId = null;
+            this.renderCourseMaterials();
+            alert('资料下载失败，请稍后重试');
+        }
     },
 
     updateLanguage() {
