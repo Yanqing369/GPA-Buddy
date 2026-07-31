@@ -2155,6 +2155,157 @@ async function handleUpdateCloudBankContent(request, env, bankId) {
   return createResponse(JSON.stringify({ success: true, questions_count: questionsCount }));
 }
 
+/* ==================== ASK GEMINI（刷题页实时提问） ==================== */
+
+// 计费：每 5 次提问扣 1 积分（等效 0.2/次）。计数行用 *_log 后缀，与扣费行区分
+const ASK_ACTION = 'ask_gemini';
+const ASK_LOG_ACTION = 'ask_gemini_log';
+const ASK_CHARGE_EVERY = 5;
+
+async function countUserAsks(userId, env) {
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM transactions WHERE user_id = ? AND description = ?"
+  ).bind(userId, ASK_LOG_ACTION).first();
+  return row?.n || 0;
+}
+
+async function countVisitorAsks(visitorId, env) {
+  const row = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM visitor_logs WHERE visitor_id = ? AND action = ?"
+  ).bind(visitorId, ASK_LOG_ACTION).first();
+  return row?.n || 0;
+}
+
+function truncateStr(s, max) {
+  s = typeof s === 'string' ? s : '';
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+async function handleAskGemini(request, env) {
+  const user = await getUserFromRequest(request, env);
+  const visitorId = request.headers.get('X-Visitor-ID');
+  if (!user && !visitorId) {
+    return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401, request);
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const messages = Array.isArray(body?.messages) ? body.messages.slice(-20) : [];
+  const images = Array.isArray(body?.images) ? body.images.slice(0, 2) : [];
+  const question = body?.question || {};
+
+  if (messages.length === 0 || messages[messages.length - 1].role !== 'user') {
+    return createResponse(JSON.stringify({ error: 'messages required' }), 400, request);
+  }
+
+  // 图片校验：类型白名单 + 大小上限（base64 ~4MB）
+  const allowedMime = ['image/jpeg', 'image/png', 'image/webp'];
+  for (const img of images) {
+    if (!img || !allowedMime.includes(img.mime_type) || typeof img.data !== 'string' || img.data.length > 4_000_000) {
+      return createResponse(JSON.stringify({ error: 'Invalid image' }), 400, request);
+    }
+  }
+
+  // ---- 计费：第 5 的倍数次提问收费 1 点 ----
+  const askCount = user ? await countUserAsks(user.id, env) : await countVisitorAsks(visitorId, env);
+  const isChargingAsk = (askCount + 1) % ASK_CHARGE_EVERY === 0;
+  if (isChargingAsk) {
+    const peek = user
+      ? await peekUserQuota(user.id, env, 1)
+      : await peekVisitorCredits(visitorId, request, env, 1);
+    if (!peek.allowed) {
+      return createResponse(JSON.stringify({ error: 'insufficient_credits', reason: peek.reason }), 402, request);
+    }
+  }
+
+  // ---- 组题目上下文文本 ----
+  const opts = Array.isArray(question.options) ? question.options.slice(0, 8) : [];
+  const optionsText = opts.map(o => `${o.key}. ${truncateStr(o.text, 300)}`).join('\n');
+  let ctx = `【题库】${truncateStr(question.bankName, 100)}\n【题干】${truncateStr(question.text, 1500)}`;
+  if (optionsText) ctx += `\n【选项】\n${optionsText}`;
+  ctx += `\n【我的作答】${question.userAnswer ? '选择了 ' + question.userAnswer : '尚未作答'}`;
+  if (question.submitted && question.correctAnswer) {
+    ctx += `\n【正确答案】${question.correctAnswer}`;
+    if (question.explanation) ctx += `\n【解析】${truncateStr(question.explanation, 800)}`;
+  }
+  if (question.source) ctx += `\n【来源】${truncateStr(question.source, 200)}`;
+
+  const systemInstruction = [
+    '你是一位耐心、专业的学习助教，正在帮助学生理解一道练习题。',
+    '学生会附上最多两张图片：图1是当前练习界面的截图（包含题目和作答状态），图2是该题来源课件的页面渲染图（可能没有图2）。',
+    '请结合图片和文字上下文回答学生的问题，重在讲解原理和思路，而不是只报答案。',
+    '如果学生尚未提交答案，不要直接剧透正确答案，用引导式讲解。',
+    '使用与学生相同的语言回答（默认中文），适当使用 Markdown 格式。'
+  ].join('\n');
+
+  // ---- 组 Vertex 请求（图片挂在最后一条 user 消息上） ----
+  const contents = messages.map((m, i) => {
+    const isLastUser = i === messages.length - 1;
+    const parts = [{ text: (isLastUser ? ctx + '\n\n【学生的问题】' : '') + truncateStr(m.text, 2000) }];
+    if (isLastUser) {
+      for (const img of images) {
+        parts.push({ inline_data: { mime_type: img.mime_type, data: img.data } });
+      }
+    }
+    return { role: m.role === 'model' ? 'model' : 'user', parts };
+  });
+
+  const modelId = env.GCP_ASK_MODEL_ID || env.GCP_MODEL_ID || 'gemini-2.5-flash-lite';
+  const isGlobal = env.GCP_LOCATION === 'global';
+  const host = isGlobal ? 'aiplatform.googleapis.com' : `${env.GCP_LOCATION}-aiplatform.googleapis.com`;
+  const location = isGlobal ? 'global' : env.GCP_LOCATION;
+  const endpoint = `https://${host}/v1/projects/${env.GCP_PROJECT_ID}/locations/${location}/publishers/google/models/${modelId}:generateContent`;
+
+  let answer = '';
+  try {
+    const token = await getAccessToken(env);
+    const vertexRes = await fetch(endpoint, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemInstruction }] },
+        contents,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+      }),
+    });
+    if (!vertexRes.ok) {
+      console.error('Vertex ask failed:', vertexRes.status, await vertexRes.text());
+      return createResponse(JSON.stringify({ error: 'AI service error' }), 502, request);
+    }
+    const data = await vertexRes.json();
+    answer = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
+  } catch (e) {
+    console.error('handleAskGemini error:', e);
+    return createResponse(JSON.stringify({ error: 'AI service error' }), 502, request);
+  }
+
+  if (!answer) {
+    return createResponse(JSON.stringify({ error: 'Empty AI response' }), 502, request);
+  }
+
+  // ---- 收费 + 计数 ----
+  if (isChargingAsk) {
+    const ok = user
+      ? await deductUserQuota(user.id, env, ASK_ACTION, 1)
+      : await deductVisitorCredits(visitorId, request, env, ASK_ACTION, 1);
+    if (!ok) console.warn('ask_gemini charge failed after success', user?.id || visitorId);
+  }
+  if (user) {
+    await env.DB.prepare(
+      'INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)'
+    ).bind(user.id, 'consume', 0, ASK_LOG_ACTION).run();
+  } else {
+    await env.DB.prepare(
+      'INSERT INTO visitor_logs (visitor_id, action, credits_used) VALUES (?, ?, ?)'
+    ).bind(visitorId, ASK_LOG_ACTION, 0).run();
+  }
+
+  return createResponse(JSON.stringify({
+    answer,
+    charged: isChargingAsk,
+    asksUntilCharge: ASK_CHARGE_EVERY - ((askCount + 1) % ASK_CHARGE_EVERY)
+  }), 200, request);
+}
+
 // 更新云端题库元信息（仅 owner）：回填源文件 source_*，或把无课程题库归入某课程
 async function handleUpdateCloudBankSource(request, env, bankId) {
   const user = await getUserFromRequest(request, env);
@@ -5124,6 +5275,11 @@ export default {
     const cloudBankContentMatch = url.pathname.match(/^\/api\/cloud-banks\/(\d+)\/content$/);
     if (cloudBankContentMatch && request.method === 'PUT') {
       return handleUpdateCloudBankContent(request, env, cloudBankContentMatch[1]);
+    }
+
+    /* ===== ASK GEMINI ===== */
+    if (url.pathname === '/api/ask' && request.method === 'POST') {
+      return handleAskGemini(request, env);
     }
     
     /* ===== SHARE ROUTES ===== */

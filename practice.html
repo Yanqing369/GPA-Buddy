@@ -38,6 +38,8 @@
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/asciimath2tex@1/dist/asciimath2tex.umd.js"></script>
     <script src="fileViewer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="js/visitor.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
@@ -397,6 +399,34 @@
         </div>
     </main>
 
+    <!-- 问 Gemini 悬浮按钮 -->
+    <button id="askToggleBtn" onclick="toggleAskPanel()" class="fixed right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 px-2 py-3 rounded-l-2xl bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+        <span class="text-xs font-medium tracking-widest" style="writing-mode: vertical-rl;" data-i18n="askAI">问 Gemini</span>
+    </button>
+
+    <!-- 问 Gemini 聊天抽屉 -->
+    <div id="askPanel" class="fixed inset-y-0 right-0 z-50 w-96 max-w-[100vw] bg-white shadow-2xl border-l border-slate-200 flex flex-col translate-x-full transition-transform duration-300">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div class="min-w-0">
+                <h3 class="font-bold text-slate-900 text-sm" data-i18n="askAI">问 Gemini</h3>
+                <p class="text-xs text-slate-400 mt-0.5 truncate"><span id="askQuestionRef"></span> · <span data-i18n="askCostHint">每 5 次提问消耗 1 积分</span></p>
+            </div>
+            <button onclick="toggleAskPanel()" class="p-1.5 hover:bg-slate-200 rounded-lg text-slate-500 transition-colors flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div id="askMessages" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
+        <div class="p-3 border-t border-slate-200 bg-white">
+            <div class="flex gap-2">
+                <textarea id="askInput" rows="2" data-i18n-placeholder="askPlaceholder" placeholder="就这道题向 Gemini 提问…"
+                    onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAskMessage();}"
+                    class="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 resize-none"></textarea>
+                <button id="askSendBtn" onclick="sendAskMessage()" class="self-end px-4 py-2 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50" data-i18n="send">发送</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Source File Viewer Modal -->
     <div id="sourceViewerModal" class="hidden fixed inset-0 source-viewer-overlay z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-[95vw] w-full max-h-[95vh] flex flex-col shadow-2xl modal-enter">
@@ -550,6 +580,32 @@
                 supportUs: '후원하기'
             }
         };
+
+        // 问 Gemini 相关文案
+        Object.assign(i18n.zh, {
+            askAI: '问 Gemini', askPlaceholder: '就这道题向 Gemini 提问…', send: '发送',
+            aiThinking: 'Gemini 思考中…', askFailed: '提问失败，请稍后重试',
+            insufficientCredits: '积分不足：每 5 次提问消耗 1 积分，请先获取积分',
+            askCostHint: '每 5 次提问消耗 1 积分'
+        });
+        Object.assign(i18n['zh-TW'], {
+            askAI: '問 Gemini', askPlaceholder: '就這道題向 Gemini 提問…', send: '發送',
+            aiThinking: 'Gemini 思考中…', askFailed: '提問失敗，請稍後重試',
+            insufficientCredits: '積分不足：每 5 次提問消耗 1 積分，請先取得積分',
+            askCostHint: '每 5 次提問消耗 1 積分'
+        });
+        Object.assign(i18n.en, {
+            askAI: 'Ask Gemini', askPlaceholder: 'Ask Gemini about this question…', send: 'Send',
+            aiThinking: 'Gemini is thinking…', askFailed: 'Ask failed, please try again',
+            insufficientCredits: 'Insufficient credits: 1 credit per 5 questions',
+            askCostHint: '1 credit per 5 questions'
+        });
+        Object.assign(i18n.ko, {
+            askAI: 'Gemini에게 질문', askPlaceholder: '이 문제에 대해 Gemini에게 질문…', send: '보내기',
+            aiThinking: 'Gemini 생각 중…', askFailed: '질문 실패, 다시 시도해 주세요',
+            insufficientCredits: '크레딧 부족: 질문 5회당 크레딧 1개 소모',
+            askCostHint: '질문 5회당 크레딧 1개 소모'
+        });
 
         function t(key) { return i18n[currentLang][key] || key; }
         function detectBrowserLanguage() { const browserLang = navigator.language || navigator.userLanguage || 'en'; const lang = browserLang.toLowerCase(); if (lang.startsWith('zh') && (lang.includes('cn') || lang.includes('sg') || lang.includes('hans') || lang === 'zh')) return 'zh'; if (lang.startsWith('zh') && (lang.includes('tw') || lang.includes('hk') || lang.includes('mo') || lang.includes('hant'))) return 'zh-TW'; if (lang.startsWith('ko')) return 'ko'; if (lang.startsWith('en')) return 'en'; return 'en'; }
@@ -748,6 +804,169 @@
                     questions: mistakeBook.data.questions,
                     updatedAt: new Date().toISOString()
                 });
+            }
+        }
+
+        /* ==================== 问 Gemini（侧边栏实时提问） ==================== */
+        const askChats = {};           // `${bankId}:${qid}` -> [{role, text}]
+        const askSourceImageCache = {}; // questionKey -> base64 | null
+        let askSending = false;
+
+        function askQuestionKey() {
+            const q = practiceState.questions[practiceState.currentIndex];
+            return q ? `${practiceState.bankId}:${q.id}` : null;
+        }
+
+        function isAskPanelOpen() {
+            return !document.getElementById('askPanel').classList.contains('translate-x-full');
+        }
+
+        function toggleAskPanel() {
+            document.getElementById('askPanel').classList.toggle('translate-x-full');
+            if (isAskPanelOpen()) renderAskMessages();
+        }
+
+        function escapeAskHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function renderAskMessages() {
+            const box = document.getElementById('askMessages');
+            const key = askQuestionKey();
+            document.getElementById('askQuestionRef').textContent = `#${practiceState.currentIndex + 1}`;
+            const history = (key && askChats[key]) || [];
+            if (history.length === 0) {
+                box.innerHTML = `<div class="text-center text-slate-400 text-xs py-8">${escapeAskHtml(t('askPlaceholder'))}</div>`;
+                return;
+            }
+            box.innerHTML = history.map(m => m.role === 'user'
+                ? `<div class="flex justify-end"><div class="max-w-[85%] px-3 py-2 rounded-2xl rounded-br-sm bg-indigo-600 text-white text-sm whitespace-pre-wrap break-words">${escapeAskHtml(m.text)}</div></div>`
+                : `<div class="flex justify-start"><div class="max-w-[90%] px-3 py-2 rounded-2xl rounded-bl-sm bg-slate-100 text-slate-800 text-sm break-words ask-ai-msg">${safeMarkedParse(m.text)}</div></div>`
+            ).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // 图1：练习界面截图（发送时实时截取，反映当前作答状态）
+        async function captureCardImage() {
+            try {
+                const canvas = await html2canvas(document.getElementById('practiceCard'), { backgroundColor: '#ffffff' });
+                const maxW = 1024;
+                let src = canvas;
+                if (canvas.width > maxW) {
+                    const c2 = document.createElement('canvas');
+                    c2.width = maxW;
+                    c2.height = Math.round(canvas.height * maxW / canvas.width);
+                    c2.getContext('2d').drawImage(canvas, 0, 0, c2.width, c2.height);
+                    src = c2;
+                }
+                return src.toDataURL('image/jpeg', 0.8).split(',')[1];
+            } catch (e) {
+                console.warn('captureCardImage failed:', e);
+                return null;
+            }
+        }
+
+        // 图2：源课件页面渲染图（按题缓存；无源文件/非 PDF 时返回 null 自动降级）
+        async function renderSourceImage(q) {
+            const key = askQuestionKey();
+            if (key in askSourceImageCache) return askSourceImageCache[key];
+            let result = null;
+            try {
+                const sourceInfo = q && q.source ? parseSource(q.source) : null;
+                if (sourceInfo) {
+                    const fileRecord = await db.sourceFiles.where('bankId').equals(practiceState.bankId).first();
+                    const isPdf = fileRecord && (
+                        (fileRecord.name || '').toLowerCase().endsWith('.pdf') ||
+                        (fileRecord.type || '').includes('pdf') ||
+                        fileRecord.isConverted
+                    );
+                    if (isPdf) {
+                        const buf = await fileRecord.data.arrayBuffer();
+                        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+                        const pageNum = Math.min(Math.max(sourceInfo.location || 1, 1), pdf.numPages);
+                        const page = await pdf.getPage(pageNum);
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvas = document.createElement('canvas');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+                        result = canvas.toDataURL('image/jpeg', 0.8).split(',')[1];
+                    }
+                }
+            } catch (e) {
+                console.warn('renderSourceImage failed:', e);
+            }
+            askSourceImageCache[key] = result;
+            return result;
+        }
+
+        async function sendAskMessage() {
+            if (askSending) return;
+            const input = document.getElementById('askInput');
+            const text = input.value.trim();
+            if (!text) return;
+            const q = practiceState.questions[practiceState.currentIndex];
+            const key = askQuestionKey();
+            if (!q || !key) return;
+
+            const history = askChats[key] = askChats[key] || [];
+            history.push({ role: 'user', text });
+            input.value = '';
+            askSending = true;
+            document.getElementById('askSendBtn').disabled = true;
+            renderAskMessages();
+            const box = document.getElementById('askMessages');
+            box.insertAdjacentHTML('beforeend', `<div id="askLoading" class="flex justify-start"><div class="px-3 py-2 rounded-2xl rounded-bl-sm bg-slate-100 text-slate-400 text-sm">${escapeAskHtml(t('aiThinking'))}</div></div>`);
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const [cardImg, srcImg] = await Promise.all([captureCardImage(), renderSourceImage(q)]);
+                const images = [];
+                if (cardImg) images.push({ mime_type: 'image/jpeg', data: cardImg });
+                if (srcImg) images.push({ mime_type: 'image/jpeg', data: srcImg });
+
+                const answered = practiceState.answers[practiceState.currentIndex];
+                const headers = { 'Content-Type': 'application/json' };
+                const token = getAuthToken();
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                if (typeof Visitor !== 'undefined' && Visitor.appendHeaders) Visitor.appendHeaders(headers);
+
+                const res = await fetch(`${API_BASE}/api/ask`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        messages: history.map(m => ({ role: m.role, text: m.text })),
+                        images,
+                        question: {
+                            bankName: currentBank.name,
+                            text: q.question || '',
+                            options: q.options ? Object.entries(q.options).map(([k, v]) => ({ key: k, text: v })) : [],
+                            userAnswer: answered ? answered.selected : null,
+                            submitted: !!answered,
+                            correctAnswer: answered ? q.correctAnswer : undefined,
+                            explanation: answered ? (q.explanation || '') : '',
+                            source: q.source || ''
+                        }
+                    })
+                });
+
+                document.getElementById('askLoading')?.remove();
+                if (res.status === 402) {
+                    history.push({ role: 'model', text: t('insufficientCredits') });
+                } else if (!res.ok) {
+                    history.push({ role: 'model', text: t('askFailed') });
+                } else {
+                    const data = await res.json();
+                    history.push({ role: 'model', text: data.answer || t('askFailed') });
+                }
+            } catch (e) {
+                console.error('sendAskMessage failed:', e);
+                document.getElementById('askLoading')?.remove();
+                history.push({ role: 'model', text: t('askFailed') });
+            } finally {
+                askSending = false;
+                document.getElementById('askSendBtn').disabled = false;
+                renderAskMessages();
             }
         }
 
@@ -984,6 +1203,9 @@
                 submitBtn.classList.remove('opacity-50'); 
                 submitBtn.textContent = t('submitAnswer'); 
             }
+
+            // 聊天抽屉打开时，切题后同步刷新对话与题号
+            if (isAskPanelOpen()) renderAskMessages();
 
             if (window.renderMathInElement) {
                 const practiceCard = document.getElementById('practiceCard');
