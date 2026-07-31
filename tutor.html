@@ -198,6 +198,16 @@
 </head>
 <body class="min-h-screen overflow-x-hidden selection:bg-green-200 selection:text-green-900">
 
+    <script>
+        // 嵌入模式（作为 iframe 嵌入个人中心等页面时）：隐藏自带导航栏
+        if (new URLSearchParams(location.search).get('embed') === '1') {
+            document.addEventListener('DOMContentLoaded', function () {
+                var nav = document.querySelector('nav');
+                if (nav) nav.style.display = 'none';
+            });
+        }
+    </script>
+
     <!-- 导航栏 -->
     <nav class="glass-nav sticky top-0 z-50 h-16">
         <div class="max-w-6xl mx-auto px-6 h-full flex items-center justify-between">
