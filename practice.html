@@ -765,27 +765,70 @@
                 .catch(e => console.warn('addToMistakeBook failed:', e));
         }
 
-        async function addToMistakeBook(q, { mistake }) {
+        /* ==================== 个性化推题（SM-2 间隔重复，参考 quizzer SM2Stats） ==================== */
+        // 每题的复习状态存在错题本 content 的 srs 字段里，随整包 JSON 写回云端
+        function parseMistakeCount(entry) {
+            const m = (entry.source || '').match(/\[(\d+)-times mistake\]$/);
+            return m ? parseInt(m[1]) : 0;
+        }
+
+        // easiness 由答错次数播种：错 0 次 -> 2.5，错 5 次及以上 -> 1.3（类比 difficulty 0~1 播种）
+        function getSrsState(entry) {
+            if (!mistakeBook.data.srs) mistakeBook.data.srs = {};
+            const key = `${entry.originCloudBankId}:${entry.originQuestionId}`;
+            if (!mistakeBook.data.srs[key]) {
+                const difficulty = Math.min(parseMistakeCount(entry), 5) / 5;
+                mistakeBook.data.srs[key] = { ef: 2.5 - difficulty * 1.2, interval: 0, reps: 0, nextReview: 0, lastReviewed: 0 };
+            }
+            return mistakeBook.data.srs[key];
+        }
+
+        // SM-2 更新：quality 0-5（答错记 1，答对记 4）；答错重置间隔，答对按 1->6->xEF 拉长
+        function reviewSrsState(entry, quality) {
+            const s = getSrsState(entry);
+            quality = Math.max(0, Math.min(5, quality));
+            s.ef = Math.max(1.3, s.ef + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            if (quality < 3) {
+                s.reps = 0;
+                s.interval = 1;
+            } else {
+                s.interval = s.reps === 0 ? 1 : s.reps === 1 ? 6 : s.interval * s.ef;
+                s.reps += 1;
+            }
+            s.lastReviewed = Date.now();
+            s.nextReview = s.lastReviewed + s.interval * 86400000;
+        }
+
+        async function addToMistakeBook(q, { mistake, reviewCorrect }) {
             if (!mistakeBook.ready) return;
             const questions = mistakeBook.data.questions;
 
-            // 去重键：题目首次入簿时写入 origin 字段；在错题本里刷题时沿用其 origin 字段
+            // 去重键：题目首次入簿时写入 origin 字段；在错题本/智能练习里刷题时沿用其 origin 字段
             const originCloudBankId = (mistakeBook.isMistakeBank && q.originCloudBankId) ? q.originCloudBankId : currentBank.migratedCloudId;
             const originQuestionId = (mistakeBook.isMistakeBank && q.originQuestionId) ? q.originQuestionId : q.id;
             const existing = questions.find(item => item.originCloudBankId === originCloudBankId && item.originQuestionId === originQuestionId);
 
             if (existing) {
-                if (!mistake) return; // 已入簿的题重复精选：忽略
-                const m = (existing.source || '').match(/\[(\d+)-times mistake\]$/);
-                const count = m ? parseInt(m[1]) + 1 : 1;
-                existing.source = (existing.source || '').replace(/\s*\[(\d+)-times mistake\]$/, '') + ` [${count}-times mistake]`;
+                if (mistake) {
+                    const count = parseMistakeCount(existing) + 1;
+                    existing.source = (existing.source || '').replace(/\s*\[(\d+)-times mistake\]$/, '') + ` [${count}-times mistake]`;
+                    reviewSrsState(existing, 1); // 答错：降低难度因子，重置复习间隔
+                } else if (reviewCorrect) {
+                    reviewSrsState(existing, 4); // 答对：拉长下次复习间隔
+                } else {
+                    return; // 已入簿的题重复精选：忽略
+                }
             } else {
+                if (reviewCorrect) return; // 未入簿的题答对：无需处理
                 const newId = questions.reduce((max, item) => Math.max(max, item.id || 0), 0) + 1;
                 const clone = { ...q, id: newId, originCloudBankId, originQuestionId };
                 // 来源字段不写文件名，写【题库名称 #题目编号】
                 const originIndex = currentBank.questions.findIndex(item => item.id === q.id);
                 clone.source = `【${currentBank.name} #${originIndex >= 0 ? originIndex + 1 : q.id}】`;
-                if (mistake) clone.source += ' [1-times mistake]';
+                if (mistake) {
+                    clone.source += ' [1-times mistake]';
+                    reviewSrsState(clone, 1);
+                }
                 questions.push(clone);
             }
 
@@ -797,8 +840,8 @@
             });
             if (!putRes.ok) throw new Error('Failed to sync mistake book');
 
-            // 同步本地镜像（若本机已下载过错题本）
-            const localMirror = await db.questionBanks.filter(b => b.migratedCloudId === mistakeBook.cloudId).last();
+            // 同步本地镜像（若本机已下载过错题本；智能练习的一次性副本除外）
+            const localMirror = await db.questionBanks.filter(b => b.migratedCloudId === mistakeBook.cloudId && !b.isSmartSession).last();
             if (localMirror) {
                 await db.questionBanks.update(localMirror.id, {
                     questions: mistakeBook.data.questions,
@@ -1286,10 +1329,12 @@
                 selected: selected.dataset.option, 
                 timestamp: new Date().toISOString() 
             };
-            // 答错 → 写入课程错题本（累加答错次数）
+            // 答错 → 写入课程错题本（累加答错次数）；答对 → 若在错题本中则更新间隔重复状态
             const answeredQ = practiceState.questions[practiceState.currentIndex];
             if (answeredQ && selected.dataset.option !== answeredQ.correctAnswer) {
                 queueMistakeBookUpdate(answeredQ, { mistake: true });
+            } else if (answeredQ) {
+                queueMistakeBookUpdate(answeredQ, { reviewCorrect: true });
             }
             await saveProgress();
             renderQuestion();

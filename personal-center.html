@@ -1554,7 +1554,17 @@
             }
         }
 
-        // 智能练题：随机练习本课程错题本里的题
+        // ==================== 个性化推题（参考 quizzer 的 SM-2 间隔重复模型） ====================
+        // 以错题本题目为参考：答错次数播种难度因子 ef，练习结果回写 srs 状态，
+        // 到期未复习的题优先推送，薄弱题（ef 低、错得多）排在前面
+        const SMART_PRACTICE_MAX = 12;
+
+        function parseWrongCount(q) {
+            const m = (q.source || '').match(/\[(\d+)-times mistake\]$/);
+            return m ? parseInt(m[1]) : 0;
+        }
+
+        // 智能练题：基于错题本的个性化推题
         async function smartPractice() {
             if (!currentCourseId) return;
             const book = cloudBanks.find(b => String(b.course_id || '') === String(currentCourseId) && b.bank_type === 'mistake');
@@ -1562,13 +1572,56 @@
                 showToast('还没有收录错题，刷题答错或精选题目后会自动加入错题本', 'error');
                 return;
             }
-            showToast('正在准备错题本，请稍候…');
+            showToast('正在生成个性化练习，请稍候…');
             try {
-                const localBankId = await downloadCloudBankToLocal(book.id, { forceRefresh: true });
-                window.location.href = `practice.html?id=${localBankId}&shuffle=1`;
+                // 1. 拉取错题本完整内容（含 srs 间隔重复状态）
+                const res = await apiFetch(`/api/share/${book.id}/download`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: '' })
+                });
+                if (!res.ok) throw new Error('Failed to download mistake book');
+                const bookData = JSON.parse((await res.json()).content);
+                const questions = Array.isArray(bookData.questions) ? bookData.questions : [];
+                if (!questions.length) {
+                    showToast('错题本还是空的，先去刷题吧', 'error');
+                    return;
+                }
+
+                // 2. 计算每题复习优先级：到期优先；薄弱题（ef 低、错得多）靠前；未到期按到期时间就近补足
+                const now = Date.now();
+                const srsMap = bookData.srs || {};
+                const scored = questions.map(q => {
+                    const s = srsMap[`${q.originCloudBankId}:${q.originQuestionId}`]
+                        || { ef: 2.5 - (Math.min(parseWrongCount(q), 5) / 5) * 1.2, nextReview: 0 };
+                    return { q, ef: s.ef, count: parseWrongCount(q), due: !s.nextReview || now >= s.nextReview, nextReview: s.nextReview || 0 };
+                });
+                scored.sort((a, b) => {
+                    if (a.due !== b.due) return a.due ? -1 : 1;
+                    if (a.due) {
+                        if (a.ef !== b.ef) return a.ef - b.ef;
+                        return b.count - a.count;
+                    }
+                    return a.nextReview - b.nextReview;
+                });
+                const selected = scored.slice(0, Math.min(SMART_PRACTICE_MAX, scored.length)).map(s => s.q);
+
+                // 3. 生成一次性智能练习题库（挂在错题本 cloudId 下，练习中答对/答错会回写错题本 srs 与次数）
+                await db.questionBanks.filter(b => b.isSmartSession && b.migratedCloudId === book.id).delete();
+                const courseName = (document.getElementById('currentCourseName').textContent || '课程').trim();
+                const localBankId = await db.questionBanks.add({
+                    name: `智能练习 · ${courseName}`,
+                    questions: selected,
+                    favorites: [],
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                    migratedCloudId: book.id,
+                    isSmartSession: true
+                });
+                window.location.href = `practice.html?id=${localBankId}`;
             } catch (e) {
                 console.error(e);
-                showToast('加载错题本失败：' + e.message, 'error');
+                showToast('生成个性化练习失败：' + e.message, 'error');
             }
         }
 
