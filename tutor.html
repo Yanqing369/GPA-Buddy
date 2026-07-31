@@ -268,13 +268,19 @@
             </div>
 
             <!-- 移动端上传按钮 -->
-            <div class="sm:hidden mb-6">
+            <div id="mobileUploadArea" class="sm:hidden mb-6">
                 <button onclick="document.getElementById('fileInput').click()" class="w-full py-3 px-4 rounded-xl liquid-btn-emerald text-white font-semibold flex items-center justify-center gap-2 spring-active">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
                     <span data-i18n="uploadStudyMaterial">上传学习资料</span>
                 </button>
+            </div>
+
+            <!-- 课程资料选择（仅 embed + course 模式显示，替代上传区） -->
+            <div id="courseFileSection" class="hidden mb-6">
+                <p class="text-sm font-medium text-slate-700 mb-3">选择课程资料生成图谱</p>
+                <div id="courseFileList" class="space-y-2 max-h-72 overflow-y-auto"></div>
             </div>
 
             <div id="fileList" class="hidden mb-6"></div>

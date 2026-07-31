@@ -683,6 +683,11 @@
         async function selectCourse(courseId) {
             currentCourseId = courseId;
             renderCourseList();
+            // 图谱导学 iframe 已加载时，同步切换课程
+            const frame = document.getElementById('tutorFrame');
+            if (frame && frame.src) {
+                frame.src = 'tutor.html?embed=1&course=' + encodeURIComponent(courseId);
+            }
             await loadCourseDetail(courseId);
         }
 
@@ -802,9 +807,9 @@
             if (tab === 'materials') renderTurnstile();
             if (tab === 'questions') await loadCloudBanks();
             if (tab === 'tutor') {
-                // 懒加载：首次切换到图谱导学时才加载 tutor.html
+                // 懒加载：首次切换到图谱导学时才加载 tutor.html（携带当前课程 id）
                 const frame = document.getElementById('tutorFrame');
-                if (frame && !frame.src) frame.src = 'tutor.html?embed=1';
+                if (frame && !frame.src) frame.src = 'tutor.html?embed=1&course=' + encodeURIComponent(currentCourseId);
             }
             renderCourseDetail();
         }
