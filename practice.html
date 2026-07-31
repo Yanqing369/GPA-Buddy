@@ -678,14 +678,23 @@
             return { filename, location, locationType, original: sourceStr };
         }
 
+        // 查找当前题的源文件：智能练习/错题本里的题来自原始题库，按 origin 找回本地镜像再取其源文件
+        async function findSourceFileRecord(q) {
+            let record = await db.sourceFiles.where('bankId').equals(practiceState.bankId).first();
+            if (record || !q || !q.originCloudBankId) return record;
+            const originBank = await db.questionBanks.filter(b => b.migratedCloudId === q.originCloudBankId && !b.isSmartSession).last();
+            if (!originBank) return null;
+            return db.sourceFiles.where('bankId').equals(originBank.id).first();
+        }
+
         async function openSourceViewer() {
             const q = practiceState.questions[practiceState.currentIndex];
             if (!q || !q.source) { alert(t('unknownSource')); return; }
             const sourceInfo = parseSource(q.source);
             if (!sourceInfo) { alert(t('unknownSource')); return; }
             
-            // 使用当前题库ID查找关联的文件
-            const fileRecord = await db.sourceFiles.where('bankId').equals(practiceState.bankId).first();
+            // 使用当前题库ID查找关联的文件（智能练习的题回溯源题库）
+            const fileRecord = await findSourceFileRecord(q);
             
             if (!fileRecord) { 
                 console.error('File not found for bankId:', practiceState.bankId, 'Available files:', await db.sourceFiles.toArray());
@@ -989,7 +998,7 @@
             try {
                 const sourceInfo = q && q.source ? parseSource(q.source) : null;
                 if (sourceInfo) {
-                    const fileRecord = await db.sourceFiles.where('bankId').equals(practiceState.bankId).first();
+                    const fileRecord = await findSourceFileRecord(q);
                     const isPdf = fileRecord && (
                         (fileRecord.name || '').toLowerCase().endsWith('.pdf') ||
                         (fileRecord.type || '').includes('pdf') ||

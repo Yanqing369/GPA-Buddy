@@ -1557,9 +1557,11 @@
 
         // ==================== 个性化推题（参考 quizzer 的 SM-2 间隔重复模型） ====================
         // 范围覆盖课程全部题库：复习状态存在课程级隐藏云端题库（bank_type='srs'，只存状态不存题），
-        // 点击时现拼全课程题目，按到期/薄弱程度（ef 低、错得多）排序取前 N 题；
+        // 点击时现拼全课程题目。一期 18 题，新题:复习老题 = 9:9 配额混合、交替出现；
+        // 老题不够补新题，新题做完后放宽比例允许全老题；
         // 答错/答对/精选/问Gemini 都会在 practice.html 侧回写 srs 状态，形成闭环
-        const SMART_PRACTICE_MAX = 12;
+        const SESSION_SIZE = 18;
+        const SESSION_REVIEW_MAX = 9; // 老题（有 srs 记录且到期）每场最多 9 道，积压也不超
         // 送分题：答错超过 2 次且 ef 低的题，在靠前位置插入乱码选项的简化版（相当于提示答案）
         const FREEBIE_WRONG_MIN = 3;
         const FREEBIE_EF_MAX = 2.0;
@@ -1641,40 +1643,53 @@
                     return;
                 }
 
-                // 3. 计算复习优先级：到期优先；薄弱题（ef 低、错得多）靠前；未到期按到期时间就近补足
-                //    先洗牌，同优先级的题（如全新题）随机出现
+                // 3. 分桶：新题（无 srs 记录）先洗牌随机；老题（有 srs 记录且到期）薄弱在前；未到期老题按到期时间就近
                 for (let i = pool.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [pool[i], pool[j]] = [pool[j], pool[i]];
                 }
                 const now = Date.now();
-                const scored = pool.map(q => {
+                const fresh = [], reviews = [], notDue = [];
+                for (const q of pool) {
                     const s = srsMap[`${q.originCloudBankId}:${q.originQuestionId}`];
-                    return { q, ef: s ? s.ef : 2.5, wrong: s ? (s.wrong || 0) : 0, due: !s || !s.nextReview || now >= s.nextReview, nextReview: s ? (s.nextReview || 0) : 0 };
-                });
-                scored.sort((a, b) => {
-                    if (a.due !== b.due) return a.due ? -1 : 1;
-                    if (a.due) {
-                        if (a.ef !== b.ef) return a.ef - b.ef;
-                        return b.wrong - a.wrong;
+                    if (!s) {
+                        fresh.push({ q, ef: 2.5, wrong: 0 });
+                    } else {
+                        const item = { q, ef: s.ef, wrong: s.wrong || 0, nextReview: s.nextReview || 0 };
+                        (!item.nextReview || now >= item.nextReview ? reviews : notDue).push(item);
                     }
-                    return a.nextReview - b.nextReview;
-                });
-                const selected = scored.slice(0, Math.min(SMART_PRACTICE_MAX, scored.length));
+                }
+                reviews.sort((a, b) => a.ef !== b.ef ? a.ef - b.ef : b.wrong - a.wrong);
+                notDue.sort((a, b) => a.nextReview - b.nextReview);
 
-                // 4. 送分题：错得多的题在靠前位置插入简化版，与真题尽量隔 3 题
-                const questions = selected.map(s => s.q);
-                const freebies = [];
-                selected.forEach((s, i) => {
+                // 4. 配额混合：新:老 = 9:9；老题不够补新题；新题做完后放宽，允许全是老题
+                const oldTake = reviews.splice(0, SESSION_REVIEW_MAX);
+                const newTake = fresh.splice(0, SESSION_SIZE - oldTake.length);
+                let shortage = SESSION_SIZE - oldTake.length - newTake.length;
+                if (shortage > 0) oldTake.push(...reviews.splice(0, shortage));
+                shortage = SESSION_SIZE - oldTake.length - newTake.length;
+                if (shortage > 0) oldTake.push(...notDue.splice(0, shortage));
+
+                // 新老交替混排（新题打头，老题穿插其中，而不是堆在最前）
+                const session = [];
+                let ni = 0, oi = 0;
+                while (ni < newTake.length || oi < oldTake.length) {
+                    if (ni < newTake.length) session.push(newTake[ni++]);
+                    if (oi < oldTake.length) session.push(oldTake[oi++]);
+                }
+
+                // 5. 送分题：老题中错得多的，在真题前约 3 题处插入简化版
+                const questions = session.map(s => s.q);
+                for (const s of session) {
                     if (s.wrong >= FREEBIE_WRONG_MIN && s.ef <= FREEBIE_EF_MAX) {
-                        freebies.push({ q: makeFreebie(s.q), at: Math.max(0, i - 3) });
+                        const realIdx = questions.indexOf(s.q);
+                        questions.splice(Math.max(0, realIdx - 3), 0, makeFreebie(s.q));
                     }
-                });
-                freebies.sort((a, b) => a.at - b.at).forEach(f => questions.splice(f.at, 0, f.q));
+                }
                 // 重新编号，避免送分题与真题同 id 导致精选/提问串键
                 questions.forEach((q, i) => { q.id = i + 1; });
 
-                // 5. 生成一次性智能练习题库（挂在课程关联的 cloudId 下，练习结果回写 srs 与错题本）
+                // 6. 生成一次性智能练习题库（挂在课程关联的 cloudId 下，练习结果回写 srs 与错题本）
                 await db.questionBanks.filter(b => !!b.isSmartSession).delete();
                 const courseName = (document.getElementById('currentCourseName').textContent || '课程').trim();
                 const localBankId = await db.questionBanks.add({
