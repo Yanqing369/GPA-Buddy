@@ -714,7 +714,8 @@
 
         // 只显示当前课程的云题库（course_id 为空的旧题库/手动上传题库不属于任何课程）
         function currentCourseBanks() {
-            return cloudBanks.filter(b => String(b.course_id || '') === String(currentCourseId));
+            // bank_type='srs' 是智能练题的复习状态档案，只存状态不存题，前端隐藏
+            return cloudBanks.filter(b => String(b.course_id || '') === String(currentCourseId) && b.bank_type !== 'srs');
         }
 
         function updateCountBadges() {
@@ -1466,7 +1467,7 @@
 
         // 下载云端题库到本地（forceRefresh 时原地刷新已有副本），返回本地题库 id
         async function downloadCloudBankToLocal(bankId, { forceRefresh = false } = {}) {
-            const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId).last();
+            const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId && !b.isSmartSession).last();
             if (existing && !forceRefresh) return existing.id;
 
             // 1. 下载题库 JSON
@@ -1532,7 +1533,7 @@
 
                 if (!isMistakeBook) {
                     // 普通题库：本地已有副本则直接跳转，resume=1 继续上次进度
-                    const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId).last();
+                    const existing = await db.questionBanks.filter(b => b.migratedCloudId === bankId && !b.isSmartSession).last();
                     if (existing) {
                         window.location.href = `practice.html?id=${existing.id}&resume=1`;
                         return;
@@ -1555,67 +1556,134 @@
         }
 
         // ==================== 个性化推题（参考 quizzer 的 SM-2 间隔重复模型） ====================
-        // 以错题本题目为参考：答错次数播种难度因子 ef，练习结果回写 srs 状态，
-        // 到期未复习的题优先推送，薄弱题（ef 低、错得多）排在前面
+        // 范围覆盖课程全部题库：复习状态存在课程级隐藏云端题库（bank_type='srs'，只存状态不存题），
+        // 点击时现拼全课程题目，按到期/薄弱程度（ef 低、错得多）排序取前 N 题；
+        // 答错/答对/精选/问Gemini 都会在 practice.html 侧回写 srs 状态，形成闭环
         const SMART_PRACTICE_MAX = 12;
+        // 送分题：答错超过 2 次且 ef 低的题，在靠前位置插入乱码选项的简化版（相当于提示答案）
+        const FREEBIE_WRONG_MIN = 3;
+        const FREEBIE_EF_MAX = 2.0;
 
         function parseWrongCount(q) {
             const m = (q.source || '').match(/\[(\d+)-times mistake\]$/);
             return m ? parseInt(m[1]) : 0;
         }
 
-        // 智能练题：基于错题本的个性化推题
+        async function downloadCloudBankContent(bankId) {
+            const res = await apiFetch(`/api/share/${bankId}/download`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: '' })
+            });
+            if (!res.ok) throw new Error('Failed to download bank content');
+            return JSON.parse((await res.json()).content);
+        }
+
+        function gibberishOption() {
+            const chars = 'abcdefghijklmnopqrstuvwxyz';
+            const len = 6 + Math.floor(Math.random() * 10);
+            let s = '';
+            for (let i = 0; i < len; i++) s += (i && Math.random() < 0.15) ? ' ' : chars[Math.floor(Math.random() * 26)];
+            return s;
+        }
+
+        // 生成送分题：保留正确答案，其余选项换成随机乱码
+        function makeFreebie(q) {
+            const clone = { ...q, options: { ...q.options }, isFreebie: true };
+            for (const key of Object.keys(clone.options)) {
+                if (key !== q.correctAnswer) clone.options[key] = gibberishOption();
+            }
+            return clone;
+        }
+
+        // 智能练题：汇总全课程题库 + srs 复习状态档案，生成个性化练习
         async function smartPractice() {
             if (!currentCourseId) return;
-            const book = cloudBanks.find(b => String(b.course_id || '') === String(currentCourseId) && b.bank_type === 'mistake');
-            if (!book || !book.questions_count) {
-                showToast('还没有收录错题，刷题答错或精选题目后会自动加入错题本', 'error');
+            const sameCourse = b => String(b.course_id || '') === String(currentCourseId);
+            const banks = cloudBanks.filter(b => sameCourse(b) && b.bank_type !== 'mistake' && b.bank_type !== 'srs');
+            if (!banks.length) {
+                showToast('这门课程还没有题库，请先生成题目', 'error');
                 return;
             }
             showToast('正在生成个性化练习，请稍候…');
             try {
-                // 1. 拉取错题本完整内容（含 srs 间隔重复状态）
-                const res = await apiFetch(`/api/share/${book.id}/download`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password: '' })
-                });
-                if (!res.ok) throw new Error('Failed to download mistake book');
-                const bookData = JSON.parse((await res.json()).content);
-                const questions = Array.isArray(bookData.questions) ? bookData.questions : [];
-                if (!questions.length) {
-                    showToast('错题本还是空的，先去刷题吧', 'error');
+                // 1. 读取 srs 复习状态档案（没有则视为全新）；兼容旧版：合并错题本 content 里的 srs 与答错次数
+                const srsBank = cloudBanks.find(b => sameCourse(b) && b.bank_type === 'srs');
+                const book = cloudBanks.find(b => sameCourse(b) && b.bank_type === 'mistake');
+                const srsMap = {};
+                if (srsBank) Object.assign(srsMap, (await downloadCloudBankContent(srsBank.id)).srs || {});
+                if (book) {
+                    const bookData = await downloadCloudBankContent(book.id);
+                    const legacy = bookData.srs || {};
+                    for (const key of Object.keys(legacy)) if (!srsMap[key]) srsMap[key] = legacy[key];
+                    for (const item of bookData.questions || []) {
+                        const key = `${item.originCloudBankId}:${item.originQuestionId}`;
+                        const count = parseWrongCount(item);
+                        if (!srsMap[key]) {
+                            srsMap[key] = { ef: 2.5 - (Math.min(count, 5) / 5) * 1.2, interval: 0, reps: 0, nextReview: 0, lastReviewed: 0, wrong: count };
+                        } else if (!srsMap[key].wrong) {
+                            srsMap[key].wrong = count;
+                        }
+                    }
+                }
+
+                // 2. 现拼全课程题目（本地有镜像直接复用，没有则下载）
+                const pool = [];
+                for (const bank of banks) {
+                    const localId = await downloadCloudBankToLocal(bank.id);
+                    const local = await db.questionBanks.get(localId);
+                    for (const q of (local.questions || [])) {
+                        pool.push({ ...q, originCloudBankId: bank.id, originQuestionId: q.id });
+                    }
+                }
+                if (!pool.length) {
+                    showToast('课程题库还是空的，请先生成题目', 'error');
                     return;
                 }
 
-                // 2. 计算每题复习优先级：到期优先；薄弱题（ef 低、错得多）靠前；未到期按到期时间就近补足
+                // 3. 计算复习优先级：到期优先；薄弱题（ef 低、错得多）靠前；未到期按到期时间就近补足
+                //    先洗牌，同优先级的题（如全新题）随机出现
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
                 const now = Date.now();
-                const srsMap = bookData.srs || {};
-                const scored = questions.map(q => {
-                    const s = srsMap[`${q.originCloudBankId}:${q.originQuestionId}`]
-                        || { ef: 2.5 - (Math.min(parseWrongCount(q), 5) / 5) * 1.2, nextReview: 0 };
-                    return { q, ef: s.ef, count: parseWrongCount(q), due: !s.nextReview || now >= s.nextReview, nextReview: s.nextReview || 0 };
+                const scored = pool.map(q => {
+                    const s = srsMap[`${q.originCloudBankId}:${q.originQuestionId}`];
+                    return { q, ef: s ? s.ef : 2.5, wrong: s ? (s.wrong || 0) : 0, due: !s || !s.nextReview || now >= s.nextReview, nextReview: s ? (s.nextReview || 0) : 0 };
                 });
                 scored.sort((a, b) => {
                     if (a.due !== b.due) return a.due ? -1 : 1;
                     if (a.due) {
                         if (a.ef !== b.ef) return a.ef - b.ef;
-                        return b.count - a.count;
+                        return b.wrong - a.wrong;
                     }
                     return a.nextReview - b.nextReview;
                 });
-                const selected = scored.slice(0, Math.min(SMART_PRACTICE_MAX, scored.length)).map(s => s.q);
+                const selected = scored.slice(0, Math.min(SMART_PRACTICE_MAX, scored.length));
 
-                // 3. 生成一次性智能练习题库（挂在错题本 cloudId 下，练习中答对/答错会回写错题本 srs 与次数）
-                await db.questionBanks.filter(b => b.isSmartSession && b.migratedCloudId === book.id).delete();
+                // 4. 送分题：错得多的题在靠前位置插入简化版，与真题尽量隔 3 题
+                const questions = selected.map(s => s.q);
+                const freebies = [];
+                selected.forEach((s, i) => {
+                    if (s.wrong >= FREEBIE_WRONG_MIN && s.ef <= FREEBIE_EF_MAX) {
+                        freebies.push({ q: makeFreebie(s.q), at: Math.max(0, i - 3) });
+                    }
+                });
+                freebies.sort((a, b) => a.at - b.at).forEach(f => questions.splice(f.at, 0, f.q));
+                // 重新编号，避免送分题与真题同 id 导致精选/提问串键
+                questions.forEach((q, i) => { q.id = i + 1; });
+
+                // 5. 生成一次性智能练习题库（挂在课程关联的 cloudId 下，练习结果回写 srs 与错题本）
+                await db.questionBanks.filter(b => !!b.isSmartSession).delete();
                 const courseName = (document.getElementById('currentCourseName').textContent || '课程').trim();
                 const localBankId = await db.questionBanks.add({
                     name: `智能练习 · ${courseName}`,
-                    questions: selected,
+                    questions,
                     favorites: [],
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
-                    migratedCloudId: book.id,
+                    migratedCloudId: srsBank ? srsBank.id : (book ? book.id : banks[0].id),
                     isSmartSession: true
                 });
                 window.location.href = `practice.html?id=${localBankId}`;
