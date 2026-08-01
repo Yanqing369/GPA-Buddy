@@ -485,7 +485,7 @@ const TutorApp = {
         this.setupDropZone();
         this.setupEventListeners();
         this.initCourseMode();
-        TutorGraph.init('graphContainer');
+        TutorGraph.init('graphContainer', { usePhysics: !this.courseId }); // 物理模拟只在整页 tutor.html 启用
         TutorPanel.init();
         TutorPanel.onComplete = (nodeId) => this.markNodeComplete(nodeId);
         TutorGraph.onNodeSelect = (nodeId) => this.selectNode(nodeId);

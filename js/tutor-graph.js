@@ -19,7 +19,8 @@ const TutorGraph = {
         selectedBorder: '#f97316' // orange-500
     },
 
-    init(containerId) {
+    init(containerId, { usePhysics = true } = {}) {
+        this.usePhysics = usePhysics;
         this.nodes = new vis.DataSet([]);
         this.edges = new vis.DataSet([]);
 
@@ -53,13 +54,31 @@ const TutorGraph = {
                     shakeTowards: 'roots'
                 }
             },
-            // 不使用物理模拟：层级布局静态定位，图谱保持静止，仅支持拖动平移和滚轮缩放
-            physics: { enabled: false },
+            // 物理模拟仅在整页 tutor.html 启用：完成初始稳定布局后自动关闭，图谱随即静止；
+            // 嵌入页（个人中心）禁用，层级布局静态定位
+            physics: usePhysics ? {
+                enabled: true,
+                stabilization: { iterations: 150, updateInterval: 25 },
+                hierarchicalRepulsion: {
+                    centralGravity: 0.0,
+                    springLength: 120,
+                    springConstant: 0.01,
+                    nodeDistance: 160,
+                    damping: 0.09
+                }
+            } : { enabled: false },
             interaction: { hover: true, tooltipDelay: 200, dragView: true, zoomView: true }
         };
 
         const container = document.getElementById(containerId);
         this.network = new vis.Network(container, { nodes: this.nodes, edges: this.edges }, options);
+
+        if (usePhysics) {
+            // 稳定布局完成后关闭物理模拟，避免图谱持续漂移、反复重置视图导致无法缩放
+            this.network.on('stabilizationIterationsDone', () => {
+                this.network.setOptions({ physics: { enabled: false } });
+            });
+        }
 
         this.network.on('click', (params) => {
             if (params.nodes.length > 0) {
@@ -120,6 +139,11 @@ const TutorGraph = {
 
         this.nodes.add(visNodes);
         this.edges.add(visEdges);
+        if (this.usePhysics) {
+            // 新图谱重新开启物理模拟并显式执行一次稳定布局（完成后会被自动关闭）
+            this.network.setOptions({ physics: { enabled: true } });
+            this.network.stabilize();
+        }
         this.startBreathing();
     },
 
