@@ -789,7 +789,14 @@ const TutorApp = {
     },
 
     async startGeneration() {
+        if (!this.currentFile && this.courseId) {
+            // 课程模式：未勾选资料时自动使用第一份课程资料，不弹上传提示
+            const first = (this.courseMaterials || [])[0];
+            if (!first) return;
+            await this.selectCourseMaterial(first);
+        }
         if (!this.currentFile) {
+            if (this.courseId) return; // 课程模式不弹上传提示
             this.showToast(this.t('uploadTitle'), 'error');
             return;
         }
