@@ -491,6 +491,10 @@ const TutorApp = {
         TutorGraph.onNodeSelect = (nodeId) => this.selectNode(nodeId);
         this.loadRecentGraphs();
 
+        // URL 携带 graph 参数时自动加载对应图谱（个人中心嵌入页点击"加载"会整页跳转到这里）
+        const graphParam = new URLSearchParams(location.search).get('graph');
+        if (graphParam) this.loadGraph(Number(graphParam));
+
         if (window.fileViewer) {
             window.fileViewer.init((key) => this.t(key));
         }
@@ -885,9 +889,19 @@ const TutorApp = {
                 disableTutorRefreshProtection();
                 this.hideProgressModal();
                 if (graphId) {
-                    this.showGraphView();
-                    this.loadGraph(graphId);
-                    this.showToast(this.t('completed'), 'success');
+                    if (this.courseId) {
+                        // 课程嵌入模式：不在图谱导学栏内显示思维导图，回到上传视图，
+                        // 用户在历史列表点击"加载"整页跳转 tutor.html 查看
+                        this.showUploadView();
+                        this.loadRecentGraphs();
+                        this.showToast(this.t('completed'), 'success');
+                    } else {
+                        this.showGraphView();
+                        this.loadGraph(graphId);
+                        this.showToast(this.t('completed'), 'success');
+                    }
+                    // 重置人机验证，下次生成使用新 token（token 为一次性，复用会导致二次生成失败）
+                    if (typeof turnstile !== 'undefined') turnstile.reset();
                 } else {
                     // 骨架保存极慢或失败时的兜底
                     this.showToast(this.t('networkError'), 'error');
@@ -1120,6 +1134,10 @@ const TutorApp = {
         document.getElementById('graphSection').classList.add('hidden');
         const newGraphBtn = document.getElementById('newGraphBtn');
         if (newGraphBtn) newGraphBtn.classList.add('hidden');
+        // 重置课程资料选择状态：否则返回后同一资料仍显示已勾选，点击会被去重逻辑跳过，
+        // currentFile 已被清空却无法重新下载，导致第二次生成无法进行
+        this.selectedMaterialId = null;
+        if (this.courseId) this.renderCourseMaterials();
         this.currentGraphId = null;
         this.skeleton = null;
         this.completedNodes = new Set();
@@ -1148,6 +1166,11 @@ const TutorApp = {
 
     async loadGraph(graphId) {
         graphId = Number(graphId);
+        // 课程嵌入模式（个人中心 iframe）：不在栏内显示图谱，整页跳转到 tutor.html 显示
+        if (this.courseId) {
+            window.top.location.href = `tutor.html?graph=${graphId}`;
+            return;
+        }
         console.log('[TutorApp] loadGraph called with id:', graphId);
         const data = await TutorDB.getGraph(graphId);
         if (!data || !data.graph) {
