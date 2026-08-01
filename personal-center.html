@@ -188,13 +188,13 @@
                 <div class="h-10 rounded-xl overflow-hidden flex-shrink-0 w-10 bg-white">
                     <img src="resources/logo.png" alt="logo" class="h-full w-full object-contain">
                 </div>
-                <span class="font-bold text-lg tracking-tight text-slate-900">个人中心</span>
+                <span class="font-bold text-lg tracking-tight text-slate-900" data-i18n="navTitle">个人中心</span>
             </a>
             <a href="index.html" class="px-4 py-2 rounded-xl liquid-btn text-sm font-medium text-slate-700 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
-                <span>返回首页</span>
+                <span data-i18n="backHome">返回首页</span>
             </a>
         </div>
     </nav>
@@ -206,17 +206,17 @@
             <div class="md:col-span-1">
                 <div class="glass-card rounded-2xl p-4">
                     <div class="flex items-center justify-between mb-4">
-                        <h2 class="font-bold text-lg text-slate-900">我的课程</h2>
+                        <h2 class="font-bold text-lg text-slate-900" data-i18n="myCourses">我的课程</h2>
                         <span id="courseCount" class="text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">0</span>
                     </div>
                     <div id="courseList" class="space-y-1 max-h-[calc(100vh-280px)] overflow-y-auto pr-1">
-                        <div class="text-slate-400 text-sm text-center py-8">暂无课程</div>
+                        <div class="text-slate-400 text-sm text-center py-8" data-i18n="noCourses">暂无课程</div>
                     </div>
                     <button onclick="showAddCourseModal()" class="mt-4 w-full py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center justify-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
-                        添加课程
+                        <span data-i18n="addCourse">添加课程</span>
                     </button>
                 </div>
             </div>
@@ -229,29 +229,29 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                         </svg>
                     </div>
-                    <h3 class="text-lg font-semibold text-slate-900 mb-2">管理你的课程资料与题目</h3>
-                    <p class="text-slate-500 mb-6">从左侧选择课程，或添加新课程开始整理</p>
-                    <button onclick="showAddCourseModal()" class="px-6 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">添加第一门课程</button>
+                    <h3 class="text-lg font-semibold text-slate-900 mb-2" data-i18n="emptyTitle">管理你的课程资料与题目</h3>
+                    <p class="text-slate-500 mb-6" data-i18n="emptyDesc">从左侧选择课程，或添加新课程开始整理</p>
+                    <button onclick="showAddCourseModal()" class="px-6 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium" data-i18n="addFirstCourse">添加第一门课程</button>
                 </div>
 
                 <div id="courseDetail" class="hidden glass-card rounded-2xl p-6">
                     <div class="flex items-center justify-between mb-6">
                         <div>
                             <h2 id="currentCourseName" class="text-2xl font-bold text-slate-900"></h2>
-                            <p class="text-sm text-slate-500 mt-1">管理该课程的资料与题目</p>
+                            <p class="text-sm text-slate-500 mt-1" data-i18n="courseDetailDesc">管理该课程的资料与题目</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button onclick="smartPractice()" class="px-4 py-2 rounded-xl liquid-btn-emerald text-white text-sm font-semibold flex items-center gap-2 spring-active shadow-lg shadow-emerald-200/50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
                                 </svg>
-                                智能练题
+                                <span data-i18n="smartPractice">智能练题</span>
                             </button>
                             <button onclick="deleteCurrentCourse()" class="px-3 py-2 rounded-xl text-red-600 hover:bg-red-50 text-sm font-medium flex items-center gap-2 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
-                                删除课程
+                                <span data-i18n="deleteCourse">删除课程</span>
                             </button>
                         </div>
                     </div>
@@ -262,21 +262,21 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
-                            课程资料
+                            <span data-i18n="tabMaterials">课程资料</span>
                             <span id="materialCountBadge" class="text-xs px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">0</span>
                         </button>
                         <button onclick="switchTab('questions')" id="tab-questions" class="tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            我的题目
+                            <span data-i18n="tabQuestions">我的题目</span>
                             <span id="questionCountBadge" class="text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">0</span>
                         </button>
                         <button onclick="switchTab('tutor')" id="tab-tutor" class="tab-btn pb-3 border-b-2 border-transparent font-medium text-slate-500 hover:text-slate-700 flex items-center gap-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
                             </svg>
-                            图谱导学
+                            <span data-i18n="tabTutor">图谱导学</span>
                         </button>
                     </div>
 
@@ -289,22 +289,22 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                 </svg>
                             </div>
-                            <p class="text-slate-700 font-medium">点击或拖拽上传资料</p>
-                            <p class="text-slate-400 text-sm mt-1">支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件将自动转为 PDF）</p>
+                            <p class="text-slate-700 font-medium" data-i18n="uploadHint">点击或拖拽上传资料</p>
+                            <p class="text-slate-400 text-sm mt-1" data-i18n="uploadFormats">支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件将自动转为 PDF）</p>
                         </div>
 
                         <!-- 批量生成题库工具栏 -->
                         <div id="batchGenerateToolbar" class="hidden mt-6 flex flex-wrap items-center gap-3 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100">
                             <div class="flex items-center gap-2">
                                 <input type="checkbox" id="selectAllMaterials" onchange="toggleSelectAllMaterials()" class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                                <label for="selectAllMaterials" class="text-sm font-medium text-slate-700">全选</label>
+                                <label for="selectAllMaterials" class="text-sm font-medium text-slate-700" data-i18n="selectAll">全选</label>
                             </div>
                             <span id="selectedMaterialCount" class="text-xs px-2 py-1 rounded-full bg-white text-slate-600">已选 0 个</span>
                             <button data-generate-btn onclick="openGenerateBankModal()" class="ml-auto px-4 py-2 rounded-xl liquid-btn-emerald text-sm font-medium flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                                 </svg>
-                                批量生成题库
+                                <span data-i18n="batchGenerate">批量生成题库</span>
                             </button>
                         </div>
 
@@ -321,7 +321,7 @@
 
                     <!-- 我的题目 -->
                     <div id="questionsSection" class="hidden">
-                        <div class="mb-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-sm text-slate-600">
+                        <div class="mb-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-sm text-slate-600" data-i18n="questionsHint">
                             这里展示你从课程资料生成的题库。点击题库即可使用 practice.html 原界面练习。
                         </div>
                         <div id="questionList" class="space-y-4"></div>
@@ -339,19 +339,19 @@
     <!-- 添加课程模态框 -->
     <div id="addCourseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-card rounded-2xl p-6 w-full max-w-md modal-enter">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">添加课程</h3>
-            <input type="text" id="courseNameInput" placeholder="例如：高等数学" 
+            <h3 class="text-lg font-bold text-slate-900 mb-4" data-i18n="addCourse">添加课程</h3>
+            <input type="text" id="courseNameInput" placeholder="例如：高等数学" data-i18n-placeholder="courseNamePlaceholder"
                    class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-sm"
                    onkeypress="if(event.key==='Enter')addCourse()">
             <button onclick="importFromAcademicSystem()" class="w-full mt-4 py-2.5 rounded-xl border border-dashed border-amber-300 bg-amber-50/50 text-amber-700 hover:bg-amber-50 text-sm font-medium flex items-center justify-center gap-2 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                 </svg>
-                从教务系统导入
+                <span data-i18n="importFromAcademic">从教务系统导入</span>
             </button>
             <div class="flex gap-3 mt-6">
-                <button onclick="hideAddCourseModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
-                <button onclick="addCourse()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">确认添加</button>
+                <button onclick="hideAddCourseModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700" data-i18n="cancel">取消</button>
+                <button onclick="addCourse()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium" data-i18n="confirmAdd">确认添加</button>
             </div>
         </div>
     </div>
@@ -359,12 +359,12 @@
     <!-- 从教务系统导入结果模态框 -->
     <div id="moodleImportModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-card rounded-2xl p-6 w-full max-w-lg modal-enter flex flex-col max-h-[80vh]">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">教务系统课程列表</h3>
+            <h3 class="text-lg font-bold text-slate-900 mb-4" data-i18n="moodleListTitle">教务系统课程列表</h3>
             <div id="moodleCourseList" class="overflow-y-auto flex-1 min-h-0 pr-1">
-                <div class="text-center py-8 text-slate-400 text-sm">正在读取...</div>
+                <div class="text-center py-8 text-slate-400 text-sm" data-i18n="loading">正在读取...</div>
             </div>
             <div class="flex gap-3 mt-6">
-                <button onclick="hideMoodleImportModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">关闭</button>
+                <button onclick="hideMoodleImportModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700" data-i18n="close">关闭</button>
             </div>
         </div>
     </div>
@@ -372,27 +372,27 @@
     <!-- 添加题目模态框 -->
     <div id="addQuestionModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-card rounded-2xl p-6 w-full max-w-lg modal-enter">
-            <h3 class="text-lg font-bold text-slate-900 mb-4">添加题目</h3>
+            <h3 class="text-lg font-bold text-slate-900 mb-4" data-i18n="addQuestionTitle">添加题目</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目标题</label>
-                    <input type="text" id="questionTitleInput" placeholder="简要描述题目" 
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="questionTitleLabel">题目标题</label>
+                    <input type="text" id="questionTitleInput" placeholder="简要描述题目" data-i18n-placeholder="questionTitlePlaceholder" 
                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目内容</label>
-                    <textarea id="questionContentInput" rows="3" placeholder="输入题目内容或题干"
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="questionContentLabel">题目内容</label>
+                    <textarea id="questionContentInput" rows="3" placeholder="输入题目内容或题干" data-i18n-placeholder="questionContentPlaceholder"
                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm resize-none"></textarea>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">答案 / 解析</label>
-                    <textarea id="questionAnswerInput" rows="3" placeholder="输入答案或解析"
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="answerLabel">答案 / 解析</label>
+                    <textarea id="questionAnswerInput" rows="3" placeholder="输入答案或解析" data-i18n-placeholder="answerPlaceholder"
                               class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm resize-none"></textarea>
                 </div>
             </div>
             <div class="flex gap-3 mt-6">
-                <button onclick="hideAddQuestionModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
-                <button onclick="addQuestion()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">保存题目</button>
+                <button onclick="hideAddQuestionModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700" data-i18n="cancel">取消</button>
+                <button onclick="addQuestion()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium" data-i18n="saveQuestion">保存题目</button>
             </div>
         </div>
     </div>
@@ -400,15 +400,15 @@
     <!-- 生成题库模态框 -->
     <div id="generateBankModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
         <div class="glass-card rounded-2xl p-6 w-full max-w-md modal-enter">
-            <h3 id="generateBankModalTitle" class="text-lg font-bold text-slate-900 mb-4">生成题库</h3>
+            <h3 id="generateBankModalTitle" class="text-lg font-bold text-slate-900 mb-4" data-i18n="generateBankTitle">生成题库</h3>
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">每份文件出题数量</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="questionCountLabel">每份文件出题数量</label>
                     <input type="number" id="generateBankQuestionCount" value="20" min="1" max="200"
                            class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1.5">题目语言</label>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5" data-i18n="questionLangLabel">题目语言</label>
                     <select id="generateBankLang" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm bg-white">
                         <option value="zh">简体中文</option>
                         <option value="zh-TW">繁體中文</option>
@@ -417,13 +417,13 @@
                     </select>
                 </div>
                 <div class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">
-                    <p>将基于选中的资料各生成一个题库，生成结果先保存到本地，并同步到云端以便跨设备使用。</p>
-                    <p class="mt-1">生成过程可能耗时，请保持页面打开。</p>
+                    <p data-i18n="generateBankNote1">将基于选中的资料各生成一个题库，生成结果先保存到本地，并同步到云端以便跨设备使用。</p>
+                    <p class="mt-1" data-i18n="generateBankNote2">生成过程可能耗时，请保持页面打开。</p>
                 </div>
             </div>
             <div class="flex gap-3 mt-6">
-                <button onclick="hideGenerateBankModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700">取消</button>
-                <button id="generateBankConfirmBtn" data-generate-btn onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium">开始生成</button>
+                <button onclick="hideGenerateBankModal()" class="flex-1 py-2.5 rounded-xl liquid-btn text-sm font-medium text-slate-700" data-i18n="cancel">取消</button>
+                <button id="generateBankConfirmBtn" data-generate-btn onclick="confirmGenerateBanks()" class="flex-1 py-2.5 rounded-xl liquid-btn-emerald text-sm font-medium" data-i18n="startGenerate">开始生成</button>
             </div>
         </div>
     </div>
@@ -434,7 +434,7 @@
             <svg id="toastIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            <span id="toastMessage">操作成功</span>
+            <span id="toastMessage" data-i18n="operationSuccess">操作成功</span>
         </div>
     </div>
 
@@ -447,6 +447,550 @@
             ? '1x00000000000000000000AA'  // Turnstile test key (always passes)
             : '0x4AAAAAACyCQq1B6IXFL27N'; // Production key
 
+        // ==================== i18n（与 index.html 同一套机制，读取 localStorage.language） ====================
+        const i18n = {
+            zh: {
+                pageTitle: '个人中心 - GPA-Buddy',
+                navTitle: '个人中心',
+                backHome: '返回首页',
+                myCourses: '我的课程',
+                noCourses: '暂无课程',
+                noCoursesHint: '暂无课程，点击下方添加',
+                addCourse: '添加课程',
+                emptyTitle: '管理你的课程资料与题目',
+                emptyDesc: '从左侧选择课程，或添加新课程开始整理',
+                addFirstCourse: '添加第一门课程',
+                courseDetailDesc: '管理该课程的资料与题目',
+                smartPractice: '智能练题',
+                deleteCourse: '删除课程',
+                tabMaterials: '课程资料',
+                tabQuestions: '我的题目',
+                tabTutor: '图谱导学',
+                uploadHint: '点击或拖拽上传资料',
+                uploadFormats: '支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件将自动转为 PDF）',
+                selectAll: '全选',
+                batchGenerate: '批量生成题库',
+                questionsHint: '这里展示你从课程资料生成的题库。点击题库即可使用 practice.html 原界面练习。',
+                courseNamePlaceholder: '例如：高等数学',
+                importFromAcademic: '从教务系统导入',
+                cancel: '取消',
+                confirmAdd: '确认添加',
+                moodleListTitle: '教务系统课程列表',
+                loading: '正在读取...',
+                close: '关闭',
+                addQuestionTitle: '添加题目',
+                questionTitleLabel: '题目标题',
+                questionTitlePlaceholder: '简要描述题目',
+                questionContentLabel: '题目内容',
+                questionContentPlaceholder: '输入题目内容或题干',
+                answerLabel: '答案 / 解析',
+                answerPlaceholder: '输入答案或解析',
+                saveQuestion: '保存题目',
+                generateBankTitle: '生成题库',
+                questionCountLabel: '每份文件出题数量',
+                questionLangLabel: '题目语言',
+                generateBankNote1: '将基于选中的资料各生成一个题库，生成结果先保存到本地，并同步到云端以便跨设备使用。',
+                generateBankNote2: '生成过程可能耗时，请保持页面打开。',
+                startGenerate: '开始生成',
+                operationSuccess: '操作成功',
+                pleaseLogin: '请先登录以使用个人中心',
+                loginExpired: '登录已过期，请重新登录',
+                loadCoursesFailed: '加载课程失败',
+                loadCourseDetailFailed: '加载课程详情失败',
+                materialCount: '{0} 份资料',
+                enterCourseName: '请输入课程名称',
+                courseAddSuccess: '课程添加成功',
+                addCourseFailed: '添加课程失败',
+                selectCourseFirst: '请先选择课程',
+                confirmDeleteCourse: '确定要删除课程「{0}」吗？该课程下的所有资料和题目也将被删除。',
+                courseDeleted: '课程已删除',
+                deleteCourseFailed: '删除课程失败',
+                loadingFont: '正在加载转换字体...',
+                fontLoadFailed: '字体加载失败，无法转换中文内容',
+                convertingToPdf: '正在将 {0} 转换为 PDF...',
+                convertFailed: '转换 {0} 失败：{1}',
+                uploadFailed: '上传 {0} 失败',
+                uploadedCount: '已上传 {0} 个文件',
+                noMaterials: '暂无资料，点击上方区域上传',
+                download: '下载',
+                delete: '删除',
+                selectedCount: '已选 {0} 个',
+                downloadMaterialFailed: '下载资料失败',
+                confirmDeleteMaterial: '确定要删除这份资料吗？',
+                materialDeleted: '资料已删除',
+                deleteMaterialFailed: '删除资料失败',
+                unknownError: '未知错误',
+                serverBusy: '服务器繁忙，请稍后重试',
+                generatingWait: '正在生成题库，请等待完成',
+                generateBankFor: '生成题库：{0}',
+                batchGenerateFor: '批量生成题库（{0} 个文件）',
+                selectMaterialFirst: '请先选择资料',
+                completeVerification: '请先完成人机验证',
+                generating: '正在生成题库...',
+                queued: '正在排队...',
+                requestFailed: '请求失败 ({0})',
+                waiting: '等待中',
+                parsingFile: '正在解析文件',
+                generatedCount: '已生成 {0} 题',
+                totalCount: '共 {0} 题',
+                saved: '已保存',
+                failedPrefix: '失败：{0}',
+                generateComplete: '题库生成完成，成功 {0} 个',
+                generateFailed: '生成题库失败：{0}',
+                bankNameSuffix: '{0} 题库',
+                savedLocalCloudFailed: '「{0}」已保存到本地，但云端同步失败：{1}',
+                fillTitleContent: '请填写题目标题和内容',
+                questionSaved: '题目保存成功',
+                saveQuestionFailed: '保存题目失败',
+                noBanks: '暂无题库，在「课程资料」页选择资料生成题库',
+                mistakeBook: '错题本',
+                questionsCount: '{0} 道题目',
+                createdAt: '创建于 {0}',
+                downloadSourceTitle: '下载源文件',
+                deleteBankTitle: '删除题库',
+                defaultBankName: '题库',
+                downloadingBank: '正在下载题库，请稍候…',
+                syncingMistakes: '正在同步错题本，请稍候…',
+                loadBankFailed: '加载题库失败：{0}',
+                noBanksForPractice: '这门课程还没有题库，请先生成题目',
+                generatingPersonalized: '正在生成个性化练习，请稍候…',
+                emptyBankPool: '课程题库还是空的，请先生成题目',
+                defaultCourseName: '课程',
+                smartSessionName: '智能练习 · {0}',
+                personalizedFailed: '生成个性化练习失败：{0}',
+                confirmDeleteBank: '确定要删除这个题库吗？本地已下载的副本不会被删除。',
+                bankDeleted: '题库已删除',
+                deleteBankFailed: '删除题库失败',
+                downloadSourceFailed: '下载源文件失败',
+                confirmDeleteQuestion: '确定要删除这道题目吗？',
+                questionDeleted: '题目已删除',
+                deleteQuestionFailed: '删除题目失败',
+                loadingCourses: '正在读取课程列表...',
+                noImportableCourses: '暂无可导入课程',
+                clickToImport: '点击课程名称开始导入',
+                readFailed: '读取失败：{0}',
+                importingCourse: '正在导入课程，请稍候...',
+                importFailedStatus: '导入失败 ({0})',
+                importedCourse: '已导入课程「{0}」，共 {1} 个文件',
+                importFailed: '导入失败：{0}'
+            },
+            'zh-TW': {
+                pageTitle: '個人中心 - GPA-Buddy',
+                navTitle: '個人中心',
+                backHome: '返回首頁',
+                myCourses: '我的課程',
+                noCourses: '暫無課程',
+                noCoursesHint: '暫無課程，點擊下方添加',
+                addCourse: '添加課程',
+                emptyTitle: '管理你的課程資料與題目',
+                emptyDesc: '從左側選擇課程，或添加新課程開始整理',
+                addFirstCourse: '添加第一門課程',
+                courseDetailDesc: '管理該課程的資料與題目',
+                smartPractice: '智能練題',
+                deleteCourse: '刪除課程',
+                tabMaterials: '課程資料',
+                tabQuestions: '我的題目',
+                tabTutor: '圖譜導學',
+                uploadHint: '點擊或拖拽上傳資料',
+                uploadFormats: '支持 PDF、Word、PPT、Excel、TXT 等常用格式（Office 文件將自動轉為 PDF）',
+                selectAll: '全選',
+                batchGenerate: '批量生成題庫',
+                questionsHint: '這裡展示你從課程資料生成的題庫。點擊題庫即可使用 practice.html 原介面練習。',
+                courseNamePlaceholder: '例如：高等數學',
+                importFromAcademic: '從教務系統導入',
+                cancel: '取消',
+                confirmAdd: '確認添加',
+                moodleListTitle: '教務系統課程列表',
+                loading: '正在讀取...',
+                close: '關閉',
+                addQuestionTitle: '添加題目',
+                questionTitleLabel: '題目標題',
+                questionTitlePlaceholder: '簡要描述題目',
+                questionContentLabel: '題目內容',
+                questionContentPlaceholder: '輸入題目內容或題幹',
+                answerLabel: '答案 / 解析',
+                answerPlaceholder: '輸入答案或解析',
+                saveQuestion: '保存題目',
+                generateBankTitle: '生成題庫',
+                questionCountLabel: '每份文件出題數量',
+                questionLangLabel: '題目語言',
+                generateBankNote1: '將基於選中的資料各生成一個題庫，生成結果先保存到本地，並同步到雲端以便跨設備使用。',
+                generateBankNote2: '生成過程可能耗時，請保持頁面打開。',
+                startGenerate: '開始生成',
+                operationSuccess: '操作成功',
+                pleaseLogin: '請先登錄以使用個人中心',
+                loginExpired: '登錄已過期，請重新登錄',
+                loadCoursesFailed: '加載課程失敗',
+                loadCourseDetailFailed: '加載課程詳情失敗',
+                materialCount: '{0} 份資料',
+                enterCourseName: '請輸入課程名稱',
+                courseAddSuccess: '課程添加成功',
+                addCourseFailed: '添加課程失敗',
+                selectCourseFirst: '請先選擇課程',
+                confirmDeleteCourse: '確定要刪除課程「{0}」嗎？該課程下的所有資料和題目也將被刪除。',
+                courseDeleted: '課程已刪除',
+                deleteCourseFailed: '刪除課程失敗',
+                loadingFont: '正在加載轉換字體...',
+                fontLoadFailed: '字體加載失敗，無法轉換中文內容',
+                convertingToPdf: '正在將 {0} 轉換為 PDF...',
+                convertFailed: '轉換 {0} 失敗：{1}',
+                uploadFailed: '上傳 {0} 失敗',
+                uploadedCount: '已上傳 {0} 個文件',
+                noMaterials: '暫無資料，點擊上方區域上傳',
+                download: '下載',
+                delete: '刪除',
+                selectedCount: '已選 {0} 個',
+                downloadMaterialFailed: '下載資料失敗',
+                confirmDeleteMaterial: '確定要刪除這份資料嗎？',
+                materialDeleted: '資料已刪除',
+                deleteMaterialFailed: '刪除資料失敗',
+                unknownError: '未知錯誤',
+                serverBusy: '伺服器繁忙，請稍後重試',
+                generatingWait: '正在生成題庫，請等待完成',
+                generateBankFor: '生成題庫：{0}',
+                batchGenerateFor: '批量生成題庫（{0} 個文件）',
+                selectMaterialFirst: '請先選擇資料',
+                completeVerification: '請先完成人機驗證',
+                generating: '正在生成題庫...',
+                queued: '正在排隊...',
+                requestFailed: '請求失敗 ({0})',
+                waiting: '等待中',
+                parsingFile: '正在解析文件',
+                generatedCount: '已生成 {0} 題',
+                totalCount: '共 {0} 題',
+                saved: '已保存',
+                failedPrefix: '失敗：{0}',
+                generateComplete: '題庫生成完成，成功 {0} 個',
+                generateFailed: '生成題庫失敗：{0}',
+                bankNameSuffix: '{0} 題庫',
+                savedLocalCloudFailed: '「{0}」已保存到本地，但雲端同步失敗：{1}',
+                fillTitleContent: '請填寫題目標題和內容',
+                questionSaved: '題目保存成功',
+                saveQuestionFailed: '保存題目失敗',
+                noBanks: '暫無題庫，在「課程資料」頁選擇資料生成題庫',
+                mistakeBook: '錯題本',
+                questionsCount: '{0} 道題目',
+                createdAt: '創建於 {0}',
+                downloadSourceTitle: '下載源文件',
+                deleteBankTitle: '刪除題庫',
+                defaultBankName: '題庫',
+                downloadingBank: '正在下載題庫，請稍候…',
+                syncingMistakes: '正在同步錯題本，請稍候…',
+                loadBankFailed: '加載題庫失敗：{0}',
+                noBanksForPractice: '這門課程還沒有題庫，請先生成題目',
+                generatingPersonalized: '正在生成個性化練習，請稍候…',
+                emptyBankPool: '課程題庫還是空的，請先生成題目',
+                defaultCourseName: '課程',
+                smartSessionName: '智能練習 · {0}',
+                personalizedFailed: '生成個性化練習失敗：{0}',
+                confirmDeleteBank: '確定要刪除這個題庫嗎？本地已下載的副本不會被刪除。',
+                bankDeleted: '題庫已刪除',
+                deleteBankFailed: '刪除題庫失敗',
+                downloadSourceFailed: '下載源文件失敗',
+                confirmDeleteQuestion: '確定要刪除這道題目嗎？',
+                questionDeleted: '題目已刪除',
+                deleteQuestionFailed: '刪除題目失敗',
+                loadingCourses: '正在讀取課程列表...',
+                noImportableCourses: '暫無可導入課程',
+                clickToImport: '點擊課程名稱開始導入',
+                readFailed: '讀取失敗：{0}',
+                importingCourse: '正在導入課程，請稍候...',
+                importFailedStatus: '導入失敗 ({0})',
+                importedCourse: '已導入課程「{0}」，共 {1} 個文件',
+                importFailed: '導入失敗：{0}'
+            },
+            en: {
+                pageTitle: 'Personal Center - GPA-Buddy',
+                navTitle: 'Personal Center',
+                backHome: 'Back to Home',
+                myCourses: 'My Courses',
+                noCourses: 'No courses yet',
+                noCoursesHint: 'No courses yet — add one below',
+                addCourse: 'Add Course',
+                emptyTitle: 'Manage your course materials and questions',
+                emptyDesc: 'Select a course on the left, or add a new course to get started',
+                addFirstCourse: 'Add Your First Course',
+                courseDetailDesc: 'Manage materials and questions for this course',
+                smartPractice: 'Smart Practice',
+                deleteCourse: 'Delete Course',
+                tabMaterials: 'Materials',
+                tabQuestions: 'My Questions',
+                tabTutor: 'Mind Map Tutor',
+                uploadHint: 'Click or drag to upload materials',
+                uploadFormats: 'Supports PDF, Word, PPT, Excel, TXT and other common formats (Office files are automatically converted to PDF)',
+                selectAll: 'Select All',
+                batchGenerate: 'Generate Banks in Batch',
+                questionsHint: 'Question banks generated from course materials are shown here. Click a bank to practice in the original practice.html interface.',
+                courseNamePlaceholder: 'e.g. Advanced Mathematics',
+                importFromAcademic: 'Import from Academic System',
+                cancel: 'Cancel',
+                confirmAdd: 'Add',
+                moodleListTitle: 'Academic System Course List',
+                loading: 'Loading...',
+                close: 'Close',
+                addQuestionTitle: 'Add Question',
+                questionTitleLabel: 'Question Title',
+                questionTitlePlaceholder: 'Briefly describe the question',
+                questionContentLabel: 'Question Content',
+                questionContentPlaceholder: 'Enter the question content or stem',
+                answerLabel: 'Answer / Explanation',
+                answerPlaceholder: 'Enter the answer or explanation',
+                saveQuestion: 'Save Question',
+                generateBankTitle: 'Generate Question Bank',
+                questionCountLabel: 'Questions per file',
+                questionLangLabel: 'Question Language',
+                generateBankNote1: 'A question bank will be generated for each selected material. Results are saved locally first, then synced to the cloud for cross-device use.',
+                generateBankNote2: 'Generation may take a while — please keep this page open.',
+                startGenerate: 'Start Generating',
+                operationSuccess: 'Success',
+                pleaseLogin: 'Please log in to use the Personal Center',
+                loginExpired: 'Your session has expired. Please log in again.',
+                loadCoursesFailed: 'Failed to load courses',
+                loadCourseDetailFailed: 'Failed to load course details',
+                materialCount: '{0} materials',
+                enterCourseName: 'Please enter a course name',
+                courseAddSuccess: 'Course added',
+                addCourseFailed: 'Failed to add course',
+                selectCourseFirst: 'Please select a course first',
+                confirmDeleteCourse: 'Delete course "{0}"? All materials and questions under this course will also be deleted.',
+                courseDeleted: 'Course deleted',
+                deleteCourseFailed: 'Failed to delete course',
+                loadingFont: 'Loading conversion fonts...',
+                fontLoadFailed: 'Failed to load fonts; cannot convert Chinese content',
+                convertingToPdf: 'Converting {0} to PDF...',
+                convertFailed: 'Failed to convert {0}: {1}',
+                uploadFailed: 'Failed to upload {0}',
+                uploadedCount: 'Uploaded {0} file(s)',
+                noMaterials: 'No materials yet — click the area above to upload',
+                download: 'Download',
+                delete: 'Delete',
+                selectedCount: '{0} selected',
+                downloadMaterialFailed: 'Failed to download material',
+                confirmDeleteMaterial: 'Delete this material?',
+                materialDeleted: 'Material deleted',
+                deleteMaterialFailed: 'Failed to delete material',
+                unknownError: 'Unknown error',
+                serverBusy: 'Server is busy — please try again later',
+                generatingWait: 'Question banks are being generated — please wait',
+                generateBankFor: 'Generate Bank: {0}',
+                batchGenerateFor: 'Generate Banks in Batch ({0} files)',
+                selectMaterialFirst: 'Please select materials first',
+                completeVerification: 'Please complete the human verification first',
+                generating: 'Generating question banks...',
+                queued: 'Queued...',
+                requestFailed: 'Request failed ({0})',
+                waiting: 'Waiting',
+                parsingFile: 'Parsing file',
+                generatedCount: '{0} questions generated',
+                totalCount: '{0} questions in total',
+                saved: 'Saved',
+                failedPrefix: 'Failed: {0}',
+                generateComplete: 'Generation complete — {0} succeeded',
+                generateFailed: 'Failed to generate question bank: {0}',
+                bankNameSuffix: '{0} Bank',
+                savedLocalCloudFailed: '"{0}" was saved locally, but cloud sync failed: {1}',
+                fillTitleContent: 'Please fill in the question title and content',
+                questionSaved: 'Question saved',
+                saveQuestionFailed: 'Failed to save question',
+                noBanks: 'No question banks yet — generate one from materials on the "Materials" tab',
+                mistakeBook: 'Mistakes',
+                questionsCount: '{0} questions',
+                createdAt: 'Created {0}',
+                downloadSourceTitle: 'Download source file',
+                deleteBankTitle: 'Delete question bank',
+                defaultBankName: 'Question Bank',
+                downloadingBank: 'Downloading question bank, please wait…',
+                syncingMistakes: 'Syncing mistake book, please wait…',
+                loadBankFailed: 'Failed to load question bank: {0}',
+                noBanksForPractice: 'This course has no question banks yet — generate some questions first',
+                generatingPersonalized: 'Generating personalized practice, please wait…',
+                emptyBankPool: 'The course banks are still empty — generate some questions first',
+                defaultCourseName: 'Course',
+                smartSessionName: 'Smart Practice · {0}',
+                personalizedFailed: 'Failed to generate personalized practice: {0}',
+                confirmDeleteBank: 'Delete this question bank? Downloaded local copies will not be deleted.',
+                bankDeleted: 'Question bank deleted',
+                deleteBankFailed: 'Failed to delete question bank',
+                downloadSourceFailed: 'Failed to download source file',
+                confirmDeleteQuestion: 'Delete this question?',
+                questionDeleted: 'Question deleted',
+                deleteQuestionFailed: 'Failed to delete question',
+                loadingCourses: 'Loading course list...',
+                noImportableCourses: 'No courses available to import',
+                clickToImport: 'Click a course name to start importing',
+                readFailed: 'Failed to load: {0}',
+                importingCourse: 'Importing course, please wait...',
+                importFailedStatus: 'Import failed ({0})',
+                importedCourse: 'Imported course "{0}" with {1} files',
+                importFailed: 'Import failed: {0}'
+            },
+            ko: {
+                pageTitle: '개인 센터 - GPA-Buddy',
+                navTitle: '개인 센터',
+                backHome: '홈으로 돌아가기',
+                myCourses: '내 강좌',
+                noCourses: '강좌 없음',
+                noCoursesHint: '강좌가 없습니다. 아래에서 추가하세요',
+                addCourse: '강좌 추가',
+                emptyTitle: '강좌 자료와 문제를 관리하세요',
+                emptyDesc: '왼쪽에서 강좌를 선택하거나 새 강좌를 추가해 시작하세요',
+                addFirstCourse: '첫 강좌 추가',
+                courseDetailDesc: '이 강좌의 자료와 문제를 관리합니다',
+                smartPractice: '스마트 연습',
+                deleteCourse: '강좌 삭제',
+                tabMaterials: '강좌 자료',
+                tabQuestions: '내 문제',
+                tabTutor: '마인드맵 학습',
+                uploadHint: '클릭하거나 드래그하여 자료 업로드',
+                uploadFormats: 'PDF, Word, PPT, Excel, TXT 등 일반 형식 지원(Office 파일은 자동으로 PDF로 변환됩니다)',
+                selectAll: '전체 선택',
+                batchGenerate: '문제은행 일괄 생성',
+                questionsHint: '강좌 자료에서 생성된 문제은행이 여기에 표시됩니다. 문제은행을 클릭하면 practice.html 원래 화면에서 연습할 수 있습니다.',
+                courseNamePlaceholder: '예: 고등수학',
+                importFromAcademic: '학사 시스템에서 가져오기',
+                cancel: '취소',
+                confirmAdd: '추가 확인',
+                moodleListTitle: '학사 시스템 강좌 목록',
+                loading: '불러오는 중...',
+                close: '닫기',
+                addQuestionTitle: '문제 추가',
+                questionTitleLabel: '문제 제목',
+                questionTitlePlaceholder: '문제를 간단히 설명하세요',
+                questionContentLabel: '문제 내용',
+                questionContentPlaceholder: '문제 내용 또는 지문을 입력하세요',
+                answerLabel: '정답 / 해설',
+                answerPlaceholder: '정답 또는 해설을 입력하세요',
+                saveQuestion: '문제 저장',
+                generateBankTitle: '문제은행 생성',
+                questionCountLabel: '파일당 출제 수',
+                questionLangLabel: '문제 언어',
+                generateBankNote1: '선택한 자료마다 문제은행이 하나씩 생성되며, 결과는 먼저 로컬에 저장된 후 여러 기기에서 사용할 수 있도록 클라우드에 동기화됩니다.',
+                generateBankNote2: '생성에 시간이 걸릴 수 있으니 페이지를 열어 두세요.',
+                startGenerate: '생성 시작',
+                operationSuccess: '작업 성공',
+                pleaseLogin: '개인 센터를 사용하려면 먼저 로그인하세요',
+                loginExpired: '로그인이 만료되었습니다. 다시 로그인하세요',
+                loadCoursesFailed: '강좌 불러오기 실패',
+                loadCourseDetailFailed: '강좌 상세 불러오기 실패',
+                materialCount: '자료 {0}개',
+                enterCourseName: '강좌 이름을 입력하세요',
+                courseAddSuccess: '강좌가 추가되었습니다',
+                addCourseFailed: '강좌 추가 실패',
+                selectCourseFirst: '먼저 강좌를 선택하세요',
+                confirmDeleteCourse: '강좌「{0}」을(를) 삭제하시겠습니까? 이 강좌의 모든 자료와 문제도 함께 삭제됩니다.',
+                courseDeleted: '강좌가 삭제되었습니다',
+                deleteCourseFailed: '강좌 삭제 실패',
+                loadingFont: '변환 글꼴을 불러오는 중...',
+                fontLoadFailed: '글꼴 로딩에 실패하여 중국어 내용을 변환할 수 없습니다',
+                convertingToPdf: '{0}을(를) PDF로 변환하는 중...',
+                convertFailed: '{0} 변환 실패: {1}',
+                uploadFailed: '{0} 업로드 실패',
+                uploadedCount: '파일 {0}개 업로드 완료',
+                noMaterials: '자료가 없습니다. 위 영역을 클릭해 업로드하세요',
+                download: '다운로드',
+                delete: '삭제',
+                selectedCount: '{0}개 선택됨',
+                downloadMaterialFailed: '자료 다운로드 실패',
+                confirmDeleteMaterial: '이 자료를 삭제하시겠습니까?',
+                materialDeleted: '자료가 삭제되었습니다',
+                deleteMaterialFailed: '자료 삭제 실패',
+                unknownError: '알 수 없는 오류',
+                serverBusy: '서버가 혼잡합니다. 잠시 후 다시 시도하세요',
+                generatingWait: '문제은행을 생성하는 중입니다. 완료될 때까지 기다려 주세요',
+                generateBankFor: '문제은행 생성: {0}',
+                batchGenerateFor: '문제은행 일괄 생성(파일 {0}개)',
+                selectMaterialFirst: '먼저 자료를 선택하세요',
+                completeVerification: '먼저 사람 인증을 완료하세요',
+                generating: '문제은행 생성 중...',
+                queued: '대기 중...',
+                requestFailed: '요청 실패 ({0})',
+                waiting: '대기 중',
+                parsingFile: '파일 분석 중',
+                generatedCount: '{0}문제 생성됨',
+                totalCount: '총 {0}문제',
+                saved: '저장됨',
+                failedPrefix: '실패: {0}',
+                generateComplete: '문제은행 생성 완료, 성공 {0}개',
+                generateFailed: '문제은행 생성 실패: {0}',
+                bankNameSuffix: '{0} 문제은행',
+                savedLocalCloudFailed: '「{0}」이(가) 로컬에 저장되었지만 클라우드 동기화에 실패했습니다: {1}',
+                fillTitleContent: '문제 제목과 내용을 입력하세요',
+                questionSaved: '문제가 저장되었습니다',
+                saveQuestionFailed: '문제 저장 실패',
+                noBanks: '문제은행이 없습니다. 「강좌 자료」 탭에서 자료를 선택해 문제은행을 생성하세요',
+                mistakeBook: '오답 노트',
+                questionsCount: '문제 {0}개',
+                createdAt: '생성일 {0}',
+                downloadSourceTitle: '원본 파일 다운로드',
+                deleteBankTitle: '문제은행 삭제',
+                defaultBankName: '문제은행',
+                downloadingBank: '문제은행을 다운로드하는 중입니다. 잠시만 기다려 주세요…',
+                syncingMistakes: '오답 노트를 동기화하는 중입니다. 잠시만 기다려 주세요…',
+                loadBankFailed: '문제은행 불러오기 실패: {0}',
+                noBanksForPractice: '이 강좌에는 아직 문제은행이 없습니다. 먼저 문제를 생성하세요',
+                generatingPersonalized: '맞춤 연습을 생성하는 중입니다. 잠시만 기다려 주세요…',
+                emptyBankPool: '강좌 문제은행이 비어 있습니다. 먼저 문제를 생성하세요',
+                defaultCourseName: '강좌',
+                smartSessionName: '스마트 연습 · {0}',
+                personalizedFailed: '맞춤 연습 생성 실패: {0}',
+                confirmDeleteBank: '이 문제은행을 삭제하시겠습니까? 로컬에 다운로드된 사본은 삭제되지 않습니다.',
+                bankDeleted: '문제은행이 삭제되었습니다',
+                deleteBankFailed: '문제은행 삭제 실패',
+                downloadSourceFailed: '원본 파일 다운로드 실패',
+                confirmDeleteQuestion: '이 문제를 삭제하시겠습니까?',
+                questionDeleted: '문제가 삭제되었습니다',
+                deleteQuestionFailed: '문제 삭제 실패',
+                loadingCourses: '강좌 목록을 불러오는 중...',
+                noImportableCourses: '가져올 수 있는 강좌가 없습니다',
+                clickToImport: '강좌 이름을 클릭하면 가져오기가 시작됩니다',
+                readFailed: '불러오기 실패: {0}',
+                importingCourse: '강좌를 가져오는 중입니다. 잠시만 기다려 주세요...',
+                importFailedStatus: '가져오기 실패 ({0})',
+                importedCourse: '강좌「{0}」을(를) 가져왔습니다. 파일 {1}개',
+                importFailed: '가져오기 실패: {0}'
+            }
+        };
+
+        let currentLang = localStorage.getItem('language') || 'zh';
+        if (!i18n[currentLang]) currentLang = 'zh';
+
+        function t(key, ...args) {
+            let text = i18n[currentLang]?.[key] || key;
+            if (args.length > 0) {
+                args.forEach((arg, index) => {
+                    text = text.replace(`{${index}}`, arg);
+                });
+            }
+            return text;
+        }
+
+        // 日期格式随语言切换（formatDateTimeCN 仍固定按 UTC+8 显示）
+        function dateLocale() {
+            return { 'zh': 'zh-CN', 'zh-TW': 'zh-TW', 'en': 'en-US', 'ko': 'ko-KR' }[currentLang] || 'zh-CN';
+        }
+
+        function updateLanguage() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[currentLang]?.[key]) {
+                    el.textContent = i18n[currentLang][key];
+                }
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[currentLang]?.[key]) {
+                    el.placeholder = i18n[currentLang][key];
+                }
+            });
+
+            const langMap = { 'zh': 'zh-CN', 'zh-TW': 'zh-TW', 'en': 'en', 'ko': 'ko' };
+            document.documentElement.lang = langMap[currentLang] || 'zh-CN';
+            document.title = t('pageTitle');
+            // 图谱导学 iframe 的无障碍标题
+            const tutorFrame = document.getElementById('tutorFrame');
+            if (tutorFrame) tutorFrame.title = t('tabTutor');
+        }
 
         let data = { courses: [], materials: [], questions: [], batches: [] };
         let currentCourseId = null;
@@ -513,7 +1057,7 @@
         }
 
         function formatDate(isoString) {
-            return new Date(isoString).toLocaleDateString('zh-CN', {
+            return new Date(isoString).toLocaleDateString(dateLocale(), {
                 year: 'numeric', month: 'short', day: 'numeric'
             });
         }
@@ -560,11 +1104,13 @@
         }
 
         async function init() {
+            // 应用页面语言（静态 data-i18n 文案、<title>、<html lang>）
+            updateLanguage();
             // 打开本地数据库
             try { await db.open(); } catch (e) { console.warn('Open IndexedDB failed:', e); }
 
             if (!getAuthToken()) {
-                showToast('请先登录以使用个人中心', 'error');
+                showToast(t('pleaseLogin'), 'error');
             } else {
                 // 把 visitor 时代的本地零散题库迁移到云端 default 课程（幂等，后台执行）
                 if (window.BankMigration) {
@@ -614,7 +1160,7 @@
             try {
                 const res = await apiFetch('/api/courses');
                 if (res.status === 401) {
-                    showToast('登录已过期，请重新登录', 'error');
+                    showToast(t('loginExpired'), 'error');
                     return;
                 }
                 if (!res.ok) throw new Error('Failed to load courses');
@@ -627,7 +1173,7 @@
                 renderCourseDetail();
             } catch (e) {
                 console.error(e);
-                showToast('加载课程失败', 'error');
+                showToast(t('loadCoursesFailed'), 'error');
             }
         }
 
@@ -642,7 +1188,7 @@
                 renderCourseDetail();
             } catch (e) {
                 console.error(e);
-                showToast('加载课程详情失败', 'error');
+                showToast(t('loadCourseDetailFailed'), 'error');
             }
         }
 
@@ -661,7 +1207,7 @@
             document.getElementById('courseCount').textContent = data.courses.length;
 
             if (data.courses.length === 0) {
-                container.innerHTML = '<div class="text-slate-400 text-sm text-center py-8">暂无课程，点击下方添加</div>';
+                container.innerHTML = `<div class="text-slate-400 text-sm text-center py-8">${t('noCoursesHint')}</div>`;
                 return;
             }
 
@@ -673,7 +1219,7 @@
                          class="course-item cursor-pointer rounded-xl p-3 ${isActive ? 'active' : 'text-slate-700'}">
                         <div class="font-medium text-sm truncate">${escapeHtml(course.name)}</div>
                         <div class="text-xs mt-1 ${isActive ? 'text-emerald-600' : 'text-slate-400'}">
-                            ${materialCount} 份资料
+                            ${t('materialCount', materialCount)}
                         </div>
                     </div>
                 `;
@@ -738,7 +1284,7 @@
             const input = document.getElementById('courseNameInput');
             const name = input.value.trim();
             if (!name) {
-                showToast('请输入课程名称', 'error');
+                showToast(t('enterCourseName'), 'error');
                 return;
             }
             try {
@@ -759,21 +1305,21 @@
                 renderCourseList();
                 renderCourseDetail();
                 hideAddCourseModal();
-                showToast('课程添加成功');
+                showToast(t('courseAddSuccess'));
             } catch (e) {
                 console.error(e);
-                showToast('添加课程失败', 'error');
+                showToast(t('addCourseFailed'), 'error');
             }
         }
 
         async function deleteCurrentCourse() {
             if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
+                showToast(t('selectCourseFirst'), 'error');
                 return;
             }
             const course = data.courses.find(c => c.id === currentCourseId);
             if (!course) return;
-            if (!confirm(`确定要删除课程「${course.name}」吗？该课程下的所有资料和题目也将被删除。`)) return;
+            if (!confirm(t('confirmDeleteCourse', course.name))) return;
 
             try {
                 const res = await apiFetch(`/api/courses/${currentCourseId}`, { method: 'DELETE' });
@@ -784,10 +1330,10 @@
                 currentCourseId = null;
                 renderCourseList();
                 renderCourseDetail();
-                showToast('课程已删除');
+                showToast(t('courseDeleted'));
             } catch (e) {
                 console.error(e);
-                showToast('删除课程失败', 'error');
+                showToast(t('deleteCourseFailed'), 'error');
             }
         }
 
@@ -861,11 +1407,11 @@
         async function convertOfficeToPdf(file) {
             const converter = getDocConverter();
             if (!converter.isFontLoaded) {
-                showToast('正在加载转换字体...', 'info');
+                showToast(t('loadingFont'), 'info');
                 await converter.loadFont();
             }
             if (!converter.isFontLoaded || !converter.fontBytes) {
-                throw new Error('字体加载失败，无法转换中文内容');
+                throw new Error(t('fontLoadFailed'));
             }
             const blob = await converter.convert(file, { download: false });
             const pdfFileName = file.name.replace(/\.[^/.]+$/, '.pdf');
@@ -874,7 +1420,7 @@
 
         async function uploadFiles(files) {
             if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
+                showToast(t('selectCourseFirst'), 'error');
                 return;
             }
             let successCount = 0;
@@ -884,11 +1430,11 @@
                 const ext = (file.name.split('.').pop() || '').toLowerCase();
                 if (OFFICE_EXTS.includes(ext)) {
                     try {
-                        showToast(`正在将 ${file.name} 转换为 PDF...`, 'info');
+                        showToast(t('convertingToPdf', file.name), 'info');
                         uploadFile = await convertOfficeToPdf(file);
                     } catch (e) {
                         console.error(e);
-                        showToast(`转换 ${file.name} 失败：` + e.message, 'error');
+                        showToast(t('convertFailed', file.name, e.message), 'error');
                         continue;
                     }
                 }
@@ -908,13 +1454,13 @@
                     successCount++;
                 } catch (e) {
                     console.error(e);
-                    showToast(`上传 ${uploadFile.name} 失败`, 'error');
+                    showToast(t('uploadFailed', uploadFile.name), 'error');
                 }
             }
             updateCourseCount(currentCourseId, 'materials', successCount);
             updateCountBadges();
             if (currentTab === 'materials') renderMaterials();
-            if (successCount > 0) showToast(`已上传 ${successCount} 个文件`);
+            if (successCount > 0) showToast(t('uploadedCount', successCount));
         }
 
         function renderMaterials() {
@@ -931,7 +1477,7 @@
             updateSelectedMaterialCount();
 
             if (materials.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无资料，点击上方区域上传</div>';
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">${t('noMaterials')}</div>`;
                 return;
             }
 
@@ -955,9 +1501,9 @@
                         </div>
                     </div>
                     <div class="flex items-center gap-2 flex-shrink-0">
-                        <button data-generate-btn onclick="openGenerateBankModal('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">生成题库</button>
-                        <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">下载</button>
-                        <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">删除</button>
+                        <button data-generate-btn onclick="openGenerateBankModal('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors">${t('generateBankTitle')}</button>
+                        <button onclick="downloadMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors">${t('download')}</button>
+                        <button onclick="deleteMaterial('${m.id}')" class="px-3 py-1.5 rounded-lg text-xs font-medium text-red-600 hover:bg-red-50 transition-colors">${t('delete')}</button>
                     </div>
                 </div>
             `;
@@ -1003,12 +1549,12 @@
 
         function updateSelectedMaterialCount() {
             const count = selectedMaterialIds.size;
-            document.getElementById('selectedMaterialCount').textContent = `已选 ${count} 个`;
+            document.getElementById('selectedMaterialCount').textContent = t('selectedCount', count);
         }
 
         async function downloadMaterial(materialId) {
             if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
+                showToast(t('selectCourseFirst'), 'error');
                 return;
             }
             const material = data.materials.find(m => m.id === materialId);
@@ -1027,16 +1573,16 @@
                 URL.revokeObjectURL(url);
             } catch (e) {
                 console.error(e);
-                showToast('下载资料失败', 'error');
+                showToast(t('downloadMaterialFailed'), 'error');
             }
         }
 
         async function deleteMaterial(materialId) {
             if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
+                showToast(t('selectCourseFirst'), 'error');
                 return;
             }
-            if (!confirm('确定要删除这份资料吗？')) return;
+            if (!confirm(t('confirmDeleteMaterial'))) return;
             try {
                 const res = await apiFetch(`/api/courses/${currentCourseId}/materials/${materialId}`, { method: 'DELETE' });
                 if (!res.ok) throw new Error('Failed to delete material');
@@ -1044,18 +1590,18 @@
                 updateCourseCount(currentCourseId, 'materials', -1);
                 updateCountBadges();
                 renderMaterials();
-                showToast('资料已删除');
+                showToast(t('materialDeleted'));
             } catch (e) {
                 console.error(e);
-                showToast('删除资料失败', 'error');
+                showToast(t('deleteMaterialFailed'), 'error');
             }
         }
 
         // 生成失败信息的用户友好化：429/限流只显示「服务器繁忙」，不暴露原始报错
         function friendlyGenerateError(message) {
-            const m = String(message || '未知错误');
+            const m = String(message || t('unknownError'));
             if (m.includes('429') || m.includes('RESOURCE_EXHAUSTED') || m.includes('Resource exhausted')) {
-                return '服务器繁忙，请稍后重试';
+                return t('serverBusy');
             }
             return m;
         }
@@ -1071,7 +1617,7 @@
 
         function openGenerateBankModal(materialId = null) {
             if (isGenerating) {
-                showToast('正在生成题库，请等待完成', 'info');
+                showToast(t('generatingWait'), 'info');
                 return;
             }
             generateBankSingleId = materialId;
@@ -1081,10 +1627,10 @@
 
             if (materialId) {
                 const material = data.materials.find(m => m.id === materialId);
-                title.textContent = `生成题库：${material ? material.name : ''}`;
+                title.textContent = t('generateBankFor', material ? material.name : '');
             } else {
                 const count = selectedMaterialIds.size;
-                title.textContent = `批量生成题库（${count} 个文件）`;
+                title.textContent = t('batchGenerateFor', count);
             }
 
             modal.classList.remove('hidden');
@@ -1104,7 +1650,7 @@
             }
 
             if (materialIds.length === 0) {
-                showToast('请先选择资料', 'error');
+                showToast(t('selectMaterialFirst'), 'error');
                 return;
             }
 
@@ -1117,7 +1663,7 @@
                 turnstileToken = turnstile.getResponse();
             }
             if (!turnstileToken) {
-                showToast('请先完成人机验证', 'error');
+                showToast(t('completeVerification'), 'error');
                 return;
             }
 
@@ -1132,14 +1678,14 @@
 
             const progressArea = document.getElementById('generateProgressArea');
             progressArea.classList.remove('hidden');
-            progressArea.innerHTML = '<div class="text-sm text-slate-600 mb-2">正在生成题库...</div>';
+            progressArea.innerHTML = `<div class="text-sm text-slate-600 mb-2">${t('generating')}</div>`;
 
             const progressMap = new Map(); // fileId -> { status, count, total }
 
             // 先把所有待生成文件放入进度区，未轮到的显示「正在排队...」
             for (const id of materialIds) {
                 const material = data.materials.find(m => m.id === String(id));
-                progressMap.set(String(id), { name: material?.name || String(id), status: '正在排队...', progress: 0, queued: true });
+                progressMap.set(String(id), { name: material?.name || String(id), status: t('queued'), progress: 0, queued: true });
             }
             updateProgressUI();
 
@@ -1174,7 +1720,7 @@
 
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `请求失败 (${res.status})`);
+                    throw new Error(err.error || t('requestFailed', res.status));
                 }
 
                 const reader = res.body.getReader();
@@ -1197,13 +1743,13 @@
                             const fileId = event.fileId ? String(event.fileId) : null;
 
                             if (fileId && !progressMap.has(fileId)) {
-                                progressMap.set(fileId, { name: event.fileName || fileId, status: '等待中', progress: 0 });
+                                progressMap.set(fileId, { name: event.fileName || fileId, status: t('waiting'), progress: 0 });
                             }
 
                             if (event.type === 'file_start') {
                                 const item = progressMap.get(fileId);
                                 item.queued = false;
-                                item.status = '正在解析文件';
+                                item.status = t('parsingFile');
                                 item.parsing = true;
                             } else if (event.type === 'batch0_chunk') {
                                 // 流式逐题更新进度（与 DocGenerate 一致）
@@ -1213,7 +1759,7 @@
                                 const n = countCompleteQuestions(item.chunkBuffer);
                                 if (n > (item.count || 0)) {
                                     item.count = n;
-                                    item.status = `已生成 ${n} 题`;
+                                    item.status = t('generatedCount', n);
                                     // 流式阶段最多走到 89%，之后由 final_result / file_done 推进
                                     item.progress = Math.max(item.progress || 0, Math.min(89, Math.round(n / options.questionCount * 100)));
                                 }
@@ -1221,20 +1767,20 @@
                                 const item = progressMap.get(fileId);
                                 item.parsing = false;
                                 item.count = Math.max(event.count || 0, item.count || 0);
-                                item.status = `已生成 ${item.count} 题`;
+                                item.status = t('generatedCount', item.count);
                                 item.progress = Math.max(item.progress || 0, 50);
                             } else if (event.type === 'final_result') {
                                 const item = progressMap.get(fileId);
                                 item.parsing = false;
                                 item.count = event.generatedCount || event.data?.length || 0;
-                                item.status = `共 ${item.count} 题`;
+                                item.status = t('totalCount', item.count);
                                 item.progress = Math.max(item.progress || 0, 90);
                             } else if (event.type === 'done') {
                                 // 单个文件完成
                             } else if (event.type === 'file_done') {
                                 const item = progressMap.get(fileId);
                                 item.done = true;
-                                item.status = '已保存';
+                                item.status = t('saved');
                                 item.progress = 100;
                                 item.count = event.generatedCount || 0;
 
@@ -1243,7 +1789,7 @@
                             } else if (event.type === 'file_error') {
                                 const item = progressMap.get(fileId);
                                 item.error = true;
-                                item.status = `失败：${friendlyGenerateError(event.message)}`;
+                                item.status = t('failedPrefix', friendlyGenerateError(event.message));
                             } else if (event.type === 'all_done') {
                                 allDoneReceived = true;
                             } else if (event.type === 'error') {
@@ -1256,7 +1802,7 @@
                     }
                 }
 
-                showToast(`题库生成完成，成功 ${Array.from(progressMap.values()).filter(i => i.done).length} 个`, 'success');
+                showToast(t('generateComplete', Array.from(progressMap.values()).filter(i => i.done).length), 'success');
                 selectedMaterialIds.clear();
                 renderMaterials();
                 // 重新拉取云题库，刷新「我的题目」数量徽标（当前在该标签页时也同步刷新列表）
@@ -1265,7 +1811,7 @@
                 if (currentTab === 'questions') renderQuestions();
             } catch (e) {
                 console.error(e);
-                showToast('生成题库失败：' + friendlyGenerateError(e.message), 'error');
+                showToast(t('generateFailed', friendlyGenerateError(e.message)), 'error');
             } finally {
                 isGenerating = false;
                 setGenerateButtonsDisabled(false);
@@ -1280,7 +1826,7 @@
         async function saveGeneratedBankToLocalAndCloud(materialId, materialName, questions, lang) {
             if (!Array.isArray(questions) || questions.length === 0) return;
 
-            const bankName = `${materialName} 题库`;
+            const bankName = t('bankNameSuffix', materialName);
             const bank = {
                 name: bankName,
                 questions: questions,
@@ -1330,7 +1876,7 @@
                 });
                 if (!res.ok) {
                     const err = await res.json().catch(() => ({}));
-                    throw new Error(err.error || `请求失败 (${res.status})`);
+                    throw new Error(err.error || t('requestFailed', res.status));
                 }
                 // 回写云端 id，避免被 BankMigration 当成待迁移的本地题库重复上云
                 const uploaded = await res.json().catch(() => null);
@@ -1339,7 +1885,7 @@
                 }
             } catch (e) {
                 console.warn('Upload bank to cloud failed:', e);
-                showToast(`「${bankName}」已保存到本地，但云端同步失败：${e.message}`, 'error');
+                showToast(t('savedLocalCloudFailed', bankName, e.message), 'error');
             }
         }
 
@@ -1357,7 +1903,7 @@
 
         async function addQuestion() {
             if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
+                showToast(t('selectCourseFirst'), 'error');
                 return;
             }
             const title = document.getElementById('questionTitleInput').value.trim();
@@ -1365,7 +1911,7 @@
             const answer = document.getElementById('questionAnswerInput').value.trim();
 
             if (!title || !content) {
-                showToast('请填写题目标题和内容', 'error');
+                showToast(t('fillTitleContent'), 'error');
                 return;
             }
 
@@ -1380,10 +1926,10 @@
                 updateCourseCount(currentCourseId, 'questions', 1);
                 renderCourseList();
                 hideAddQuestionModal();
-                showToast('题目保存成功');
+                showToast(t('questionSaved'));
             } catch (e) {
                 console.error(e);
-                showToast('保存题目失败', 'error');
+                showToast(t('saveQuestionFailed'), 'error');
             }
         }
 
@@ -1392,7 +1938,7 @@
             if (!isoString) return '';
             const d = new Date(String(isoString).replace(' ', 'T') + 'Z');
             if (isNaN(d)) return String(isoString);
-            return d.toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+            return d.toLocaleString(dateLocale(), { timeZone: 'Asia/Shanghai', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
         }
 
         let cloudBanks = []; // 当前用户的云端题库列表
@@ -1416,7 +1962,7 @@
             const banks = [...currentCourseBanks()].sort((a, b) => (b.bank_type === 'mistake') - (a.bank_type === 'mistake'));
 
             if (banks.length === 0) {
-                container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无题库，在「课程资料」页选择资料生成题库</div>';
+                container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">${t('noBanks')}</div>`;
                 return;
             }
 
@@ -1424,18 +1970,18 @@
                 <div id="bankCard-${bank.id}" class="cursor-pointer p-5 rounded-2xl bg-white/60 border border-white/80 hover:bg-white/90 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
                     <div class="flex items-start justify-between gap-3">
                         <div class="min-w-0 flex-1" onclick="practiceCloudBank(${bank.id})">
-                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(bank.title)}${bank.bank_type === 'mistake' ? '<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold align-middle whitespace-nowrap">错题本</span>' : ''}</h4>
-                            <div class="text-xs text-slate-500 mt-1.5">${bank.questions_count} 道题目</div>
-                            <div class="text-xs text-slate-400 mt-0.5">创建于 ${formatDateTimeCN(bank.created_at)}</div>
+                            <h4 class="font-semibold text-slate-900 text-sm truncate group-hover:text-emerald-700 transition-colors">${escapeHtml(bank.title)}${bank.bank_type === 'mistake' ? `<span class="ml-1.5 px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-semibold align-middle whitespace-nowrap">${t('mistakeBook')}</span>` : ''}</h4>
+                            <div class="text-xs text-slate-500 mt-1.5">${t('questionsCount', bank.questions_count)}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${t('createdAt', formatDateTimeCN(bank.created_at))}</div>
                         </div>
                         <div class="flex items-center gap-1.5 flex-shrink-0">
                             ${bank.has_source_file ? `
-                            <button onclick="event.stopPropagation(); downloadCloudBankSource(${bank.id})" title="下载源文件" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
+                            <button onclick="event.stopPropagation(); downloadCloudBankSource(${bank.id})" title="${t('downloadSourceTitle')}" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                                 </svg>
                             </button>` : ''}
-                            <button onclick="event.stopPropagation(); deleteCloudBank(${bank.id})" title="删除题库" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
+                            <button onclick="event.stopPropagation(); deleteCloudBank(${bank.id})" title="${t('deleteBankTitle')}" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
@@ -1484,7 +2030,7 @@
             let localBankId;
             if (existing) {
                 await db.questionBanks.update(existing.id, {
-                    name: bankData.name || data.title || '题库',
+                    name: bankData.name || data.title || t('defaultBankName'),
                     questions: bankData.questions || [],
                     favorites: bankData.favorites || [],
                     updatedAt: new Date().toISOString()
@@ -1492,7 +2038,7 @@
                 localBankId = existing.id;
             } else {
                 localBankId = await db.questionBanks.add({
-                    name: bankData.name || data.title || '题库',
+                    name: bankData.name || data.title || t('defaultBankName'),
                     questions: bankData.questions || [],
                     favorites: bankData.favorites || [],
                     createdAt: new Date().toISOString(),
@@ -1538,17 +2084,17 @@
                         window.location.href = `practice.html?id=${existing.id}&resume=1`;
                         return;
                     }
-                    showToast('正在下载题库，请稍候…');
+                    showToast(t('downloadingBank'));
                 } else {
                     // 错题本内容会持续更新，每次都从云端刷新
-                    showToast('正在同步错题本，请稍候…');
+                    showToast(t('syncingMistakes'));
                 }
 
                 const localBankId = await downloadCloudBankToLocal(bankId, { forceRefresh: isMistakeBook });
                 window.location.href = `practice.html?id=${localBankId}&resume=1`;
             } catch (e) {
                 console.error(e);
-                showToast('加载题库失败：' + e.message, 'error');
+                showToast(t('loadBankFailed', e.message), 'error');
             } finally {
                 practicingBankIds.delete(bankId);
                 setBankDownloading(bankId, false);
@@ -1604,10 +2150,10 @@
             const sameCourse = b => String(b.course_id || '') === String(currentCourseId);
             const banks = cloudBanks.filter(b => sameCourse(b) && b.bank_type !== 'mistake' && b.bank_type !== 'srs');
             if (!banks.length) {
-                showToast('这门课程还没有题库，请先生成题目', 'error');
+                showToast(t('noBanksForPractice'), 'error');
                 return;
             }
-            showToast('正在生成个性化练习，请稍候…');
+            showToast(t('generatingPersonalized'));
             try {
                 // 1. 读取 srs 复习状态档案（没有则视为全新）；兼容旧版：合并错题本 content 里的 srs 与答错次数
                 const srsBank = cloudBanks.find(b => sameCourse(b) && b.bank_type === 'srs');
@@ -1639,7 +2185,7 @@
                     }
                 }
                 if (!pool.length) {
-                    showToast('课程题库还是空的，请先生成题目', 'error');
+                    showToast(t('emptyBankPool'), 'error');
                     return;
                 }
 
@@ -1691,9 +2237,9 @@
 
                 // 6. 生成一次性智能练习题库（挂在课程关联的 cloudId 下，练习结果回写 srs 与错题本）
                 await db.questionBanks.filter(b => !!b.isSmartSession).delete();
-                const courseName = (document.getElementById('currentCourseName').textContent || '课程').trim();
+                const courseName = (document.getElementById('currentCourseName').textContent || t('defaultCourseName')).trim();
                 const localBankId = await db.questionBanks.add({
-                    name: `智能练习 · ${courseName}`,
+                    name: t('smartSessionName', courseName),
                     questions,
                     favorites: [],
                     createdAt: new Date().toISOString(),
@@ -1704,21 +2250,21 @@
                 window.location.href = `practice.html?id=${localBankId}`;
             } catch (e) {
                 console.error(e);
-                showToast('生成个性化练习失败：' + e.message, 'error');
+                showToast(t('personalizedFailed', e.message), 'error');
             }
         }
 
         async function deleteCloudBank(bankId) {
-            if (!confirm('确定要删除这个题库吗？本地已下载的副本不会被删除。')) return;
+            if (!confirm(t('confirmDeleteBank'))) return;
             try {
                 const res = await apiFetch(`/api/cloud-banks/${bankId}`, { method: 'DELETE' });
                 if (!res.ok) throw new Error('Failed to delete cloud bank');
                 cloudBanks = cloudBanks.filter(b => b.id !== bankId);
                 renderQuestions();
-                showToast('题库已删除');
+                showToast(t('bankDeleted'));
             } catch (e) {
                 console.error(e);
-                showToast('删除题库失败', 'error');
+                showToast(t('deleteBankFailed'), 'error');
             }
         }
 
@@ -1739,16 +2285,16 @@
                 URL.revokeObjectURL(url);
             } catch (e) {
                 console.error(e);
-                showToast('下载源文件失败', 'error');
+                showToast(t('downloadSourceFailed'), 'error');
             }
         }
 
         async function deleteQuestion(questionId) {
             if (!currentCourseId) {
-                showToast('请先选择课程', 'error');
+                showToast(t('selectCourseFirst'), 'error');
                 return;
             }
-            if (!confirm('确定要删除这道题目吗？')) return;
+            if (!confirm(t('confirmDeleteQuestion'))) return;
 
             // 前端模拟生成的题目，直接本地删除，不调后端
             if (String(questionId).startsWith('mock_')) {
@@ -1756,7 +2302,7 @@
                 updateCourseCount(currentCourseId, 'questions', -1);
                 updateCountBadges();
                 renderQuestions();
-                showToast('题目已删除');
+                showToast(t('questionDeleted'));
                 return;
             }
 
@@ -1767,10 +2313,10 @@
                 updateCourseCount(currentCourseId, 'questions', -1);
                 updateCountBadges();
                 renderQuestions();
-                showToast('题目已删除');
+                showToast(t('questionDeleted'));
             } catch (e) {
                 console.error(e);
-                showToast('删除题目失败', 'error');
+                showToast(t('deleteQuestionFailed'), 'error');
             }
         }
 
@@ -1783,24 +2329,24 @@
             const modal = document.getElementById('moodleImportModal');
             const container = document.getElementById('moodleCourseList');
             modal.classList.remove('hidden');
-            container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在读取课程列表...</div>';
+            container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">${t('loadingCourses')}</div>`;
 
             try {
                 const response = await apiFetch('/api/moodle/courses');
                 const result = await response.json();
 
                 if (!response.ok || result.error) {
-                    throw new Error(result.error || `请求失败 (${response.status})`);
+                    throw new Error(result.error || t('requestFailed', response.status));
                 }
 
                 const courses = result.courses || [];
                 if (courses.length === 0) {
-                    container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">暂无可导入课程</div>';
+                    container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">${t('noImportableCourses')}</div>`;
                     return;
                 }
 
                 container.innerHTML = `
-                    <div class="text-xs text-slate-500 mb-2 px-1">点击课程名称开始导入</div>
+                    <div class="text-xs text-slate-500 mb-2 px-1">${t('clickToImport')}</div>
                     ${courses.map(course => `
                         <div onclick="importMoodleCourse(${course.id}, ${JSON.stringify(course.fullname).replace(/"/g, '&quot;')})" 
                              class="p-3 rounded-xl bg-white/60 border border-white/80 hover:bg-emerald-50/50 cursor-pointer transition-colors group">
@@ -1810,13 +2356,13 @@
                     `).join('')}
                 `;
             } catch (err) {
-                container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">读取失败：${escapeHtml(err.message)}</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">${t('readFailed', escapeHtml(err.message))}</div>`;
             }
         }
 
         async function importMoodleCourse(moodleCourseId, courseName) {
             const container = document.getElementById('moodleCourseList');
-            container.innerHTML = '<div class="text-center py-8 text-slate-400 text-sm">正在导入课程，请稍候...</div>';
+            container.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">${t('importingCourse')}</div>`;
 
             try {
                 const response = await apiFetch(`/api/moodle/courses/${moodleCourseId}/import`, {
@@ -1825,7 +2371,7 @@
                 const result = await response.json();
 
                 if (!response.ok || result.error) {
-                    throw new Error(result.error || `导入失败 (${response.status})`);
+                    throw new Error(result.error || t('importFailedStatus', response.status));
                 }
 
                 // 导入成功，添加到本地课程列表
@@ -1843,9 +2389,9 @@
                 await loadCourseDetail(importedCourse.id);
                 hideMoodleImportModal();
                 hideAddCourseModal();
-                showToast(`已导入课程「${result.course.name}」，共 ${result.materials.length} 个文件`);
+                showToast(t('importedCourse', result.course.name, result.materials.length));
             } catch (err) {
-                container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">导入失败：${escapeHtml(err.message)}</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-red-500 text-sm">${t('importFailed', escapeHtml(err.message))}</div>`;
             }
         }
 
