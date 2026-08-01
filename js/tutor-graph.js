@@ -9,6 +9,7 @@ const TutorGraph = {
     selectedNodeId: null,
     onNodeSelect: null, // callback(nodeId)
     breathInterval: null,
+    breathDrawHandler: null,
     breathPhase: 0,
 
     COLORS: {
@@ -72,6 +73,11 @@ const TutorGraph = {
         const container = document.getElementById(containerId);
         this.network = new vis.Network(container, { nodes: this.nodes, edges: this.edges }, options);
 
+        // 初始布局稳定后关闭物理模拟，避免图谱持续漂移、反复重置视图导致无法缩放
+        this.network.on('stabilizationIterationsDone', () => {
+            this.network.setOptions({ physics: { enabled: false } });
+        });
+
         this.network.on('click', (params) => {
             if (params.nodes.length > 0) {
                 const nodeId = params.nodes[0];
@@ -131,6 +137,9 @@ const TutorGraph = {
 
         this.nodes.add(visNodes);
         this.edges.add(visEdges);
+        // 新图谱重新开启物理模拟并显式执行一次稳定布局（完成后会被自动关闭，图谱随即静止）
+        this.network.setOptions({ physics: { enabled: true } });
+        this.network.stabilize();
         this.startBreathing();
     },
 
@@ -140,26 +149,32 @@ const TutorGraph = {
         const periodMs = 3000;
         const intervalMs = 60;
 
+        // 光晕直接画在 canvas 上（beforeDrawing），不再 update 节点数据——
+        // 之前每次 update 都会重启 vis 物理模拟，导致图谱一直动、缩放被反复重置
+        this.breathDrawHandler = (ctx) => {
+            if (!this.network) return;
+            const t = (Math.sin(this.breathPhase) + 1) / 2; // 0 ~ 1
+            const radius = 24 + t * 20;
+            const alpha = 0.10 + t * 0.22;
+            const positions = this.network.getPositions();
+            this.nodes.forEach(n => {
+                if (!n.color || n.color.background !== this.COLORS.available) return;
+                const p = positions[n.id];
+                if (!p) return;
+                const grad = ctx.createRadialGradient(p.x, p.y, 6, p.x, p.y, radius);
+                grad.addColorStop(0, `rgba(16, 185, 129, ${alpha})`);
+                grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        };
+        this.network.on('beforeDrawing', this.breathDrawHandler);
+
         this.breathInterval = setInterval(() => {
             this.breathPhase += (2 * Math.PI * intervalMs) / periodMs;
-            const t = (Math.sin(this.breathPhase) + 1) / 2; // 0 ~ 1
-
-            this.nodes.forEach(n => {
-                if (n.color.background === this.COLORS.available) {
-                    const size = 20 + t * 36; // 10 ~ 26
-                    const alpha = 0.15 + t * 0.35; // 0.15 ~ 0.5
-                    this.nodes.update({
-                        id: n.id,
-                        shadow: {
-                            enabled: true,
-                            color: `rgba(16, 185, 129, ${alpha})`,
-                            size: size,
-                            x: 0,
-                            y: 0
-                        }
-                    });
-                }
-            });
+            if (this.network) this.network.redraw();
         }, intervalMs);
     },
 
@@ -168,13 +183,11 @@ const TutorGraph = {
             clearInterval(this.breathInterval);
             this.breathInterval = null;
         }
-        // 重置所有节点 shadow 为基础值
-        this.nodes.forEach(n => {
-            this.nodes.update({
-                id: n.id,
-                shadow: { enabled: true, color: 'rgba(0,0,0,0.15)', size: 10, x: 0, y: 4 }
-            });
-        });
+        if (this.network && this.breathDrawHandler) {
+            this.network.off('beforeDrawing', this.breathDrawHandler);
+            this.breathDrawHandler = null;
+            this.network.redraw();
+        }
     },
 
     updateNodeStatus(nodeId, completedNodes) {
