@@ -100,7 +100,7 @@ const TutorApp = {
             refreshWarning: '⚠️ 生成过程中请勿关闭或刷新网页',
             unlockPrerequisite: '请先学习：{0}',
             pageTitle: '请出题',
-            language: '输出语言',
+            language: '输出语言1',
             langZH: '中文',
             langTW: '繁體中文',
             langEN: 'English',
