@@ -557,7 +557,7 @@ function generateEmailCode() {
 
 /* ==================== EMAIL AUTH CONFIG ==================== */
 const TEST_ACCOUNTS = {
-  'test1@gpa-buddy.com': 'PCG123456',
+  'test1@gpa-buddy.com': 'firebird',
   'test2@gpa-buddy.com': 'PCG123456',
 };
 
