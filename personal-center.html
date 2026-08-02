@@ -241,6 +241,7 @@
                             <p class="text-sm text-slate-500 mt-1" data-i18n="courseDetailDesc">管理该课程的资料与题目</p>
                         </div>
                         <div class="flex items-center gap-2">
+                            <div id="masteryBadge" class="hidden" title=""></div>
                             <button onclick="smartPractice()" class="px-4 py-2 rounded-xl liquid-btn-emerald text-white text-sm font-semibold flex items-center gap-2 spring-active shadow-lg shadow-emerald-200/50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
@@ -462,6 +463,11 @@
                 addFirstCourse: '添加第一门课程',
                 courseDetailDesc: '管理该课程的资料与题目',
                 smartPractice: '智能练题',
+                mastery: '掌握度',
+                masteryHigh: '熟练掌握，可上考场',
+                masteryMid: '基本掌握，零星复习即可',
+                masteryLow: '半生不熟，需要集中复习',
+                masteryWeak: '薄弱，优先用智能练题攻克',
                 deleteCourse: '删除课程',
                 tabMaterials: '课程资料',
                 tabQuestions: '我的题目',
@@ -587,6 +593,11 @@
                 addFirstCourse: '添加第一門課程',
                 courseDetailDesc: '管理該課程的資料與題目',
                 smartPractice: '智能練題',
+                mastery: '掌握度',
+                masteryHigh: '熟練掌握，可上考場',
+                masteryMid: '基本掌握，零星複習即可',
+                masteryLow: '半生不熟，需要集中複習',
+                masteryWeak: '薄弱，優先用智能練題攻克',
                 deleteCourse: '刪除課程',
                 tabMaterials: '課程資料',
                 tabQuestions: '我的題目',
@@ -712,6 +723,11 @@
                 addFirstCourse: 'Add Your First Course',
                 courseDetailDesc: 'Manage materials and questions for this course',
                 smartPractice: 'Smart Practice',
+                mastery: 'Mastery',
+                masteryHigh: 'Mastered, exam-ready',
+                masteryMid: 'Good grasp, light review needed',
+                masteryLow: 'Shaky, needs focused review',
+                masteryWeak: 'Weak, prioritize Smart Practice',
                 deleteCourse: 'Delete Course',
                 tabMaterials: 'Materials',
                 tabQuestions: 'My Questions',
@@ -837,6 +853,11 @@
                 addFirstCourse: '첫 강좌 추가',
                 courseDetailDesc: '이 강좌의 자료와 문제를 관리합니다',
                 smartPractice: '스마트 연습',
+                mastery: '숙달도',
+                masteryHigh: '완전히 숙달, 시험 준비 완료',
+                masteryMid: '대체로 숙달, 가벼운 복습만 필요',
+                masteryLow: '아직 불안정, 집중 복습 필요',
+                masteryWeak: '취약, 스마트 연습으로 우선 공략',
                 deleteCourse: '강좌 삭제',
                 tabMaterials: '강좌 자료',
                 tabQuestions: '내 문제',
@@ -1250,6 +1271,7 @@
             document.getElementById('currentCourseName').textContent = course.name;
 
             updateCountBadges();
+            updateMasteryBadge();
             if (currentTab === 'materials') {
                 renderMaterials();
                 renderTurnstile();
@@ -2099,6 +2121,83 @@
                 practicingBankIds.delete(bankId);
                 setBankDownloading(bankId, false);
             }
+        }
+
+        // ==================== 掌握度指标（基于 SM-2 复习状态，0-100 分） ====================
+        // 单题掌握度 m = 100 × (0.7×e^(-t/S) + 0.3×E)：R=e^(-t/S) 为遗忘曲线记忆保持率
+        // （t=距上次复习天数，S=max(interval,0.5) 为记忆稳定性），E=(ef-1.3)/1.3 截断到 0..1 为熟练度；
+        // 未练过的题计 0 分；整库按答错次数加权平均（错得越多权重越大，最高 2.5 倍）。
+        // 分档：90+ 熟练 / 70+ 基本 / 40+ 待复习 / <40 薄弱
+        async function updateMasteryBadge() {
+            const badge = document.getElementById('masteryBadge');
+            if (!badge) return;
+            badge.classList.add('hidden');
+            if (!currentCourseId) return;
+            const sameCourse = b => String(b.course_id || '') === String(currentCourseId);
+            const banks = cloudBanks.filter(b => sameCourse(b) && b.bank_type !== 'mistake' && b.bank_type !== 'srs');
+            const totalQuestions = banks.reduce((sum, b) => sum + (b.questions_count || 0), 0);
+            if (!totalQuestions) return;
+
+            // 读取 srs 复习状态档案（含旧版错题本 srs 合并，与智能练题同一口径）
+            const bankIds = new Set(banks.map(b => b.id));
+            const srsMap = {};
+            const srsBank = cloudBanks.find(b => sameCourse(b) && b.bank_type === 'srs');
+            const book = cloudBanks.find(b => sameCourse(b) && b.bank_type === 'mistake');
+            try {
+                if (srsBank) Object.assign(srsMap, (await downloadCloudBankContent(srsBank.id)).srs || {});
+                if (book) {
+                    const bookData = await downloadCloudBankContent(book.id);
+                    const legacy = bookData.srs || {};
+                    for (const key of Object.keys(legacy)) if (!srsMap[key]) srsMap[key] = legacy[key];
+                    for (const item of bookData.questions || []) {
+                        const key = `${item.originCloudBankId}:${item.originQuestionId}`;
+                        if (!srsMap[key]) {
+                            const count = parseWrongCount(item);
+                            srsMap[key] = { ef: 2.5 - (Math.min(count, 5) / 5) * 1.2, interval: 0, reps: 0, nextReview: 0, lastReviewed: 0, wrong: count };
+                        } else if (!srsMap[key].wrong) {
+                            srsMap[key].wrong = parseWrongCount(item);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('updateMasteryBadge: failed to load srs profile', e);
+                return;
+            }
+
+            const now = Date.now();
+            let weightedSum = 0, weightTotal = 0, practiced = 0;
+            for (const key of Object.keys(srsMap)) {
+                const bankId = Number(key.split(':')[0]);
+                if (!bankIds.has(bankId)) continue; // 只统计当前课程现存题库的题
+                const s = srsMap[key];
+                let m = 0;
+                if (s.lastReviewed) {
+                    const tDays = Math.max(0, (now - s.lastReviewed) / 86400000);
+                    const S = Math.max(s.interval || 0, 0.5);
+                    const R = Math.exp(-tDays / S);
+                    const E = Math.min(1, Math.max(0, ((s.ef || 1.3) - 1.3) / 1.3));
+                    m = 100 * (0.7 * R + 0.3 * E);
+                }
+                const w = 1 + Math.min(s.wrong || 0, 3) * 0.5;
+                weightedSum += m * w;
+                weightTotal += w;
+                practiced++;
+            }
+            // 未练过的题：0 分、权重 1
+            weightTotal += Math.max(0, totalQuestions - practiced);
+            if (!weightTotal) return;
+            const score = Math.round(weightedSum / weightTotal);
+
+            const bands = [
+                [90, 'masteryHigh', 'bg-emerald-100 text-emerald-700 border-emerald-200'],
+                [70, 'masteryMid', 'bg-blue-100 text-blue-700 border-blue-200'],
+                [40, 'masteryLow', 'bg-amber-100 text-amber-700 border-amber-200'],
+                [0, 'masteryWeak', 'bg-red-100 text-red-700 border-red-200']
+            ];
+            const [, bandKey, cls] = bands.find(([min]) => score >= min);
+            badge.className = `px-3 py-2 rounded-xl border text-sm font-semibold flex items-center gap-1.5 ${cls}`;
+            badge.title = t(bandKey);
+            badge.innerHTML = `<span>${t('mastery')}</span><span>${score}</span>`;
         }
 
         // ==================== 个性化推题（参考 quizzer 的 SM-2 间隔重复模型） ====================
