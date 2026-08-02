@@ -17,6 +17,13 @@ FRONTEND_URL = "https://www.gpa-buddy.com"
 # Moodle 教务系统地址
 MOODLE_BASE_URL = "https://moodle.gpa-buddy.com"
 
+# ADK Agent 答疑（/api/ask 的 Agent Runtime 链路）
+# 仅当前端传 useAdkAgent=true 且 ADK_ASK_RUNTIME_ID 已配置时生效，否则回退直连 Vertex
+ADK_ASK_ENABLED = "true"
+ADK_ASK_REGION = "us-west1"
+# 部署 Agent Runtime 后用 wrangler secret put 设置：
+# ADK_ASK_RUNTIME_ID = "projects/gpa-490510/locations/us-west1/reasoningEngines/<id>"
+
 # R2 存储空间（课程资料原始文件）
 [[r2_buckets]]
 binding = "MATERIALS_BUCKET"

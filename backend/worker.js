@@ -2255,24 +2255,31 @@ async function handleAskGemini(request, env) {
   const location = isGlobal ? 'global' : env.GCP_LOCATION;
   const endpoint = `https://${host}/v1/projects/${env.GCP_PROJECT_ID}/locations/${location}/publishers/google/models/${modelId}:generateContent`;
 
+  // ---- ADK Agent 分流：前端开关 + Worker 配置（ADK_ASK_ENABLED + ADK_ASK_RUNTIME_ID）同时就绪才走 Agent Runtime ----
+  const useAdkAgent = !!body.useAdkAgent && env.ADK_ASK_ENABLED === 'true' && !!env.ADK_ASK_RUNTIME_ID;
+
   let answer = '';
   try {
-    const token = await getAccessToken(env);
-    const vertexRes = await fetch(endpoint, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: systemInstruction }] },
-        contents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
-      }),
-    });
-    if (!vertexRes.ok) {
-      console.error('Vertex ask failed:', vertexRes.status, await vertexRes.text());
-      return createResponse(JSON.stringify({ error: 'AI service error' }), 502, request);
+    if (useAdkAgent) {
+      answer = await askViaAgentRuntime(env, ctx, messages, images, user ? `u${user.id}` : `v${visitorId}`);
+    } else {
+      const token = await getAccessToken(env);
+      const vertexRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemInstruction }] },
+          contents,
+          generationConfig: { temperature: 0.7, maxOutputTokens: 2048 },
+        }),
+      });
+      if (!vertexRes.ok) {
+        console.error('Vertex ask failed:', vertexRes.status, await vertexRes.text());
+        return createResponse(JSON.stringify({ error: 'AI service error' }), 502, request);
+      }
+      const data = await vertexRes.json();
+      answer = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
     }
-    const data = await vertexRes.json();
-    answer = (data.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('').trim();
   } catch (e) {
     console.error('handleAskGemini error:', e);
     return createResponse(JSON.stringify({ error: 'AI service error' }), 502, request);
@@ -2304,6 +2311,65 @@ async function handleAskGemini(request, env) {
     charged: isChargingAsk,
     asksUntilCharge: ASK_CHARGE_EVERY - ((askCount + 1) % ASK_CHARGE_EVERY)
   }), 200, request);
+}
+
+// ---- 通过 Agent Runtime（ADK Agent）答疑 ----
+// 复用 Vertex 服务账号（getAccessToken），调用 reasoningEngine 的 :streamQuery。
+// Agent Runtime 侧系统指令与上面直连链路一致（见 gpa-buddy-ask-adk/app/agent.py），
+// 这里把题目上下文 + 完整对话记录拼成单条 user 消息（每次请求新建会话，无跨轮状态）。
+async function askViaAgentRuntime(env, ctx, messages, images, userId) {
+  const region = env.ADK_ASK_REGION || 'us-west1';
+  const resource = String(env.ADK_ASK_RUNTIME_ID).replace(/^\/+/, '');
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/${resource}:streamQuery`;
+
+  const transcript = messages
+    .map(m => `${m.role === 'model' ? '助教' : '学生'}：${truncateStr(m.text, 2000)}`)
+    .join('\n');
+  const parts = [{ text: `${ctx}\n\n【对话记录】\n${transcript}` }];
+  for (const img of images) {
+    parts.push({ inline_data: { mime_type: img.mime_type, data: img.data } });
+  }
+
+  const token = await getAccessToken(env);
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      class_method: 'async_stream_query',
+      input: {
+        user_id: String(userId || 'guest').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64),
+        message: { role: 'user', parts },
+      },
+    }),
+  });
+  if (!res.ok) {
+    console.error('Agent Runtime ask failed:', res.status, await res.text());
+    throw new Error(`agent_runtime_${res.status}`);
+  }
+
+  // :streamQuery 返回流式事件（可能是 JSON 数组分块、JSONL 或 SSE），尽量兼容地提取 model 文本
+  const raw = await res.text();
+  const collect = ev => {
+    let t = '';
+    for (const p of ev?.content?.parts || []) {
+      if (p.text) t += p.text;
+    }
+    return t;
+  };
+  let answer = '';
+  try {
+    const parsed = JSON.parse(raw);
+    for (const ev of Array.isArray(parsed) ? parsed : [parsed]) answer += collect(ev);
+  } catch {
+    for (const line of raw.split('\n')) {
+      const s = line.trim().replace(/^data:\s*/, '').replace(/^\[/, '').replace(/\]$/, '').replace(/,$/, '');
+      if (!s || s === '[DONE]') continue;
+      try {
+        answer += collect(JSON.parse(s));
+      } catch { /* 忽略分块边界上的非完整 JSON 行 */ }
+    }
+  }
+  return answer.trim();
 }
 
 // 更新云端题库元信息（仅 owner）：回填源文件 source_*，或把无课程题库归入某课程

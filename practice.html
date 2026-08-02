@@ -425,6 +425,10 @@
         </div>
         <div id="askMessages" class="flex-1 overflow-y-auto p-4 space-y-3"></div>
         <div class="p-3 border-t border-slate-200 bg-white">
+            <label class="flex items-center gap-1.5 mb-2 text-xs text-slate-500 cursor-pointer select-none">
+                <input type="checkbox" id="useAdkAgent" class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-300" />
+                ADK Agent <span class="text-[10px] px-1 py-0.5 rounded bg-indigo-50 text-indigo-500 border border-indigo-100">β</span>
+            </label>
             <div class="flex gap-2">
                 <textarea id="askInput" rows="2" data-i18n-placeholder="askPlaceholder" placeholder="就这道题向 Gemini 提问…"
                     onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAskMessage();}"
@@ -936,6 +940,14 @@
         const askSrsMarked = new Set(); // 本次会话已对哪些题记过"提问"信号（每题只记一次）
         let askSending = false;
 
+        // ADK Agent 开关：状态持久化到 localStorage
+        (function initAdkAgentToggle() {
+            const el = document.getElementById('useAdkAgent');
+            if (!el) return;
+            el.checked = localStorage.getItem('askUseAdkAgent') === '1';
+            el.addEventListener('change', () => localStorage.setItem('askUseAdkAgent', el.checked ? '1' : '0'));
+        })();
+
         function askQuestionKey() {
             const q = practiceState.questions[practiceState.currentIndex];
             return q ? `${practiceState.bankId}:${q.id}` : null;
@@ -1066,6 +1078,7 @@
                     body: JSON.stringify({
                         messages: history.map(m => ({ role: m.role, text: m.text })),
                         images,
+                        useAdkAgent: document.getElementById('useAdkAgent').checked,
                         question: {
                             bankName: currentBank.name,
                             text: q.question || '',

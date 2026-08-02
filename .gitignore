@@ -6,6 +6,8 @@ backend/DEPLOY_AUTH.md
 backend/worker - old.js
 backend/worker - 副本.js
 backend/t.txt
+.kimi-code/
+promo/
 
 # Environment files
 .env
