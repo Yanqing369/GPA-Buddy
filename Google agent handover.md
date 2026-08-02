@@ -355,3 +355,15 @@ gcloud alpha agent-registry agents list \
 - [ ] **前端 `practice.html` 的 ADK 开关尚未发布**——需按前端静态站点的部署流程发布后才对用户可见
 - [ ] （可选）Console 配置 Agent Gateway
 - [ ] （可选）稳定后评估是否把 `--min-instances` 调回 1 消除冷启动
+
+### tutor 接口 ADK 化（2026-08-02 会话第三段）
+
+- [x] 新建 `gpa-buddy-tutor-adk`：`SequentialAgent` 工作流 = `skeleton_agent`（gemini-2.5-pro，output_schema 结构化骨架）+ 自定义 `NodeFanoutAgent`（拓扑分批、asyncio 并行、gemini-2.5-flash-lite 逐节点结构化生成 + 重试 + 兜底 stub），以 `tutor_event` JSON 标记事件流式回报进度
+- [x] 本地冒烟测试通过（`smoke_test.py`，Runner 直跑，5 节点全流程）；测试 PDF：`gpa-buddy-tutor-adk/test-smoke.pdf`
+- [x] Worker：`/api/tutor/generate` 增加 `useAdkAgent` 分流，`runTutorViaAgentRuntime()` 把 `tutor_event` 翻译为既有 SSE 事件类型（**前端协议零改动**）；扣费/complete/GCS 清理两条链路共用
+- [x] 前端：`tutor.html` 加 `ADK Agent β` 开关（localStorage `tutorUseAdkAgent`），`tutor-main.js` 提交带 `useAdkAgent`；嵌入页无开关自动走原链路
+- [x] **部署在 us-central1**（不是 ask 的 us-west1）：`projects/933510492864/locations/us-central1/reasoningEngines/6229377135409102848`，min-instances=0
+- [x] IAM：RE 服务账号获项目级 `roles/storage.objectAdmin`（解决 Cloud Build 读暂存桶 PERMISSION_DENIED）+ 两个 GCS bucket（gpa-buddy-asia / gpa_buddy）的 objectViewer
+- [x] Agent Registry（us-central1）确认 `gpa-buddy-tutor-adk` 已注册
+- [x] E2E 双链路通过：ADK 链路 35s（骨架 6 节点两批并行），原 Worker 编排链路 43s 回归正常
+- 踩坑记录：us-west1 连续失败（零容器日志，疑似区域容量/拉镜像权限）；换 us-central1 后暴露真实错误是 RE 服务账号缺 storage 权限，授 objectAdmin 后一次成功。ask agent 当时在 us-west1 的成功可能也有运气成分

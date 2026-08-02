@@ -2372,6 +2372,74 @@ async function askViaAgentRuntime(env, ctx, messages, images, userId) {
   return answer.trim();
 }
 
+// ---- 通过 Agent Runtime（ADK 多智能体工作流）生成导学图谱 ----
+// Agent 侧完成骨架+节点生成（见 gpa-buddy-tutor-adk/app/agent.py），
+// 这里只负责把 agent 事件流中的 tutor_event 翻译为前端既有 SSE 事件类型，前端零改动。
+async function runTutorViaAgentRuntime(env, token, fileUri, lang, customPrompt, visitorId, sendSSE) {
+  const region = env.ADK_TUTOR_REGION || 'us-west1';
+  const resource = String(env.ADK_TUTOR_RUNTIME_ID).replace(/^\/+/, '');
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/${resource}:streamQuery`;
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      class_method: 'async_stream_query',
+      input: {
+        user_id: `tutor_${String(visitorId || 'guest').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 48)}`,
+        message: {
+          role: 'user',
+          parts: [
+            { file_data: { file_uri: fileUri, mime_type: 'application/pdf' } },
+            { text: JSON.stringify({ lang, custom_prompt: customPrompt || '', file_uri: fileUri }) },
+          ],
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    console.error('Tutor Agent Runtime failed:', res.status, await res.text());
+    throw new Error(`VERTEX_ERROR|Agent Runtime error ${res.status}`);
+  }
+
+  // 增量解析流式事件（兼容 JSONL / SSE / JSON 数组分块）
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let gotDone = false;
+
+  const handleChunk = async (chunk) => {
+    const s = chunk.trim().replace(/^data:\s*/, '').replace(/^\[/, '').replace(/\]$/, '').replace(/,$/, '');
+    if (!s || s === '[DONE]') return;
+    let ev;
+    try { ev = JSON.parse(s); } catch { return; /* 分块边界上的非完整 JSON */ }
+    for (const p of ev?.content?.parts || []) {
+      if (!p.text) continue;
+      let obj;
+      try { obj = JSON.parse(p.text); } catch { continue; }
+      const te = obj?.tutor_event;
+      if (!te) continue;
+      if (te.type === 'agent_done') { gotDone = true; continue; }
+      if (te.type === 'error') throw new Error(`VERTEX_ERROR|${te.message || 'agent error'}`);
+      await sendSSE(te);
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop(); // 最后一段可能不完整，留到下次
+    for (const line of lines) await handleChunk(line);
+  }
+  if (buf.trim()) await handleChunk(buf);
+
+  if (!gotDone) {
+    throw new Error('VERTEX_ERROR|Agent Runtime stream ended before completion');
+  }
+}
+
 // 更新云端题库元信息（仅 owner）：回填源文件 source_*，或把无课程题库归入某课程
 async function handleUpdateCloudBankSource(request, env, bankId) {
   const user = await getUserFromRequest(request, env);
@@ -6072,6 +6140,9 @@ export default {
         const buffer = await file.arrayBuffer();
         const fileUri = await uploadToGCS(buffer, name, token, env);
 
+        // ADK Agent 分流：前端开关 + Worker 配置同时就绪才走 Agent Runtime 工作流
+        const useAdkTutor = form.get('useAdkAgent') === 'true' && env.ADK_TUTOR_ENABLED === 'true' && !!env.ADK_TUTOR_RUNTIME_ID;
+
         // 4. 创建 SSE 流
         const { readable, writable } = new TransformStream();
         const writer = writable.getWriter();
@@ -6084,6 +6155,11 @@ export default {
         // 5. 异步执行生成逻辑
         ctx.waitUntil((async () => {
           try {
+            if (useAdkTutor) {
+              // ADK 工作流：骨架（pro）+ 节点并行生成（flash-lite）都在 agent 侧完成，
+              // runTutorViaAgentRuntime 把 agent 事件翻译为既有 SSE 事件类型
+              await runTutorViaAgentRuntime(env, token, fileUri, lang, customPrompt, visitorId, sendSSE);
+            } else {
             // 5.1 骨架生成
             const modelId = mode === 'fast' ? 'gemini-2.5-flash-lite' : 'gemini-2.5-pro';
             const skeletonPrompt = buildTutorSkeletonPrompt(lang, customPrompt);
@@ -6239,7 +6315,8 @@ export default {
               contentMap.set(node.id, nodeContent);
             }
 
-            // 生成成功后再扣费
+            }
+            // 生成成功后再扣费（两条链路共用）
             if (visitorId) {
               const deducted = await deductVisitorCredits(visitorId, request, env, 'tutor_generate', tutorCost);
               if (!deducted) {

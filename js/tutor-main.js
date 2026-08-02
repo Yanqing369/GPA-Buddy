@@ -482,6 +482,12 @@ const TutorApp = {
     init() {
         this.updateLanguage();
         updateLogo();
+        // ADK Agent 开关：状态持久化到 localStorage
+        const adkToggle = document.getElementById('useAdkAgent');
+        if (adkToggle) {
+            adkToggle.checked = localStorage.getItem('tutorUseAdkAgent') === '1';
+            adkToggle.addEventListener('change', () => localStorage.setItem('tutorUseAdkAgent', adkToggle.checked ? '1' : '0'));
+        }
         this.setupDropZone();
         this.setupEventListeners();
         this.initCourseMode();
@@ -940,6 +946,9 @@ const TutorApp = {
         formData.append('lang', lang);
         formData.append('mode', mode);
         formData.append('customPrompt', customPrompt);
+        if (document.getElementById('useAdkAgent')?.checked) {
+            formData.append('useAdkAgent', 'true');
+        }
         if (Visitor && Visitor.getId()) {
             formData.append('visitorId', Visitor.getId());
         }

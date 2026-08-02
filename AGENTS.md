@@ -21,6 +21,7 @@ This is a bilingual (Chinese/English) education/review platform with a Cloudflar
 /                    # Frontend pages (HTML + JS)
 backend/             # Cloudflare Worker source and migrations
 gpa-buddy-ask-adk/   # ADK ask agent (Agent Runtime pilot for /api/ask)
+gpa-buddy-tutor-adk/ # ADK tutor workflow agent (Agent Runtime, /api/tutor/generate)
 js/                  # Shared frontend JS modules
 login/               # OAuth/email auth configs and test accounts
 resources/           # Static assets (images, audio, documents)
