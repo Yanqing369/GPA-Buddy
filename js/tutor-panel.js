@@ -182,6 +182,10 @@ const TutorPanel = {
 
     renderActivitiesStep(activities) {
         const html = activities.map((act, idx) => {
+            // 兼容：模型可能返回非标准 type（如 multiple_choice），只要带选项就按选择题处理
+            if (act.type !== 'choice' && Array.isArray(act.options) && act.options.length > 0) {
+                act.type = 'choice';
+            }
             let inner = `<div class="text-base font-medium text-slate-800 mb-4">${idx + 1}. ${this.safeMarkedParse(act.question)}</div>`;
             if (act.type === 'choice') {
                 inner += `<div class="space-y-2">`;

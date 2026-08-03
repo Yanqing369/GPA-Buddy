@@ -68,7 +68,8 @@ class CoreConcept(BaseModel):
 
 
 class CheckActivity(BaseModel):
-    type: str = "choice"
+    # Literal 约束：自由 str 时模型可能返回 "multiple_choice" 等值，前端只认 "choice"
+    type: Literal["choice"] = "choice"
     question: str
     options: list[str]
     correct: int = 0
