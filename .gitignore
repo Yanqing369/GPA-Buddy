@@ -46,3 +46,20 @@ worker_diff.txt
 
 # Local test scripts (may contain keys)
 api-test.py
+
+# AI-facing docs / dev notes (not for judges)
+AGENTS.md
+Google agent handover.md
+update_requirement.md
+resources/documents/
+gpa-buddy-ask-adk/GEMINI.md
+gpa-buddy-tutor-adk/GEMINI.md
+
+# Scaffold placeholder tests & local smoke tests
+gpa-buddy-ask-adk/tests/unit/test_dummy.py
+gpa-buddy-tutor-adk/tests/unit/test_dummy.py
+gpa-buddy-tutor-adk/smoke_test.py
+gpa-buddy-tutor-adk/test-smoke.pdf
+
+# Duplicate asset
+resources/chineselogo - 副本.png
