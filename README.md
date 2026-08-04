@@ -41,7 +41,7 @@ password:firebird
 ### 7.点击‘智能练题’进入**推荐算法模式**，此时系统会根据你的熟练度给你安排学习计划，推荐下一题做什么。
 ![alt text](resources/image-9.png)
 
-### 8.做题时可以查看原文，得知题目指向的知识点。不懂的也可以问内置的AI（背后是一个**Google Cloud Agent Runtime**）
+### 8.做题时可以查看原文，得知题目指向的知识点。不懂的也可以问内置的AI，AI将根据屏幕截图和原文内容实时作答（背后是一个**Google Cloud Agent Runtime**）
 ![alt text](resources/image-10.png)
 
 ### 9.进入‘图谱导学’可以构建思维导图。AI会把文件内容拆分为若干知识点，并按照逻辑关系把它们串起来。
