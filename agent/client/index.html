@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPA Buddy 测验 Agent</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+         background: #f6f7f9; color: #1e293b; height: 100vh; display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px;
+           background: #fff; border-bottom: 1px solid #e2e8f0; }
+  header h1 { font-size: 16px; margin: 0; flex: 1; }
+  .badge { font-size: 12px; padding: 2px 8px; border-radius: 10px; background: #e2e8f0; }
+  .badge.ok { background: #d1fae5; color: #047857; }
+  .badge.warn { background: #fef3c7; color: #b45309; }
+  button, .btn { border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+                 background: #10b981; color: #fff; font-size: 14px; text-decoration: none; }
+  button.secondary, .btn.secondary { background: #e2e8f0; color: #334155; }
+  #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; white-space: pre-wrap;
+         word-break: break-word; line-height: 1.55; font-size: 14px; }
+  .msg.user { align-self: flex-end; background: #10b981; color: #fff; }
+  .msg.agent { align-self: flex-start; background: #fff; border: 1px solid #e2e8f0; }
+  .msg.sys { align-self: center; background: transparent; color: #94a3b8; font-size: 12px; padding: 2px; }
+  .quiz-card { align-self: stretch; background: #fff; border: 1px solid #e2e8f0;
+               border-radius: 12px; padding: 16px; max-width: 720px; }
+  .quiz-card h2 { font-size: 16px; margin: 0 0 12px; }
+  .quiz-q { margin: 12px 0 4px; font-weight: 600; }
+  .quiz-opt { display: block; padding: 6px 10px; margin: 4px 0; border: 1px solid #e2e8f0;
+              border-radius: 8px; cursor: pointer; }
+  .quiz-opt:hover { background: #f0fdf4; }
+  .quiz-opt input { margin-right: 8px; }
+  #composer { display: flex; gap: 8px; padding: 12px 16px; background: #fff;
+              border-top: 1px solid #e2e8f0; }
+  #input { flex: 1; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px;
+           font-size: 14px; outline: none; }
+  #turnstile-box { position: fixed; bottom: 8px; right: 8px; opacity: .85; }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 GPA Buddy 测验 Agent</h1>
+  <span id="ts-badge" class="badge warn">Turnstile…</span>
+  <span id="login-badge" class="badge">未登录</span>
+  <button class="secondary" id="paste-btn">粘贴 token</button>
+  <label class="btn secondary" style="margin:0">上传文件<input type="file" id="file-input" hidden></label>
+  <a class="btn" id="login-btn" href="https://moyuxiaowu.org/auth/google" target="_blank">Google 登录</a>
+</header>
+
+<div id="chat"></div>
+
+<div id="composer">
+  <input id="input" placeholder="例如：帮我从 Moodle 导入课程并出题 / 根据错题再出一套题" autofocus>
+  <button id="send-btn">发送</button>
+</div>
+
+<div id="turnstile-box"></div>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+
+/* ---------- Google 登录：捕获 worker 回调带回来的 token ---------- */
+(async () => {
+  const url = new URL(location.href);
+  const token = url.searchParams.get('token');
+  if (token) {
+    history.replaceState(null, '', '/index.html');
+    const res = await fetch('/api/session', {method: 'POST',
+      headers: {'Content-Type': 'application/json'}, body: JSON.stringify({token})});
+    const data = await res.json();
+    if (data.ok) sysMsg(`登录成功：${data.user.name || data.user.email}`);
+    else sysMsg('登录失败：' + (data.error || '未知错误'));
+    refreshStatus();
+  }
+})();
+
+async function refreshStatus() {
+  const s = await (await fetch('/api/status')).json();
+  const b = document.getElementById('login-badge');
+  b.textContent = s.logged_in ? '已登录' : '未登录';
+  b.className = 'badge ' + (s.logged_in ? 'ok' : '');
+}
+refreshStatus();
+
+document.getElementById('paste-btn').onclick = async () => {
+  const token = prompt('粘贴 worker JWT（auth_token）：');
+  if (!token) return;
+  const res = await fetch('/api/session', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify({token})});
+  const data = await res.json();
+  sysMsg(data.ok ? `登录成功：${data.user.name || data.user.email}` : 'token 无效：' + data.error);
+  refreshStatus();
+};
+
+/* ---------- Turnstile：持续向服务端推送最新 token ---------- */
+function onTurnstile(token) {
+  fetch('/api/turnstile', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify({token})});
+  const b = document.getElementById('ts-badge');
+  b.textContent = 'Turnstile ✓'; b.className = 'badge ok';
+}
+try {
+  turnstile.ready(() => {
+    turnstile.render('#turnstile-box', {
+      sitekey: '0x4AAAAAACyCQq1B6IXFL27N',
+      callback: onTurnstile,
+      'expired-callback': () => { document.getElementById('ts-badge').textContent = 'Turnstile 过期'; },
+      'error-callback': () => {
+        const b = document.getElementById('ts-badge');
+        b.textContent = 'Turnstile 不可用'; b.className = 'badge warn';
+      },
+    });
+  });
+} catch (e) { /* Turnstile 加载失败不阻塞聊天 */ }
+
+/* ---------- 文件上传 ---------- */
+document.getElementById('file-input').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  sysMsg(`正在上传 ${file.name} …`);
+  const fd = new FormData();
+  fd.append('file', file);
+  const data = await (await fetch('/api/upload', {method: 'POST', body: fd})).json();
+  if (data.ok) {
+    sendMessage(`[FILE_UPLOADED] 用户上传了文件「${data.name}」，已保存到本机路径 ${data.path}。请询问用户要上传到哪个课程（或建议新建课程），然后用 upload_material 上传。`);
+  } else {
+    sysMsg('上传失败');
+  }
+  e.target.value = '';
+};
+
+/* ---------- 聊天 + SSE ---------- */
+function addMsg(text, cls) {
+  const div = document.createElement('div');
+  div.className = 'msg ' + cls;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+function sysMsg(t) { addMsg(t, 'sys'); }
+
+async function sendMessage(text) {
+  addMsg(text.startsWith('[QUIZ_ANSWERS]') ? '（已提交答案）' : text, 'user');
+  const agentDiv = addMsg('…', 'agent');
+  let acc = '';
+  const res = await fetch('/api/chat', {method: 'POST',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify({message: text})});
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  for (;;) {
+    const {done, value} = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, {stream: true});
+    const parts = buf.split('\n\n');
+    buf = parts.pop();
+    for (const p of parts) {
+      const line = p.split('\n').find(l => l.startsWith('data:'));
+      if (!line) continue;
+      const ev = JSON.parse(line.slice(5).trim());
+      if (ev.type === 'text') { acc += ev.data; agentDiv.textContent = acc; }
+      else if (ev.type === 'a2ui') renderA2UI(ev.messages);
+      else if (ev.type === 'tool') sysMsg(`调用工具：${ev.name}`);
+      else if (ev.type === 'error') sysMsg('错误：' + ev.data);
+      chat.scrollTop = chat.scrollHeight;
+    }
+  }
+  if (!acc) agentDiv.textContent = '（完成）';
+}
+
+document.getElementById('send-btn').onclick = () => {
+  const t = input.value.trim();
+  if (t) { input.value = ''; sendMessage(t); }
+};
+input.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('send-btn').click(); });
+
+/* ---------- A2UI 最小渲染器（Text / Column / RadioGroup / Button） ---------- */
+function renderA2UI(messages) {
+  let components = null, surfaceId = 'quiz';
+  for (const m of messages) {
+    if (m.surfaceUpdate) { components = m.surfaceUpdate.components; surfaceId = m.surfaceUpdate.surfaceId; }
+  }
+  if (!components) return;
+  const byId = {};
+  components.forEach(c => byId[c.id] = c.component);
+
+  const card = document.createElement('div');
+  card.className = 'quiz-card';
+
+  function renderComp(comp) {
+    if (comp.Text) {
+      const el = document.createElement(comp.Text.usageHint === 'h2' ? 'h2' : 'div');
+      if (!comp.Text.usageHint) el.className = 'quiz-q';
+      el.textContent = comp.Text.text;
+      return el;
+    }
+    if (comp.RadioGroup) {
+      const box = document.createElement('div');
+      box.dataset.radiogroup = comp.RadioGroup.name;
+      comp.RadioGroup.options.forEach(o => {
+        const label = document.createElement('label');
+        label.className = 'quiz-opt';
+        const r = document.createElement('input');
+        r.type = 'radio'; r.name = surfaceId + '_' + comp.RadioGroup.name; r.value = o.value;
+        label.appendChild(r);
+        label.appendChild(document.createTextNode(o.label));
+        box.appendChild(label);
+      });
+      return box;
+    }
+    if (comp.Button) {
+      const b = document.createElement('button');
+      b.textContent = comp.Button.label;
+      b.onclick = () => submitQuiz(card);
+      return b;
+    }
+    if (comp.Column) {
+      const col = document.createElement('div');
+      (comp.Column.children.explicitList || []).forEach(id => {
+        if (byId[id]) col.appendChild(renderComp(byId[id]));
+      });
+      return col;
+    }
+    return document.createElement('div');
+  }
+
+  card.appendChild(renderComp(byId['root']));
+  chat.appendChild(card);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function submitQuiz(card) {
+  const answers = {};
+  card.querySelectorAll('[data-radiogroup]').forEach(group => {
+    const name = group.dataset.radiogroup;
+    const checked = group.querySelector('input:checked');
+    if (checked) answers[name] = checked.value;
+  });
+  card.querySelectorAll('input,button').forEach(el => el.disabled = true);
+  sendMessage('[QUIZ_ANSWERS]' + JSON.stringify(answers));
+}
+
+sysMsg('Agent 已就绪。先点右上角「Google 登录」，然后试试：列出 Moodle 课程');
+</script>
+</body>
+</html>
