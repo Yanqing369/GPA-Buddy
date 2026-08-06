@@ -1,6 +1,6 @@
 # 交接文档：GPA Buddy 测验 Agent（Google ADK）
 
-日期：2026-08-06 ｜ 状态：**代码完成，聊天闭环已用 DeepSeek 实测通过；Moodle 导入/错题写入待真实登录态复验**
+日期：2026-08-06 ｜ 状态：**完成——完整闭环已对生产 API 实测通过（验收标准 1-6 全部跑通）**
 
 ## 1. 目标与设计思路
 
@@ -74,8 +74,13 @@ agent 调 present_quiz ──▶ 工具返回 a2ui_messages ──▶ server 识
 
 ### 待复验（需要真实登录态 JWT，浏览器点一次「Google 登录」即可）
 
-- `import_moodle_course`（需登录）、`generate_quiz`（generate-banks，PDF 路径预计可用，见下）、
-  错题实际写入云端错题本、用 Gemini 模型跑一遍（设 `GOOGLE_API_KEY`，去掉 AGENT_MODEL 即可）。
+- ~~import_moodle_course / generate_quiz / 错题写入 / 错题再出题~~ —— **2026-08-06 已全部实测通过**：
+  测试账号（test1@gpa-buddy.com，验证码已改为 `firebird`）登录 → 导入 Moodle 课程 3
+  （课程 id 40，PDF 资料 id 64）→ generate-banks 出 20 题 ✓ → 故意答错 2 题判分 18/20 ✓ →
+  错题写入云端错题本（`[1-times mistake]` 后缀正确）✓ → 根据错题生成 20 道新题 ✓。
+- 唯一未实测：浏览器里点「Google 登录」的 OAuth 跳转链路（代码已实现，原理见第 1 节；
+  如跳转异常，可用页面上的「粘贴 token」兜底）。
+- 用 Gemini 模型跑一遍聊天（设 `GOOGLE_API_KEY`，去掉 AGENT_MODEL 即可；DeepSeek 路径已验证）。
 
 ## 5. 重要发现：worker 生产 bug（建议尽快修）
 
@@ -87,7 +92,8 @@ Vertex 返回 400 `thinking_level is not supported by this model`。
   PDF 路径（`streamVertex`，`thinkingBudget: -1`，:3241）不受此 bug 影响；
   `/fallback/pdf_generate`（DeepSeek）正常，agent 已用它兜底错题再出题。
 - 修复：`thinkingLevel: 'LOW'` 改成 `thinkingBudget: 1024`（或删掉 thinkingConfig）。
-- 另：生产 worker 与仓库代码不同步——仓库里的测试账号后门（`PCG123456`）在线上无效。
+- 测试账号：test1/test2@gpa-buddy.com，当前验证码 `firebird`（见 main 分支提交 249d3a3；
+  旧码 `PCG123456` 已失效）。
 
 ## 6. 其他关键结论
 
