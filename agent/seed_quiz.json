@@ -1,0 +1,8 @@
+{
+  "title": "演示测验",
+  "questions": [
+    {"id": 1, "question": "水的化学式是什么？", "options": {"A": "H2O2", "B": "H2O", "C": "CO2", "D": "O2"}, "correctAnswer": "B", "explanation": "水由两个氢原子和一个氧原子构成，化学式为 H2O。", "source": "seed"},
+    {"id": 2, "question": "光合作用主要发生在植物细胞的哪个结构中？", "options": {"A": "线粒体", "B": "细胞核", "C": "叶绿体", "D": "液泡"}, "correctAnswer": "C", "explanation": "光合作用的场所是叶绿体。", "source": "seed"},
+    {"id": 3, "question": "HTTP 协议默认端口号是？", "options": {"A": "21", "B": "443", "C": "25", "D": "80"}, "correctAnswer": "D", "explanation": "HTTP 默认 80，HTTPS 默认 443。", "source": "seed"}
+  ]
+}

@@ -30,6 +30,7 @@ agent/
    export GOOGLE_API_KEY=你的key       # bash
    ```
    或使用 Vertex AI：`GOOGLE_GENAI_USE_VERTEXAI=TRUE` + `GOOGLE_CLOUD_PROJECT` + `gcloud auth application-default login`。
+   也可临时用 DeepSeek 验证：`set AGENT_MODEL=deepseek/deepseek-chat` + `set DEEPSEEK_API_KEY=...`。
 
 ## 运行
 

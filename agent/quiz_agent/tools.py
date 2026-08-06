@@ -332,16 +332,13 @@ def present_quiz() -> dict:
 
 
 def grade_quiz(answers: dict[str, str]) -> dict:
-    """给用户提交的答案判分，并把错题写入云端错题本（需要登录）。
+    """给用户提交的答案判分；已登录时把错题写入云端错题本。
 
     用户作答后客户端会发来 [QUIZ_ANSWERS] 消息，解析其中的 JSON 作为 answers 传入。
 
     Args:
         answers: 题号到选项字母的映射，例如 {"q1": "A", "q2": "C"}。
     """
-    err = _check_auth()
-    if err:
-        return err
     quiz = session.get("quiz")
     if not quiz or not quiz.get("questions"):
         return {"status": "error", "message": "没有进行中的测验。"}
@@ -357,13 +354,18 @@ def grade_quiz(answers: dict[str, str]) -> dict:
             wrong.append(q)
     score = sum(1 for r in results if r["correct"])
     mistake_count = 0
+    note = ""
     if wrong:
-        bank_id = _get_or_create_mistake_bank(quiz.get("course_id"))
-        mistake_count = _append_mistakes(bank_id, wrong)
+        if session.get("token"):
+            bank_id = _get_or_create_mistake_bank(quiz.get("course_id"))
+            mistake_count = _append_mistakes(bank_id, wrong)
+        else:
+            note = "（未登录，本次错题未写入错题本；登录后重新提交即可记录）"
     return {"status": "success", "score": score, "total": len(results),
             "results": results, "mistakes_recorded": mistake_count,
             "message": (f"得分 {score}/{len(results)}。"
-                        + (f"已将 {mistake_count} 道错题写入错题本。" if mistake_count else "全部答对，没有错题。"))}
+                        + (f"已将 {mistake_count} 道错题写入错题本。" if mistake_count else "")
+                        + note)}
 
 
 def list_mistakes(course_id: int | None = None) -> dict:

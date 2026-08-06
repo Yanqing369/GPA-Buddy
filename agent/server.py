@@ -6,6 +6,7 @@
 
 import asyncio
 import json
+import os
 import pathlib
 
 import httpx
@@ -35,6 +36,12 @@ _session_ready = asyncio.Event()
 @app.on_event("startup")
 async def _init_session():
     await session_service.create_session(app_name="quiz_agent", user_id=USER_ID, session_id=SESSION_ID)
+    # 可选：QUIZ_AGENT_SEED_QUIZ=<json文件> 预置一套演示题目（用于无登录演示/测试 A2UI 链路）
+    seed = os.environ.get("QUIZ_AGENT_SEED_QUIZ")
+    if seed and pathlib.Path(seed).exists():
+        data = json.loads(pathlib.Path(seed).read_text(encoding="utf-8"))
+        session["quiz"] = {"course_id": None, "title": data.get("title", "演示测验"),
+                           "questions": data["questions"]}
     _session_ready.set()
 
 

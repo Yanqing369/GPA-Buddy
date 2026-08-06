@@ -1,8 +1,20 @@
 """GPA Buddy 测验 agent：导入文件 → 出题 → 做题 → 记错题 → 再出题。"""
 
+import os
+
 from google.adk.agents import Agent
 
 from . import tools
+
+
+def _build_model():
+    """默认 gemini-2.5-flash；设 AGENT_MODEL=deepseek/deepseek-chat 等可经 LiteLLM 换模型。"""
+    name = os.environ.get("AGENT_MODEL", "gemini-2.5-flash")
+    if "/" in name:  # LiteLLM 形式，如 deepseek/deepseek-chat
+        from google.adk.models.lite_llm import LiteLlm
+        return LiteLlm(model=name)
+    return name
+
 
 INSTRUCTION = """你是 GPA Buddy 测验助手，帮助用户把课程资料变成选择题练习，并围绕错题循环巩固。
 
@@ -27,7 +39,7 @@ INSTRUCTION = """你是 GPA Buddy 测验助手，帮助用户把课程资料变�
 
 root_agent = Agent(
     name="quiz_agent",
-    model="gemini-2.5-flash",
+    model=_build_model(),
     description="从 Moodle 或本地文件生成选择题测验，记录错题并针对错题再出题的练习助手。",
     instruction=INSTRUCTION,
     tools=[
