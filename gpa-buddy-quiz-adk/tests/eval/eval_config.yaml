@@ -1,0 +1,32 @@
+metrics_to_run:
+  - used_worker_tool
+  - agent_turn_count
+
+custom_metrics:
+  # 两个 case 都期望 agent 调用 worker 工具（list_moodle_courses / import_moodle_course 等），
+  # 纯代码判定，本地执行，不依赖 eval 服务区域。
+  - name: used_worker_tool
+    custom_function: |
+      WORKER_TOOLS = {
+          "check_login", "list_moodle_courses", "import_moodle_course",
+          "list_my_courses", "create_course", "list_materials", "upload_material",
+          "generate_quiz", "present_quiz", "grade_quiz", "list_mistakes",
+          "generate_quiz_from_mistakes",
+      }
+
+      def evaluate(instance):
+          calls = []
+          for turn in (instance.get("agent_data") or {}).get("turns", []):
+              for ev in turn.get("events", []):
+                  for part in (ev.get("content") or {}).get("parts", []):
+                      fc = part.get("function_call")
+                      if fc and fc.get("name"):
+                          calls.append(fc["name"])
+          hit = [c for c in calls if c in WORKER_TOOLS]
+          return {"score": 1 if hit else 0,
+                  "explanation": f"tool calls: {calls}"}
+  - name: agent_turn_count
+    custom_function: |
+      def evaluate(instance):
+          turns = (instance.get("agent_data") or {}).get("turns", [])
+          return {'score': len(turns)}

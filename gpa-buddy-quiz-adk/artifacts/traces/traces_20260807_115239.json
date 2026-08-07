@@ -1,0 +1,209 @@
+{
+  "eval_cases": [
+    {
+      "prompt": {
+        "parts": [
+          {
+            "text": "列出 Moodle 课程"
+          }
+        ],
+        "role": "user"
+      },
+      "responses": [
+        {
+          "response": {
+            "parts": [
+              {
+                "text": "好的，Moodle 上有以下课程可供导入：\n1. Biochemistry of Nutrition营养学 (moodle_id: 2)\n2. 生物信息学 bioinfomatics (moodle_id: 3)\n\n您想导入哪门课程？请告诉我课程的 moodle_id。"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ],
+      "eval_case_id": "list_moodle_courses",
+      "agent_data": {
+        "agents": {
+          "quiz_agent": {
+            "agent_id": "quiz_agent",
+            "agent_type": "LlmAgent",
+            "description": "从 Moodle 或本地文件生成选择题测验，记录错题并针对错题再出题的练习助手。",
+            "instruction": "你是 GPA Buddy 测验助手，帮助用户把课程资料变成选择题练习，并围绕错题循环巩固。\n\n工作循环（根据用户的聊天指令自主规划步骤）：\n1. 获取资料：用户想从 Moodle 导入时，先 list_moodle_courses 列出课程，确认后 import_moodle_course；\n   用户给了本地文件路径时，用 list_my_courses / create_course 准备课程，再 upload_material 上传\n   （仅支持 .pdf/.txt/.md）。\n2. 出题：用 list_materials 确认资料 id，然后 generate_quiz 生成题目，成功后必须立即调用\n   present_quiz 把测验界面展示给用户（不要自己把题目逐条打在聊天里，除非用户明确要求）。\n3. 判分：用户作答后，客户端会发来一条以 [QUIZ_ANSWERS] 开头、后接 JSON 的消息，\n   把 JSON 解析成 dict 调用 grade_quiz。判分后简要汇报得分和错题解析要点，错题会自动写入错题本。\n4. 再出题：用户想巩固时，用 list_mistakes 查看错题本，或 generate_quiz_from_mistakes 直接根据\n   错题出新题，成功后同样立即 present_quiz。错题重练后再判分，形成循环。\n\n规则：\n- 任何工具返回\"尚未登录\"时，引导用户点击页面右上角「Google 登录」，不要反复重试。\n- 出题数量默认 10 题，语言默认中文(zh)，除非用户另有要求。\n- 导入 Moodle 课程后，主动告诉用户课程里有哪些文件，并询问是否直接出题（用户说\"直接出\"就别再问）。\n- 回复用中文，简洁，不要复述工具返回的原始 JSON。\n- generate_quiz / generate_quiz_from_mistakes 成功后必须调用 present_quiz，这一步不能省。\n",
+            "tools": [
+              {
+                "function_declarations": [
+                  {
+                    "description": "列出 Moodle 上可导入的课程（无需登录）。",
+                    "name": "list_moodle_courses"
+                  }
+                ]
+              }
+            ],
+            "sub_agents": []
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "turn_id": "turn_0",
+            "events": [
+              {
+                "author": "quiz_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-2cc311ef-84b6-4e56-85bf-c9c8a5258dfc",
+                        "args": {},
+                        "name": "list_moodle_courses"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "quiz_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-2cc311ef-84b6-4e56-85bf-c9c8a5258dfc",
+                        "name": "list_moodle_courses",
+                        "response": {
+                          "status": "success",
+                          "courses": [
+                            {
+                              "moodle_id": 2,
+                              "name": "Biochemistry of Nutrition营养学",
+                              "shortname": "营养Nutri"
+                            },
+                            {
+                              "moodle_id": 3,
+                              "name": "生物信息学 bioinfomatics",
+                              "shortname": "bioinfomatics"
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "quiz_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "好的，Moodle 上有以下课程可供导入：\n1. Biochemistry of Nutrition营养学 (moodle_id: 2)\n2. 生物信息学 bioinfomatics (moodle_id: 3)\n\n您想导入哪门课程？请告诉我课程的 moodle_id。"
+                    }
+                  ],
+                  "role": "model"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "prompt": {
+        "parts": [
+          {
+            "text": "帮我把 Moodle 课程 id 3 导入"
+          }
+        ],
+        "role": "user"
+      },
+      "responses": [
+        {
+          "response": {
+            "parts": [
+              {
+                "text": "尚未登录。请点击页面右上角「Google 登录」后再试。"
+              }
+            ],
+            "role": "model"
+          }
+        }
+      ],
+      "eval_case_id": "import_requires_login",
+      "agent_data": {
+        "agents": {
+          "quiz_agent": {
+            "agent_id": "quiz_agent",
+            "agent_type": "LlmAgent",
+            "description": "从 Moodle 或本地文件生成选择题测验，记录错题并针对错题再出题的练习助手。",
+            "instruction": "你是 GPA Buddy 测验助手，帮助用户把课程资料变成选择题练习，并围绕错题循环巩固。\n\n工作循环（根据用户的聊天指令自主规划步骤）：\n1. 获取资料：用户想从 Moodle 导入时，先 list_moodle_courses 列出课程，确认后 import_moodle_course；\n   用户给了本地文件路径时，用 list_my_courses / create_course 准备课程，再 upload_material 上传\n   （仅支持 .pdf/.txt/.md）。\n2. 出题：用 list_materials 确认资料 id，然后 generate_quiz 生成题目，成功后必须立即调用\n   present_quiz 把测验界面展示给用户（不要自己把题目逐条打在聊天里，除非用户明确要求）。\n3. 判分：用户作答后，客户端会发来一条以 [QUIZ_ANSWERS] 开头、后接 JSON 的消息，\n   把 JSON 解析成 dict 调用 grade_quiz。判分后简要汇报得分和错题解析要点，错题会自动写入错题本。\n4. 再出题：用户想巩固时，用 list_mistakes 查看错题本，或 generate_quiz_from_mistakes 直接根据\n   错题出新题，成功后同样立即 present_quiz。错题重练后再判分，形成循环。\n\n规则：\n- 任何工具返回\"尚未登录\"时，引导用户点击页面右上角「Google 登录」，不要反复重试。\n- 出题数量默认 10 题，语言默认中文(zh)，除非用户另有要求。\n- 导入 Moodle 课程后，主动告诉用户课程里有哪些文件，并询问是否直接出题（用户说\"直接出\"就别再问）。\n- 回复用中文，简洁，不要复述工具返回的原始 JSON。\n- generate_quiz / generate_quiz_from_mistakes 成功后必须调用 present_quiz，这一步不能省。\n",
+            "tools": [
+              {
+                "function_declarations": [
+                  {
+                    "description": "列出 Moodle 上可导入的课程（无需登录）。",
+                    "name": "list_moodle_courses"
+                  }
+                ]
+              }
+            ],
+            "sub_agents": []
+          }
+        },
+        "turns": [
+          {
+            "turn_index": 0,
+            "turn_id": "turn_0",
+            "events": [
+              {
+                "author": "quiz_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "adk-e27a2764-361a-49aa-970e-cee12b76e331",
+                        "args": {
+                          "moodle_course_id": 3
+                        },
+                        "name": "import_moodle_course"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "quiz_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "adk-e27a2764-361a-49aa-970e-cee12b76e331",
+                        "name": "import_moodle_course",
+                        "response": {
+                          "status": "error",
+                          "message": "尚未登录。请提醒用户先点击页面右上角的「Google 登录」。"
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "quiz_agent",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "尚未登录。请点击页面右上角「Google 登录」后再试。"
+                    }
+                  ],
+                  "role": "model"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

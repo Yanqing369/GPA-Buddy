@@ -3410,7 +3410,7 @@ async function streamVertexFromText(text, prompt, env, token) {
       temperature: 0.5,
       responseMimeType: 'application/json',
       thinkingConfig: {
-        thinkingLevel: 'LOW',
+        thinkingBudget: 1024,
       },
     },
   };

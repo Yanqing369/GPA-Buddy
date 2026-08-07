@@ -1,8 +1,12 @@
-"""GPA Buddy 测验 agent：导入文件 → 出题 → 做题 → 记错题 → 再出题。"""
+# ruff: noqa
+# GPA Buddy 测验 Agent —— 与 agent/quiz_agent 本地演示版共用同一套工具实现。
+# 聊天指令驱动：Moodle 导入 / 文件上传 → 调 worker 出题 → A2UI 测验界面 → 记录错题 → 错题再出题。
+# 后端复用 Cloudflare Worker（https://moyuxiaowu.org），工具层见 app/tools.py。
 
 import os
 
 from google.adk.agents import Agent
+from google.adk.apps import App
 
 from . import tools
 
@@ -56,4 +60,9 @@ root_agent = Agent(
         tools.list_mistakes,
         tools.generate_quiz_from_mistakes,
     ],
+)
+
+app = App(
+    root_agent=root_agent,
+    name="app",
 )

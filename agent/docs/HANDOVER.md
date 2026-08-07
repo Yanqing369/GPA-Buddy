@@ -2,6 +2,11 @@
 
 日期：2026-08-06 ｜ 状态：**完成——完整闭环已对生产 API 实测通过（验收标准 1-6 全部跑通）**
 
+> 2026-08-07 更新：**已部署到 Agent Runtime 并自动注册进 Agent Registry**；
+> state 已改造为 ADK 会话 state（按会话隔离，上云前提）；worker thinkingLevel bug 已修复上线。
+> 云端 Runtime ID：`projects/933510492864/locations/us-central1/reasoningEngines/8698150175673155584`
+> （agents-cli 工程在仓库根目录 `gpa-buddy-quiz-adk/`，与 ask/tutor 先例一致）。
+
 ## 1. 目标与设计思路
 
 做一个对齐 `personal-center.html` 核心功能的谷歌 agent（Google ADK, Python）：
@@ -32,7 +37,8 @@ agent/
 │   │                #   grade_quiz（判分+写错题本）/ list_mistakes
 │   │                #   generate_quiz_from_mistakes（text_generate → 失败自动 fallback DeepSeek）
 │   ├── a2ui.py      # A2UI v0.8 风格消息构造（surfaceUpdate 扁平组件邻接表 + beginRendering）
-│   └── state.py     # 本地单用户会话状态（JWT / Turnstile / 当前测验）。上云需按用户隔离
+│   └── （状态已改为 ADK 会话 state：tool_context.state 存 JWT / Turnstile / 当前测验，
+│   │                本地与云端按会话隔离同一套代码；server.py 经 append_event+state_delta 注入）
 ├── server.py        # FastAPI 桥（:8788）：静态客户端 + /api/chat(ADK Runner SSE)
 │   │                #   + /api/session(注入JWT) + /api/turnstile + /api/upload + /api/status
 │   │                #   可选 QUIZ_AGENT_SEED_QUIZ=<json> 预置演示题目（无登录演示 A2UI 链路）
@@ -80,11 +86,14 @@ agent 调 present_quiz ──▶ 工具返回 a2ui_messages ──▶ server 识
   错题写入云端错题本（`[1-times mistake]` 后缀正确）✓ → 根据错题生成 20 道新题 ✓。
 - 唯一未实测：浏览器里点「Google 登录」的 OAuth 跳转链路（代码已实现，原理见第 1 节；
   如跳转异常，可用页面上的「粘贴 token」兜底）。
-- 用 Gemini 模型跑一遍聊天（设 `GOOGLE_API_KEY`，去掉 AGENT_MODEL 即可；DeepSeek 路径已验证）。
+- ~~用 Gemini 模型跑一遍聊天~~ —— **2026-08-07 已验证**：本地 `agents-cli run`（Vertex ADC）与
+  云端 Agent Runtime（`:streamQuery`）均用 Gemini 跑通「列出 Moodle 课程」真实工具调用。
+  注意：`agents-cli run --url ... --mode adk` 对本 runtime 报 session 404（CLI 兼容性问题），
+  用 worker 同款 `:streamQuery` + `class_method: async_stream_query` 直连即可（见下）。
 
-## 5. 重要发现：worker 生产 bug（建议尽快修）
+## 5. 重要发现：worker 生产 bug（**已于 2026-08-07 修复并上线**）
 
-**线上文本出题全挂**：`worker.js:3278` `streamVertexFromText` 给 `gemini-2.5-flash-lite`
+**线上文本出题全挂**：`worker.js` `streamVertexFromText` 给 `gemini-2.5-flash-lite`
 发送 `thinkingConfig: {thinkingLevel: 'LOW'}`，该模型只认 `thinkingBudget` 不认 `thinkingLevel`，
 Vertex 返回 400 `thinking_level is not supported by this model`。
 
@@ -92,6 +101,7 @@ Vertex 返回 400 `thinking_level is not supported by this model`。
   PDF 路径（`streamVertex`，`thinkingBudget: -1`，:3241）不受此 bug 影响；
   `/fallback/pdf_generate`（DeepSeek）正常，agent 已用它兜底错题再出题。
 - 修复：`thinkingLevel: 'LOW'` 改成 `thinkingBudget: 1024`（或删掉 thinkingConfig）。
+  **已按此修复并 `wrangler deploy` 上线（2026-08-07），生产 `/text_generate` 实测恢复出题。**
 - 测试账号：test1/test2@gpa-buddy.com，当前验证码 `firebird`（见 main 分支提交 249d3a3；
   旧码 `PCG123456` 已失效）。
 
@@ -111,5 +121,14 @@ Vertex 返回 400 `thinking_level is not supported by this model`。
 1. `pip install -r requirements.txt`；设 `GOOGLE_API_KEY`（或 `AGENT_MODEL=deepseek/deepseek-chat` + `DEEPSEEK_API_KEY`）。
 2. `python server.py` → http://localhost:8788 → 点「Google 登录」。
 3. 跑闭环：列出 Moodle 课程 → 导入 → 出题 → 作答 → 查错题 → 错题再出题（对应验收标准 1-6）。
-4. 修 worker 的 thinkingLevel bug（第 5 节）。
-5. 按 `docs/gemini-enterprise.md` 注册进 Gemini Enterprise。
+4. ~~修 worker 的 thinkingLevel bug（第 5 节）~~ —— 已修复上线（2026-08-07）。
+5. ~~按 `docs/gemini-enterprise.md` 注册进 Gemini Enterprise~~ —— 本项目 GCP 无 GE 应用，
+   按 ask/tutor 先例改为：**部署 Agent Runtime + Agent Registry 自动注册（均已完成，2026-08-07）**：
+   - `agents-cli scaffold create gpa-buddy-quiz-adk --agent adk --deployment-target agent_runtime --region us-central1 --prototype`
+   - state 已从模块级单用户 dict 改造为 ADK 会话 state（`tool_context.state`），上云按会话隔离
+   - `agents-cli deploy --region us-central1 --min-instances 0`（min-instances 1 有先例起不来）
+   - Runtime ID：`projects/933510492864/locations/us-central1/reasoningEngines/8698150175673155584`
+   - Agent Registry（us-central1）已确认 `gpa-buddy-quiz-adk` 注册
+   - 云端实测：`POST https://us-central1-aiplatform.googleapis.com/v1/<RESOURCE>:streamQuery`，
+     body `{"class_method":"async_stream_query","input":{"user_id":"...","message":{"role":"user","parts":[{"text":"..."}]}}}`
+   - 若以后要注册 GE：先开通 GE 应用，再按 `docs/gemini-enterprise.md` 执行

@@ -41,8 +41,9 @@ projects/PROJECT_ID/locations/REGION/reasoningEngines/AE_RESOURCE_ID
 ```
 
 > 注意：本 agent 的工具会调用外部 worker API（https://moyuxiaowu.org）。
-> Agent Engine 环境默认可以访问公网；登录态（worker JWT）目前由本地客户端注入
-> （见 `state.py` 的会话存储），部署到云端后需要改为每个用户各自的 token 注入方式
+> Agent Engine 环境默认可以访问公网；登录态（worker JWT）存在 ADK 会话 state
+> （`tool_context.state`，按会话隔离），目前由本地客户端经 server.py 注入，
+> 部署到云端后需要改为每个用户各自的 token 注入方式
 > （例如通过 GE 的 OAuth authorizations，见下文第 2 步）。
 
 ## 2. （可选）配置 OAuth Authorization

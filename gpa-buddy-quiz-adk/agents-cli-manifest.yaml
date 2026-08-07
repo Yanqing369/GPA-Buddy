@@ -1,0 +1,13 @@
+name: "gpa-buddy-quiz-adk"
+acli_version: "1.2.1"
+agent_directory: "app"
+region: "us-central1"
+base_template: "adk"
+generated_at: "2026-08-07T03:40:39.132016+00:00"
+language: "python"
+create_params:
+  deployment_target: "agent_runtime"
+  session_type: "none"
+  cicd_runner: "skip"
+  is_a2a: true
+  agent_guidance_filename: "GEMINI.md"

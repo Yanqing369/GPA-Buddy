@@ -1,0 +1,18 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "list_moodle_courses",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "列出 Moodle 课程"}]
+      }
+    },
+    {
+      "eval_case_id": "import_requires_login",
+      "prompt": {
+        "role": "user",
+        "parts": [{"text": "帮我把 Moodle 课程 id 3 导入"}]
+      }
+    }
+  ]
+}
