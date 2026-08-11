@@ -1215,10 +1215,10 @@ ${text}
 CRITICAL REQUIREMENTS:
 1. Return ONLY a JSON array. No markdown, no explanations.
 2. Response must start with [ and end with ]
-3. For each question found:
-   - Extract or infer the question text
-   - Extract options A, B, C, D (create if missing)
-   - Identify the correct answer
+3. For each question found (single-answer and multiple-answer / 多选题):
+   - Copy the question text and options VERBATIM exactly as written in the text (do NOT rewrite or paraphrase; create options only if missing)
+   - ANSWER PRIORITY: if the text provides an answer for a question, you MUST use it as "correctAnswer" — it is the standard answer; only infer the answer when the text does not provide one
+   - Set "type": "single" for single-answer questions, or "type": "multiple" for questions with two or more correct options; for "multiple" questions "correctAnswer" MUST list ALL correct letters in alphabetical order (e.g., "ABD")
    - Keep existing explanation or generate brief one
    - Set source field to "用户上传题库"
 4. CRITICAL: The "id" field MUST start from ${startId} and increment by 1 for each question
@@ -1230,6 +1230,7 @@ JSON format:
     "question": "extracted question",
     "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation or auto-generated",
     "source": "用户上传题库"
   }

@@ -1108,6 +1108,17 @@ CRITICAL REQUIREMENTS:
 4. Return ONLY a JSON array. No markdown, no code blocks, no explanations before or after.
 5. The response must start with [ and end with ]
 
+5.5. **MULTIPLE-ANSWER QUESTIONS (多选题)**:
+   - Each question MUST include a "type" field: "single" for single-answer questions or "multiple" for multiple-answer questions.
+   - When the material suits it, include some "multiple" questions (two or more correct options).
+   - For "multiple" questions, the "correctAnswer" field MUST contain ALL correct option letters concatenated in alphabetical order (e.g., "ABD"). For "single" questions it is exactly one letter (e.g., "A").
+
+5.6. **CRITICAL - MATERIAL THAT IS ALREADY QUESTIONS**:
+   - If (part of) the material already contains ready-made questions (e.g., an exam paper, exercise sheet, or question bank), you MUST extract those questions VERBATIM — copy the original question text and options as-is; do NOT rewrite, paraphrase, or invent replacements for them.
+   - If the material provides answers for those questions, you MUST use the material's answers as the "correctAnswer" — they are the standard answers. Only determine the answer yourself when the material does not provide one.
+   - Preserve the original question type: extracted questions with multiple correct options MUST be "type": "multiple".
+   - When extracting existing questions, extract ALL of them found in your assigned page range; in that case the exact question count requirement does not apply.
+
 6. **CRITICAL - PAGE RANGE REQUIREMENT**:
    This is batch ${batchIndex + 1} of ${this.totalBatches}.
    You MUST ONLY use content from pages ${startPage} to ${endPage} of the PDF.
@@ -1148,6 +1159,7 @@ Required JSON format:
       "D": "fourth option"
     },
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation text",
     "source": "-----[${hardcodedFileName}_page3]-----"
   }
@@ -1288,7 +1300,7 @@ Generate exactly 20 questions from pages ${startPage}-${endPage}. Use the EXACT 
             <div class="font-medium text-slate-900 mb-2">Q${question.id || index + 1}: ${escapeHtml(question.question)}</div>
             <div class="space-y-1 text-sm text-slate-600 mb-2">
                 ${Object.entries(question.options).map(([k, v]) => 
-                    `<div class="${question.correctAnswer === k ? 'text-emerald-600 font-medium' : ''}">${k}. ${escapeHtml(v)}</div>`
+                    `<div class="${String(question.correctAnswer || '').includes(k) ? 'text-emerald-600 font-medium' : ''}">${k}. ${escapeHtml(v)}</div>`
                 ).join('')}
             </div>
             <div class="text-sm text-emerald-600 font-medium">Answer: ${question.correctAnswer}</div>

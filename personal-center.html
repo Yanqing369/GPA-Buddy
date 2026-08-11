@@ -2234,11 +2234,12 @@
             return s;
         }
 
-        // 生成送分题：保留正确答案，其余选项换成随机乱码
+        // 生成送分题：保留正确答案，其余选项换成随机乱码（多选题保留全部正确选项）
         function makeFreebie(q) {
             const clone = { ...q, options: { ...q.options }, isFreebie: true };
+            const correctLetters = String(q.correctAnswer || '').toUpperCase();
             for (const key of Object.keys(clone.options)) {
-                if (key !== q.correctAnswer) clone.options[key] = gibberishOption();
+                if (!correctLetters.includes(key)) clone.options[key] = gibberishOption();
             }
             return clone;
         }

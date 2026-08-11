@@ -778,7 +778,9 @@
                 
                 if (progress && progress.answers && progress.answers.length > 0) {
                     const answeredCount = progress.answers.filter(a => a !== null).length;
-                    const correctCount = progress.answers.filter((a, i) => a && bank.questions[i] && a.selected === bank.questions[i].correctAnswer).length;
+                    // 多选题：答案为字母集合（如 "ABD"），规范化后再比较
+                    const normAns = v => v == null ? '' : String(Array.isArray(v) ? v.join('') : v).toUpperCase().replace(/[^A-Z]/g, '').split('').sort().join('');
+                    const correctCount = progress.answers.filter((a, i) => a && bank.questions[i] && normAns(a.selected) !== '' && normAns(a.selected) === normAns(bank.questions[i].correctAnswer)).length;
                     const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
                     const isCompleted = progress.isCompleted || answeredCount >= totalQuestions;
                     

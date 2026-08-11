@@ -288,6 +288,17 @@ CRITICAL REQUIREMENTS:
 5. The response must start with [ and end with ]
 6. For ALL mathematical formulas, equations, and symbols, you MUST use standard LaTeX format and wrap them with $...$ for inline math.
 
+6.5. **MULTIPLE-ANSWER QUESTIONS (多选题)**:
+   - Each question MUST include a "type" field: "single" for single-answer questions or "multiple" for multiple-answer questions.
+   - When the material suits it, include some "multiple" questions (two or more correct options).
+   - For "multiple" questions, the "correctAnswer" field MUST contain ALL correct option letters concatenated in alphabetical order (e.g., "ABD"). For "single" questions it is exactly one letter (e.g., "A").
+
+6.6. **CRITICAL - MATERIAL THAT IS ALREADY QUESTIONS**:
+   - If (part of) the material already contains ready-made questions (e.g., an exam paper, exercise sheet, or question bank), you MUST extract those questions VERBATIM — copy the original question text and options as-is; do NOT rewrite, paraphrase, or invent replacements for them.
+   - If the material provides answers for those questions, you MUST use the material's answers as the "correctAnswer" — they are the standard answers. Only determine the answer yourself when the material does not provide one.
+   - Preserve the original question type: extracted questions with multiple correct options MUST be "type": "multiple".
+   - When extracting existing questions, extract ALL of them found in the text; in that case the exact question count requirement does not apply.
+
 7. **CRITICAL - SOURCE FIELD FORMAT**:
    You MUST use the EXACT format: "-----[${originalFileName}_pageX]-----"
    - X is the page number found in the text markers
@@ -306,6 +317,7 @@ Required JSON format:
     "question": "question text here",
     "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation text",
     "source": "-----[${originalFileName}_page3]-----"
   }

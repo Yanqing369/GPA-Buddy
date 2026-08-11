@@ -1724,12 +1724,28 @@ async function saveGeneratedQuestionsToCourse(env, courseId, questions, sourceMa
       question: q.question || '',
       options: q.options || {}
     };
+    // 多选题：type 为 multiple 或正确答案含多个选项字母；答案统一为排序后的大写字母串（如 "ABD"）
+    const rawAnswer = Array.isArray(q.correctAnswer) ? q.correctAnswer.join('') : (q.correctAnswer || q.answer || '');
+    const raw = String(rawAnswer).trim();
+    const optionKeys = Object.keys(contentObj.options);
+    let answer = raw;
+    let answerLetterCount = 0;
+    if (optionKeys.length > 0) {
+      const letters = [...new Set(raw.toUpperCase().replace(/[^A-Z]/g, '').split('').filter(l => optionKeys.includes(l)))].sort();
+      if (letters.length > 0) {
+        answer = letters.join('');
+        answerLetterCount = letters.length;
+      }
+    }
+    const rawType = String(q.type || '').toLowerCase();
+    const isMulti = ['multiple', 'multi', 'multi_select', 'multiple_choice'].includes(rawType) || answerLetterCount > 1;
+    if (isMulti) contentObj.type = 'multiple';
     return stmt.bind(
       courseId,
-      'choice',
+      isMulti ? 'multiple' : 'choice',
       (q.question || '').slice(0, 80),
       JSON.stringify(contentObj),
-      q.correctAnswer || q.answer || '',
+      answer,
       q.explanation || '',
       q.difficulty || 1,
       JSON.stringify([]),
@@ -3616,6 +3632,17 @@ CRITICAL REQUIREMENTS:
 5. The response must start with [ and end with ]
 6. For ALL mathematical formulas, equations, and symbols, you MUST use standard LaTeX format and wrap them with $...$ for inline math.
 
+6.5. **MULTIPLE-ANSWER QUESTIONS (多选题)**:
+   - Each question MUST include a "type" field: "single" for single-answer questions or "multiple" for multiple-answer questions.
+   - When the material suits it, include some "multiple" questions (two or more correct options).
+   - For "multiple" questions, the "correctAnswer" field MUST contain ALL correct option letters concatenated in alphabetical order (e.g., "ABD"). For "single" questions it is exactly one letter (e.g., "A").
+
+6.6. **CRITICAL - MATERIAL THAT IS ALREADY QUESTIONS**:
+   - If (part of) the material already contains ready-made questions (e.g., an exam paper, exercise sheet, or question bank), you MUST extract those questions VERBATIM — copy the original question text and options as-is; do NOT rewrite, paraphrase, or invent replacements for them.
+   - If the material provides answers for those questions, you MUST use the material's answers as the "correctAnswer" — they are the standard answers. Only determine the answer yourself when the material does not provide one.
+   - Preserve the original question type: extracted questions with multiple correct options MUST be "type": "multiple".
+   - When extracting existing questions, extract ALL of them found in the text; in that case the exact question count requirement does not apply.
+
 7. **CRITICAL - SOURCE FIELD FORMAT**:
    You MUST use the EXACT format: "-----[${originalFileName}_pageX]-----"
    - X is the page number found in the text markers
@@ -3634,6 +3661,7 @@ Required JSON format (one example question, actual array may contain more):
     "question": "question text here",
     "options": { "A": "...", "B": "...", "C": "...", "D": "..." },
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation text",
     "source": "-----[${originalFileName}_page3]-----"
   }
@@ -3934,6 +3962,17 @@ CRITICAL REQUIREMENTS:
 5. The response must start with [ and end with ]
 6. For ALL mathematical formulas, equations, and symbols (including summation Σ, limits lim, integrals ∫, fractions, etc.), you MUST use standard LaTeX format and wrap them with $...$ for inline math.
 
+6.5. **MULTIPLE-ANSWER QUESTIONS (多选题)**:
+   - Each question MUST include a "type" field: "single" for single-answer questions or "multiple" for multiple-answer questions.
+   - When the material suits it, include some "multiple" questions (two or more correct options).
+   - For "multiple" questions, the "correctAnswer" field MUST contain ALL correct option letters concatenated in alphabetical order (e.g., "ABD"). For "single" questions it is exactly one letter (e.g., "A").
+
+6.6. **CRITICAL - MATERIAL THAT IS ALREADY QUESTIONS**:
+   - If (part of) the material already contains ready-made questions (e.g., an exam paper, exercise sheet, or question bank), you MUST extract those questions VERBATIM — copy the original question text and options as-is; do NOT rewrite, paraphrase, or invent replacements for them.
+   - If the material provides answers for those questions, you MUST use the material's answers as the "correctAnswer" — they are the standard answers. Only determine the answer yourself when the material does not provide one.
+   - Preserve the original question type: extracted questions with multiple correct options MUST be "type": "multiple".
+   - When extracting existing questions, extract ALL of them found in your assigned page range; in that case the exact question count requirement does not apply.
+
 7. **CRITICAL - PAGE RANGE REQUIREMENT**:
    This is batch ${batchIndex + 1} of ${totalBatches}.
    You MUST ONLY use content from pages ${startPage} to ${endPage} of the PDF.
@@ -3974,6 +4013,7 @@ Required JSON format:
       "D": "fourth option"
     },
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation text",
     "source": "-----[${originalFileName}_page3]-----"
   }
@@ -4287,6 +4327,17 @@ CRITICAL REQUIREMENTS:
 6. CRITICAL: For the "source" field, you MUST use the EXACT marker format shown in the text (e.g., "-------------【filename_page1】-----------" or "-------------【filename_section1】-----------")
 7. For ALL mathematical formulas, equations, and symbols (including summation Σ, limits lim, integrals ∫, fractions, etc.), you MUST use standard LaTeX format and wrap them with $...$ for inline math.
 
+7.5. **MULTIPLE-ANSWER QUESTIONS (多选题)**:
+   - Each question MUST include a "type" field: "single" for single-answer questions or "multiple" for multiple-answer questions.
+   - When the material suits it, include some "multiple" questions (two or more correct options).
+   - For "multiple" questions, the "correctAnswer" field MUST contain ALL correct option letters concatenated in alphabetical order (e.g., "ABD"). For "single" questions it is exactly one letter (e.g., "A").
+
+7.6. **CRITICAL - MATERIAL THAT IS ALREADY QUESTIONS**:
+   - If (part of) the material already contains ready-made questions (e.g., an exam paper, exercise sheet, or question bank), you MUST extract those questions VERBATIM — copy the original question text and options as-is; do NOT rewrite, paraphrase, or invent replacements for them.
+   - If the material provides answers for those questions, you MUST use the material's answers as the "correctAnswer" — they are the standard answers. Only determine the answer yourself when the material does not provide one.
+   - Preserve the original question type: extracted questions with multiple correct options MUST be "type": "multiple".
+   - When extracting existing questions, extract ALL of them found in the text; in that case the exact question count requirement does not apply.
+
 8. **CRITICAL - CONTENT REQUIREMENT**:
    - Focus ONLY on the substantive knowledge, concepts, theories, facts, and details within the document content
    - DO NOT create questions about document metadata or basic information such as:
@@ -4310,6 +4361,7 @@ Required JSON format:
       "D": "fourth option"
     },
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation text",
     "source": "EXACT page marker from text"
   }
@@ -4329,11 +4381,11 @@ function buildCountPrompt(text, lang) {
   
   return `You are an expert at analyzing educational content. ${langInstruction}
 
-Your task is to count how many multiple-choice questions are present in the following text.
+Your task is to count how many choice questions (single-answer and multiple-answer) are present in the following text.
 
 Instructions:
 1. Look for question patterns (e.g., numbers followed by questions, question marks, multiple choice options A/B/C/D)
-2. Count ONLY complete multiple-choice questions (must have question text AND options)
+2. Count ONLY complete choice questions (must have question text AND options)
 3. Return ONLY a single number (e.g., "15" or "42")
 4. If uncertain, provide your best estimate
 
@@ -4352,14 +4404,16 @@ function buildOrganizePrompt(chunk, startId, chunkIndex, totalChunks, lang) {
 Your task is to extract and organize multiple-choice questions from the provided text into a standardized JSON format.
 
 CRITICAL REQUIREMENTS:
-1. Extract ALL valid multiple-choice questions from the text
-2. Each question MUST have exactly 4 options: A, B, C, D
-3. Include explanation for each correct answer (if available in text, otherwise create a brief one)
-4. Return ONLY a JSON array. No markdown, no code blocks, no explanations before or after.
-5. The response must start with [ and end with ]
-6. The "id" field MUST start from ${startId} and increment by 1 for each question
-7. The "source" field MUST be exactly: "用户上传题库"
-8. For ALL mathematical formulas, equations, and symbols (including summation Σ, limits lim, integrals ∫, fractions, etc.), you MUST use standard LaTeX format and wrap them with $...$ for inline math.
+1. Extract ALL valid choice questions from the text (both single-answer and multiple-answer / 多选题)
+2. Copy each question VERBATIM: keep the original question text and options exactly as written in the text; do NOT rewrite, paraphrase, or re-order them. Keep the original set of options (typically A, B, C, D).
+3. **ANSWER PRIORITY**: If the text provides an answer for a question, you MUST use that answer as the "correctAnswer" — it is the standard answer. Only infer the answer yourself when the text does not provide one.
+4. Each question MUST include a "type" field: "single" for single-answer questions or "multiple" for questions with two or more correct options. For "multiple" questions, "correctAnswer" MUST contain ALL correct option letters concatenated in alphabetical order (e.g., "ABD").
+5. Include explanation for each correct answer (if available in text, otherwise create a brief one)
+6. Return ONLY a JSON array. No markdown, no code blocks, no explanations before or after.
+7. The response must start with [ and end with ]
+8. The "id" field MUST start from ${startId} and increment by 1 for each question
+9. The "source" field MUST be exactly: "用户上传题库"
+10. For ALL mathematical formulas, equations, and symbols (including summation Σ, limits lim, integrals ∫, fractions, etc.), you MUST use standard LaTeX format and wrap them with $...$ for inline math.
 
 Required JSON format:
 [
@@ -4373,6 +4427,7 @@ Required JSON format:
       "D": "fourth option"
     },
     "correctAnswer": "A",
+    "type": "single",
     "explanation": "explanation text"
   }
 ]

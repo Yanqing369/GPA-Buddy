@@ -369,6 +369,7 @@
                 <div class="flex items-start gap-2 mb-3 sm:mb-4">
                     <span class="text-base md:text-xl font-bold text-slate-900 shrink-0" id="questionNumberDisplay"></span>
                     <h3 class="text-base md:text-xl font-medium text-slate-900 leading-relaxed" id="questionText" data-i18n="loadingQuestion">题目内容加载中...</h3>
+                    <span id="multiBadge" class="hidden shrink-0 px-2 py-0.5 mt-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700 whitespace-nowrap">多选题</span>
                 </div>
                 <button onclick="openSourceViewer()" id="viewSourceBtn" class="mb-4 sm:mb-6 px-3 py-1.5 text-xs sm:text-sm text-indigo-600 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors flex items-center">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
@@ -547,7 +548,7 @@
 
         const i18n = {
             zh: { 
-                appName: '请出题', saveAndExit: '保存并退出', exitPractice: '退出练习', bankName: '题库名称', accuracy: '正确率', accuracyLabel: '正确率', progress: '进度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精选', removeFromFavorites: '移除精选', loadingQuestion: '题目内容加载中...', answerExplanation: '答案解析', source: '来源', viewSource: '查看原文', prevQuestion: '上一题', submitAnswer: '提交答案', nextQuestion: '下一题', submitted: '已提交', practiceComplete: '练习完成！', congratsComplete: '恭喜您完成了所有题目', finalAccuracy: '最终正确率', correct: '正确', findHelpful: '觉得这个工具对您有帮助？', donateDesc: '可以捐款支持开发者，让这个网站活到你下次考试。', supportDev: '支持开发者', backToManage: '返回管理页', practiceAgain: '再练一次', favorites: '精选', noFavorites: '暂无精选题目', confirmRemoveFavorite: '确定要从精选中移除这道题吗？', invalidBankId: '无效的题库ID', bankNotFound: '未找到题库', noExplanation: '暂无解析', unknownSource: '未知来源', sourceNotFound: '未找到源文件，可能已被删除', fileOpenError: '文件打开失败', page: '页', slide: '幻灯片', section: '章节', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '预览失败', cannotPreview: '无法预览此文件格式', pptTextOnly: '提示：PPT 目前仅支持显示文本内容，图片、图表等完整效果请下载后用 PowerPoint 查看。', pageTitle: '请出题', finishAndShowResult: '结束并查看结果', mobileConvertedTitle: '手机端暂不支持查看此文件', mobileConvertedDesc: '此文件由其他格式转换而来，手机端只支持查看原生 PDF。请在电脑上重新出题查看。', mobileConvertedBtn: '知道了',
+                appName: '请出题', saveAndExit: '保存并退出', exitPractice: '退出练习', bankName: '题库名称', accuracy: '正确率', accuracyLabel: '正确率', progress: '进度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精选', removeFromFavorites: '移除精选', loadingQuestion: '题目内容加载中...', answerExplanation: '答案解析', source: '来源', viewSource: '查看原文', prevQuestion: '上一题', submitAnswer: '提交答案', nextQuestion: '下一题', submitted: '已提交', practiceComplete: '练习完成！', congratsComplete: '恭喜您完成了所有题目', finalAccuracy: '最终正确率', correct: '正确', findHelpful: '觉得这个工具对您有帮助？', donateDesc: '可以捐款支持开发者，让这个网站活到你下次考试。', supportDev: '支持开发者', backToManage: '返回管理页', practiceAgain: '再练一次', favorites: '精选', noFavorites: '暂无精选题目', confirmRemoveFavorite: '确定要从精选中移除这道题吗？', invalidBankId: '无效的题库ID', bankNotFound: '未找到题库', noExplanation: '暂无解析', unknownSource: '未知来源', sourceNotFound: '未找到源文件，可能已被删除', fileOpenError: '文件打开失败', page: '页', slide: '幻灯片', section: '章节', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '预览失败', cannotPreview: '无法预览此文件格式', pptTextOnly: '提示：PPT 目前仅支持显示文本内容，图片、图表等完整效果请下载后用 PowerPoint 查看。', pageTitle: '请出题', finishAndShowResult: '结束并查看结果', mobileConvertedTitle: '手机端暂不支持查看此文件', mobileConvertedDesc: '此文件由其他格式转换而来，手机端只支持查看原生 PDF。请在电脑上重新出题查看。', mobileConvertedBtn: '知道了', multiSelectBadge: '多选题（可选择多个选项）',
                 confirmFinish: '确定要结束练习并查看结果吗？',
                 unfinishedCount: '您还有 {count} 道题未完成',
                 submitUnansweredZero: '未作答题目将计为 0 分',
@@ -558,7 +559,7 @@
                 supportUs: '支持我们'
             },
             'zh-TW': { 
-                appName: '請出題', saveAndExit: '儲存並退出', exitPractice: '退出練習', bankName: '題庫名稱', accuracy: '正確率', accuracyLabel: '正確率', progress: '進度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精選', removeFromFavorites: '移除精選', loadingQuestion: '題目內容載入中...', answerExplanation: '答案解析', source: '來源', viewSource: '查看原文', prevQuestion: '上一題', submitAnswer: '提交答案', nextQuestion: '下一題', submitted: '已提交', practiceComplete: '練習完成！', congratsComplete: '恭喜您完成了所有題目', finalAccuracy: '最終正確率', correct: '正確', findHelpful: '覺得這個工具對您有幫助？', donateDesc: '可以捐款支持開發者，讓這個網站活到你下次考試。', supportDev: '支持開發者', backToManage: '返回管理頁', practiceAgain: '再練一次', favorites: '精選', noFavorites: '暫無精選題目', confirmRemoveFavorite: '確定要從精選中移除這道題嗎？', invalidBankId: '無效的題庫ID', bankNotFound: '未找到題庫', noExplanation: '暫無解析', unknownSource: '未知來源', sourceNotFound: '未找到來源檔案，可能已被刪除', fileOpenError: '檔案開啟失敗', page: '頁', slide: '投影片', section: '章節', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '預覽失敗', cannotPreview: '無法預覽此檔案格式', pptTextOnly: '提示：PPT 目前僅支援顯示文字內容，圖片、圖表等完整效果請下載後用 PowerPoint 查看。', pageTitle: '請出題', finishAndShowResult: '結束並查看結果', mobileConvertedTitle: '手機端暫不支援查看此檔案', mobileConvertedDesc: '此檔案由其他格式轉換而來，手機端只支援查看原生 PDF。請在電腦上重新出題查看。', mobileConvertedBtn: '知道了',
+                appName: '請出題', saveAndExit: '儲存並退出', exitPractice: '退出練習', bankName: '題庫名稱', accuracy: '正確率', accuracyLabel: '正確率', progress: '進度', progressText: '1/30', questionNumber: '1/30', addToFavorites: '加入精選', removeFromFavorites: '移除精選', loadingQuestion: '題目內容載入中...', answerExplanation: '答案解析', source: '來源', viewSource: '查看原文', prevQuestion: '上一題', submitAnswer: '提交答案', nextQuestion: '下一題', submitted: '已提交', practiceComplete: '練習完成！', congratsComplete: '恭喜您完成了所有題目', finalAccuracy: '最終正確率', correct: '正確', findHelpful: '覺得這個工具對您有幫助？', donateDesc: '可以捐款支持開發者，讓這個網站活到你下次考試。', supportDev: '支持開發者', backToManage: '返回管理頁', practiceAgain: '再練一次', favorites: '精選', noFavorites: '暫無精選題目', confirmRemoveFavorite: '確定要從精選中移除這道題嗎？', invalidBankId: '無效的題庫ID', bankNotFound: '未找到題庫', noExplanation: '暫無解析', unknownSource: '未知來源', sourceNotFound: '未找到來源檔案，可能已被刪除', fileOpenError: '檔案開啟失敗', page: '頁', slide: '投影片', section: '章節', sheet: '工作表', approximateLocation: '大概位置', previewFailed: '預覽失敗', cannotPreview: '無法預覽此檔案格式', pptTextOnly: '提示：PPT 目前僅支援顯示文字內容，圖片、圖表等完整效果請下載後用 PowerPoint 查看。', pageTitle: '請出題', finishAndShowResult: '結束並查看結果', mobileConvertedTitle: '手機端暫不支援查看此檔案', mobileConvertedDesc: '此檔案由其他格式轉換而來，手機端只支援查看原生 PDF。請在電腦上重新出題查看。', mobileConvertedBtn: '知道了', multiSelectBadge: '多選題（可選擇多個選項）',
                 confirmFinish: '確定要結束練習並查看結果嗎？',
                 unfinishedCount: '您還有 {count} 道題未完成',
                 submitUnansweredZero: '未作答題目將計為 0 分',
@@ -569,7 +570,7 @@
                 supportUs: '支持我們'
             },
             en: { 
-                appName: 'GPA-Buddy', saveAndExit: 'Save & Exit', exitPractice: 'Exit Practice', bankName: 'Question Bank', accuracy: 'Accuracy', accuracyLabel: 'Accuracy', progress: 'Progress', progressText: '1/30', questionNumber: '1/30', addToFavorites: 'Add to Favorites', removeFromFavorites: 'Remove from Favorites', loadingQuestion: 'Loading question...', answerExplanation: 'Explanation', source: 'Source', viewSource: 'View Source', prevQuestion: 'Previous', submitAnswer: 'Submit', nextQuestion: 'Next', submitted: 'Submitted', practiceComplete: 'Practice Complete!', congratsComplete: 'Congratulations on completing all questions', finalAccuracy: 'Final Accuracy', correct: 'correct', findHelpful: 'Found this tool helpful?', donateDesc: 'Donate to support the developer and keep this site running.', supportDev: 'Support Developer', backToManage: 'Back to Manage', practiceAgain: 'Practice Again', favorites: 'Favorites', noFavorites: 'No favorite questions yet', confirmRemoveFavorite: 'Remove this question from favorites?', invalidBankId: 'Invalid bank ID', bankNotFound: 'Bank not found', noExplanation: 'No explanation available', unknownSource: 'Unknown source', sourceNotFound: 'Source file not found, may have been deleted', fileOpenError: 'Failed to open file', page: 'Page', slide: 'Slide', section: 'Section', sheet: 'Sheet', approximateLocation: 'approximate location', previewFailed: 'Preview Failed', cannotPreview: 'Cannot preview this file format', pptTextOnly: 'Note: PPT files currently only support text display. For images, charts and other full effects, please download and view with PowerPoint.', pageTitle: 'GPA-Buddy', finishAndShowResult: 'Finish & View Results', mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it',
+                appName: 'GPA-Buddy', saveAndExit: 'Save & Exit', exitPractice: 'Exit Practice', bankName: 'Question Bank', accuracy: 'Accuracy', accuracyLabel: 'Accuracy', progress: 'Progress', progressText: '1/30', questionNumber: '1/30', addToFavorites: 'Add to Favorites', removeFromFavorites: 'Remove from Favorites', loadingQuestion: 'Loading question...', answerExplanation: 'Explanation', source: 'Source', viewSource: 'View Source', prevQuestion: 'Previous', submitAnswer: 'Submit', nextQuestion: 'Next', submitted: 'Submitted', practiceComplete: 'Practice Complete!', congratsComplete: 'Congratulations on completing all questions', finalAccuracy: 'Final Accuracy', correct: 'correct', findHelpful: 'Found this tool helpful?', donateDesc: 'Donate to support the developer and keep this site running.', supportDev: 'Support Developer', backToManage: 'Back to Manage', practiceAgain: 'Practice Again', favorites: 'Favorites', noFavorites: 'No favorite questions yet', confirmRemoveFavorite: 'Remove this question from favorites?', invalidBankId: 'Invalid bank ID', bankNotFound: 'Bank not found', noExplanation: 'No explanation available', unknownSource: 'Unknown source', sourceNotFound: 'Source file not found, may have been deleted', fileOpenError: 'Failed to open file', page: 'Page', slide: 'Slide', section: 'Section', sheet: 'Sheet', approximateLocation: 'approximate location', previewFailed: 'Preview Failed', cannotPreview: 'Cannot preview this file format', pptTextOnly: 'Note: PPT files currently only support text display. For images, charts and other full effects, please download and view with PowerPoint.', pageTitle: 'GPA-Buddy', finishAndShowResult: 'Finish & View Results', mobileConvertedTitle: 'Mobile viewing not supported', mobileConvertedDesc: 'This file was converted from another format. Only native PDFs are supported on mobile. Please regenerate on a computer.', mobileConvertedBtn: 'Got it', multiSelectBadge: 'Multiple-select (choose all that apply)',
                 confirmFinish: 'Are you sure you want to finish and view results?',
                 unfinishedCount: 'You have {count} questions remaining',
                 submitUnansweredZero: 'Unanswered questions will be scored as 0',
@@ -580,7 +581,7 @@
                 supportUs: 'Support Us'
             },
             ko: { 
-                appName: 'GPA-Buddy', saveAndExit: '저장하고 나가기', exitPractice: '연습 나가기', bankName: '문제은행', accuracy: '정확도', accuracyLabel: '정확도', progress: '진행률', progressText: '1/30', questionNumber: '1/30', addToFavorites: '즐겨찾기 추가', removeFromFavorites: '즐겨찾기 제거', loadingQuestion: '문제 로딩 중...', answerExplanation: '해설', source: '출처', viewSource: '원문 보기', prevQuestion: '이전', submitAnswer: '제출', nextQuestion: '다음', submitted: '제출됨', practiceComplete: '연습 완료!', congratsComplete: '모든 문제를 완료했습니다', finalAccuracy: '최종 정확도', correct: '정답', findHelpful: '이 도구가 도움이 되셨나요?', donateDesc: '개발자를 후원하여 사이트를 유지할 수 있도록 도와주세요.', supportDev: '개발자 후원', backToManage: '관리 페이지로', practiceAgain: '다시 연습하기', favorites: '즐겨찾기', noFavorites: '즐겨찾기한 문제 없음', confirmRemoveFavorite: '즐겨찾기에서 제거하시겠습니까?', invalidBankId: '잘못된 문제은행 ID', bankNotFound: '문제은행을 찾을 수 없습니다', noExplanation: '해설 없음', unknownSource: '출처 불명', sourceNotFound: '원본 파일을 찾을 수 없습니다. 삭제되었을 수 있습니다.', fileOpenError: '파일 열기 실패', page: '페이지', slide: '슬라이드', section: '섹션', sheet: '시트', approximateLocation: '대략적인 위치', previewFailed: '미리보기 실패', cannotPreview: '이 파일 형식을 미리 볼 수 없습니다', pptTextOnly: '참고: PPT 파일은 현재 텍스트 표시만 지원합니다. 이미지, 차트 등의 전체 효과를 보려면 다운로드하여 PowerPoint에서 열어보세요.', pageTitle: 'GPA-Buddy', finishAndShowResult: '종료 및 결과 확인', mobileConvertedTitle: '모바일 미리보기 지원 안 함', mobileConvertedDesc: '이 파일은 다른 형식에서 변환되었습니다. 모바일에서는 원본 PDF만 지원됩니다. 컴퓨터에서 다시 생성해 주세요.', mobileConvertedBtn: '확인',
+                appName: 'GPA-Buddy', saveAndExit: '저장하고 나가기', exitPractice: '연습 나가기', bankName: '문제은행', accuracy: '정확도', accuracyLabel: '정확도', progress: '진행률', progressText: '1/30', questionNumber: '1/30', addToFavorites: '즐겨찾기 추가', removeFromFavorites: '즐겨찾기 제거', loadingQuestion: '문제 로딩 중...', answerExplanation: '해설', source: '출처', viewSource: '원문 보기', prevQuestion: '이전', submitAnswer: '제출', nextQuestion: '다음', submitted: '제출됨', practiceComplete: '연습 완료!', congratsComplete: '모든 문제를 완료했습니다', finalAccuracy: '최종 정확도', correct: '정답', findHelpful: '이 도구가 도움이 되셨나요?', donateDesc: '개발자를 후원하여 사이트를 유지할 수 있도록 도와주세요.', supportDev: '개발자 후원', backToManage: '관리 페이지로', practiceAgain: '다시 연습하기', favorites: '즐겨찾기', noFavorites: '즐겨찾기한 문제 없음', confirmRemoveFavorite: '즐겨찾기에서 제거하시겠습니까?', invalidBankId: '잘못된 문제은행 ID', bankNotFound: '문제은행을 찾을 수 없습니다', noExplanation: '해설 없음', unknownSource: '출처 불명', sourceNotFound: '원본 파일을 찾을 수 없습니다. 삭제되었을 수 있습니다.', fileOpenError: '파일 열기 실패', page: '페이지', slide: '슬라이드', section: '섹션', sheet: '시트', approximateLocation: '대략적인 위치', previewFailed: '미리보기 실패', cannotPreview: '이 파일 형식을 미리 볼 수 없습니다', pptTextOnly: '참고: PPT 파일은 현재 텍스트 표시만 지원합니다. 이미지, 차트 등의 전체 효과를 보려면 다운로드하여 PowerPoint에서 열어보세요.', pageTitle: 'GPA-Buddy', finishAndShowResult: '종료 및 결과 확인', mobileConvertedTitle: '모바일 미리보기 지원 안 함', mobileConvertedDesc: '이 파일은 다른 형식에서 변환되었습니다. 모바일에서는 원본 PDF만 지원됩니다. 컴퓨터에서 다시 생성해 주세요.', mobileConvertedBtn: '확인', multiSelectBadge: '복수 선택 (해당하는 것을 모두 선택)',
                 confirmFinish: '연습을 종료하고 결과를 확인하시겠습니까?',
                 unfinishedCount: '남은 문제: {count}개',
                 submitUnansweredZero: '미완료 문제는 0점 처리됩니다',
@@ -1177,7 +1178,7 @@
             if (!practiceState.bankId) return;
             
             const totalQuestions = practiceState.questions.length;
-            const correctCount = practiceState.answers.filter((a, i) => a && a.selected === practiceState.questions[i].correctAnswer).length;
+            const correctCount = practiceState.answers.filter((a, i) => a && isAnswerCorrect(a.selected, practiceState.questions[i].correctAnswer)).length;
             const accuracy = Math.round((correctCount / totalQuestions) * 100);
             
             let firstUnansweredIndex = practiceState.answers.findIndex(a => a === null);
@@ -1240,6 +1241,26 @@
             return html;
         }
 
+        // 多选题工具：答案统一为排序后的选项字母串（如 "ABD"），单选为单字母
+        function normalizeAnswerLetters(ans) {
+            if (ans == null) return '';
+            if (Array.isArray(ans)) ans = ans.join('');
+            return String(ans).toUpperCase().replace(/[^A-Z]/g, '').split('').sort().join('');
+        }
+
+        function isMultiQuestion(q) {
+            if (!q) return false;
+            const type = String(q.type || '').toLowerCase();
+            return ['multiple', 'multi', 'multi_select', 'multiple_choice', 'multiselect'].includes(type)
+                || normalizeAnswerLetters(q.correctAnswer).length > 1;
+        }
+
+        function isAnswerCorrect(selected, correct) {
+            const c = normalizeAnswerLetters(correct);
+            if (!c) return false;
+            return normalizeAnswerLetters(selected) === c;
+        }
+
         async function renderQuestion() {
             const q = practiceState.questions[practiceState.currentIndex];
             const answered = practiceState.answers[practiceState.currentIndex];
@@ -1264,11 +1285,20 @@
                 progressTotal.textContent = totalQuestions;
             }
             
-            const correct = practiceState.answers.filter((a, i) => a && a.selected === practiceState.questions[i].correctAnswer).length;
+            const correct = practiceState.answers.filter((a, i) => a && isAnswerCorrect(a.selected, practiceState.questions[i].correctAnswer)).length;
             const accuracy = Math.round((correct / totalQuestions) * 100);
             document.getElementById('accuracy').innerHTML = `${t('accuracy')}: ${accuracy}%`;
             document.getElementById('questionNumberDisplay').textContent = `${practiceState.currentIndex + 1}.`;
             document.getElementById('questionText').innerHTML = safeMarkedParse(q.question || '');
+
+            // 多选题提示徽标
+            const multiBadge = document.getElementById('multiBadge');
+            if (isMultiQuestion(q)) {
+                multiBadge.textContent = t('multiSelectBadge');
+                multiBadge.classList.remove('hidden');
+            } else {
+                multiBadge.classList.add('hidden');
+            }
             
             // 控制"查看原文"按钮的显示
             const viewSourceBtn = document.getElementById('viewSourceBtn');
@@ -1300,18 +1330,24 @@
             
             const optionsContainer = document.getElementById('optionsList');
             optionsContainer.innerHTML = '';
+            // 多选题：已选/正确均为字母集合（如 "ABD"），单选为单字母，统一用 includes 判断
+            const pickedLetters = answered ? normalizeAnswerLetters(answered.selected) : '';
+            const correctLetters = normalizeAnswerLetters(q.correctAnswer);
+            const allCorrect = answered && pickedLetters === correctLetters;
             Object.entries(q.options).forEach(([key, value]) => {
                 const btn = document.createElement('button');
                 btn.className = `w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all flex items-center group ${answered ? 'cursor-default' : 'hover:border-indigo-300 hover:bg-indigo-50'}`;
                 if (!answered) btn.onclick = () => selectOption(key);
-                
+
                 if (answered) {
-                    if (key === answered.selected) btn.classList.add(key === q.correctAnswer ? 'option-correct' : 'option-wrong');
-                    else if (key === q.correctAnswer && answered.selected !== q.correctAnswer) btn.classList.add('option-correct');
+                    const isPicked = pickedLetters.includes(key);
+                    const isCorrectOption = correctLetters.includes(key);
+                    if (isPicked) btn.classList.add(isCorrectOption ? 'option-correct' : 'option-wrong');
+                    else if (isCorrectOption && !allCorrect) btn.classList.add('option-correct');
                 }
-                
+
                 const markedValue = safeMarkedParse(value || '');
-                btn.innerHTML = `<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-3 sm:mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && key === answered.selected ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${markedValue}</span>${answered && key === q.correctAnswer ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && key === answered.selected && key !== q.correctAnswer ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
+                btn.innerHTML = `<div class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg border-2 border-slate-300 flex items-center justify-center mr-3 sm:mr-4 font-bold text-slate-500 group-hover:border-indigo-400 group-hover:text-indigo-600 transition-colors ${answered && pickedLetters.includes(key) ? 'border-indigo-600 bg-indigo-600 text-white' : ''}">${key}</div><span class="flex-1 text-slate-700">${markedValue}</span>${answered && correctLetters.includes(key) ? '<svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' : ''}${answered && pickedLetters.includes(key) && !correctLetters.includes(key) ? '<svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' : ''}`;
                 if (!answered) btn.dataset.option = key;
                 optionsContainer.appendChild(btn);
             });
@@ -1325,7 +1361,7 @@
                 else { sourceEl.textContent = t('unknownSource'); }
                 
                 const icon = document.getElementById('resultIcon');
-                if (answered.selected === q.correctAnswer) {
+                if (allCorrect) {
                     icon.className = 'w-8 h-8 rounded-full flex items-center justify-center bg-emerald-100 text-emerald-600';
                     icon.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
                 } else {
@@ -1370,7 +1406,7 @@
         }
 
         function showCompletionModal() {
-            const correct = practiceState.answers.filter((a, i) => a && a.selected === practiceState.questions[i].correctAnswer).length;
+            const correct = practiceState.answers.filter((a, i) => a && isAnswerCorrect(a.selected, practiceState.questions[i].correctAnswer)).length;
             const total = practiceState.questions.length;
             const accuracy = Math.round((correct / total) * 100);
             document.getElementById('finalAccuracy').textContent = `${accuracy}%`;
@@ -1418,24 +1454,34 @@
         
         function selectOption(key) {
             if (practiceState.answers[practiceState.currentIndex]) return;
-            document.querySelectorAll('#optionsList button').forEach(btn => { 
-                btn.classList.remove('option-selected'); 
-                if (btn.dataset.option === key) btn.classList.add('option-selected'); 
-            });
-            document.getElementById('submitBtn').disabled = false;
+            const q = practiceState.questions[practiceState.currentIndex];
+            if (isMultiQuestion(q)) {
+                // 多选题：切换该选项的选中状态，允许同时选中多个
+                document.querySelectorAll('#optionsList button[data-option]').forEach(btn => {
+                    if (btn.dataset.option === key) btn.classList.toggle('option-selected');
+                });
+            } else {
+                document.querySelectorAll('#optionsList button').forEach(btn => {
+                    btn.classList.remove('option-selected');
+                    if (btn.dataset.option === key) btn.classList.add('option-selected');
+                });
+            }
+            document.getElementById('submitBtn').disabled = !document.querySelector('#optionsList button.option-selected');
         }
-        
+
         async function submitAnswer() {
-            const selected = document.querySelector('#optionsList button.option-selected');
-            if (!selected || practiceState.answers[practiceState.currentIndex]) return;
-            
-            practiceState.answers[practiceState.currentIndex] = { 
-                selected: selected.dataset.option, 
-                timestamp: new Date().toISOString() 
+            const selectedBtns = [...document.querySelectorAll('#optionsList button.option-selected')];
+            if (selectedBtns.length === 0 || practiceState.answers[practiceState.currentIndex]) return;
+
+            // 多选题：收集全部选中项，规范化为排序字母串（如 "ABD"）；单选为单字母
+            const selected = normalizeAnswerLetters(selectedBtns.map(b => b.dataset.option).join(''));
+            practiceState.answers[practiceState.currentIndex] = {
+                selected,
+                timestamp: new Date().toISOString()
             };
             // 答错 → 写入课程错题本（累加答错次数）+ srs 重置间隔；答对 → srs 拉长复习间隔
             const answeredQ = practiceState.questions[practiceState.currentIndex];
-            if (answeredQ && selected.dataset.option !== answeredQ.correctAnswer) {
+            if (answeredQ && !isAnswerCorrect(selected, answeredQ.correctAnswer)) {
                 queueMistakeBookUpdate(answeredQ, { mistake: true });
             } else if (answeredQ) {
                 queueMistakeBookUpdate(answeredQ, { reviewCorrect: true });
