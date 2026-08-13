@@ -2456,6 +2456,78 @@ async function runTutorViaAgentRuntime(env, token, fileUri, lang, customPrompt, 
   }
 }
 
+// ---- 通过 Agent Runtime（ADK 工作流）出题/导题（gpa-buddy-quizgen-adk）----
+// Agent 侧完成"是否题库"分类 + 每批≤20题的分批生成/提取（见 gpa-buddy-quizgen-adk/app/agent.py），
+// 这里只负责把 quiz_event 翻译为 SSE 事件转发给前端，并捕获 final_result 供计费/存课。
+// 返回 final_result 负载（未收到则为 null）。
+async function runQuizViaAgentRuntime(env, token, fileUri, mimeType, params, visitorId, sendSSE) {
+  const region = env.ADK_QUIZ_REGION || 'us-west1';
+  const resource = String(env.ADK_QUIZ_RUNTIME_ID).replace(/^\/+/, '');
+  const endpoint = `https://${region}-aiplatform.googleapis.com/v1/${resource}:streamQuery`;
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      class_method: 'async_stream_query',
+      input: {
+        user_id: `quiz_${String(visitorId || 'guest').replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 48)}`,
+        message: {
+          role: 'user',
+          parts: [
+            { file_data: { file_uri: fileUri, mime_type: mimeType } },
+            { text: JSON.stringify({ ...params, file_uri: fileUri, mime_type: mimeType }) },
+          ],
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    console.error('Quiz Agent Runtime failed:', res.status, await res.text());
+    throw new Error(`VERTEX_ERROR|Agent Runtime error ${res.status}`);
+  }
+
+  // 增量解析流式事件（兼容 JSONL / SSE / JSON 数组分块）
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = '';
+  let gotDone = false;
+  let finalResult = null;
+
+  const handleChunk = async (chunk) => {
+    const s = chunk.trim().replace(/^data:\s*/, '').replace(/^\[/, '').replace(/\]$/, '').replace(/,$/, '');
+    if (!s || s === '[DONE]') return;
+    let ev;
+    try { ev = JSON.parse(s); } catch { return; /* 分块边界上的非完整 JSON */ }
+    for (const p of ev?.content?.parts || []) {
+      if (!p.text) continue;
+      let obj;
+      try { obj = JSON.parse(p.text); } catch { continue; }
+      const qe = obj?.quiz_event;
+      if (!qe) continue;
+      if (qe.type === 'agent_done') { gotDone = true; continue; }
+      if (qe.type === 'error') throw new Error(`VERTEX_ERROR|${qe.message || 'agent error'}`);
+      if (qe.type === 'final_result') finalResult = qe;
+      await sendSSE(qe);
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    const lines = buf.split('\n');
+    buf = lines.pop(); // 最后一段可能不完整，留到下次
+    for (const line of lines) await handleChunk(line);
+  }
+  if (buf.trim()) await handleChunk(buf);
+
+  if (!gotDone) {
+    throw new Error('VERTEX_ERROR|Agent Runtime stream ended before completion');
+  }
+  return finalResult;
+}
+
 // 更新云端题库元信息（仅 owner）：回填源文件 source_*，或把无课程题库归入某课程
 async function handleUpdateCloudBankSource(request, env, bankId) {
   const user = await getUserFromRequest(request, env);
@@ -3332,14 +3404,14 @@ function pemToBuffer(pem) {
 
 /* ==================== GCS ==================== */
 
-async function uploadToGCS(buffer, name, token, env) {
+async function uploadToGCS(buffer, name, token, env, contentType = 'application/pdf') {
   const url = `https://storage.googleapis.com/upload/storage/v1/b/${env.GCS_BUCKET}/o?uploadType=media&name=${encodeURIComponent(name)}`;
 
   const res = await fetch(url, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/pdf',
+      'Content-Type': contentType,
     },
     body: buffer,
   });
@@ -5910,10 +5982,10 @@ export default {
           }
         }
 
-        // Visitor credits check
+        // Visitor credits check（仅预检，生成完成且题目数大于 2 才扣费）
         const visitorId = form.get('visitorId');
         if (visitorId) {
-          const quota = await checkAndConsumeVisitorCredits(visitorId, request, env, 'text_generate');
+          const quota = await peekVisitorCredits(visitorId, request, env);
           if (!quota.allowed) {
             return createResponse(JSON.stringify({ error: quota.reason || 'Insufficient credits' }), 402);
           }
@@ -5941,6 +6013,14 @@ export default {
               env,
               sendSSE
             );
+
+            // 统一扣费阈值：只要题目数量大于 2 就扣费
+            if (allResults.length > 2 && visitorId) {
+              const deducted = await deductVisitorCredits(visitorId, request, env, 'text_generate');
+              if (!deducted) {
+                console.warn('[Text Generate] Deduction failed after generation');
+              }
+            }
 
             // 如果关联了课程，保存生成的题目到课程（建批次，名称为文件名）
             if (validatedCourseId) {
@@ -6044,10 +6124,10 @@ export default {
           }
         }
 
-        // Visitor credits check
+        // Visitor credits check（仅预检，整理完成且题目数大于 2 才扣费）
         const visitorId = form.get('visitorId');
         if (visitorId) {
-          const quota = await checkAndConsumeVisitorCredits(visitorId, request, env, 'organize');
+          const quota = await peekVisitorCredits(visitorId, request, env);
           if (!quota.allowed) {
             return createResponse(JSON.stringify({ error: quota.reason || 'Insufficient credits' }), 402);
           }
@@ -6109,8 +6189,16 @@ export default {
 
         const allQuestionsArrays = await Promise.all(organizePromises);
         const allQuestions = allQuestionsArrays.flat();
-        
+
         console.log(`[DEBUG] Organize complete: ${allQuestions.length} questions`);
+
+        // 统一扣费阈值：只要题目数量大于 2 就扣费
+        if (allQuestions.length > 2 && visitorId) {
+          const deducted = await deductVisitorCredits(visitorId, request, env, 'organize');
+          if (!deducted) {
+            console.warn('[Organize] Deduction failed after generation');
+          }
+        }
 
         return createResponse(JSON.stringify({
           success: true,
@@ -6561,14 +6649,14 @@ export default {
             const threshold = Math.ceil(questionCount * 0.95);
             const partial = generatedCount < threshold;
             
-            // 数量足够才扣费，否则不扣
-            if (!partial && visitorId) {
+            // 统一扣费阈值：只要题目数量大于 2 就扣费
+            if (generatedCount > 2 && visitorId) {
               const deducted = await deductVisitorCredits(visitorId, request, env, 'pdf_generate');
               if (!deducted) {
                 console.warn('[PDF Generate] Deduction failed after generation, credits may have been consumed by concurrent requests');
               }
             }
-            
+
             console.log(`[DEBUG] Final result: ${generatedCount} questions (requested ${questionCount}, threshold ${threshold}, partial=${partial})`);
             console.log(`[DEBUG] First question:`, allResults[0] ? allResults[0].question?.substring(0, 50) : 'N/A');
             console.log(`[DEBUG] Total token count: ${totalTokenCount}`);
@@ -6727,7 +6815,8 @@ export default {
             const threshold = Math.ceil(questionCount * 0.95);
             const partial = generatedCount < threshold;
 
-            if (!partial && visitorId) {
+            // 统一扣费阈值：只要题目数量大于 2 就扣费
+            if (generatedCount > 2 && visitorId) {
               const deducted = await deductVisitorCredits(visitorId, request, env, 'pdf_generate');
               if (!deducted) {
                 console.warn('[Fallback PDF Generate] Deduction failed after generation');
@@ -6741,6 +6830,185 @@ export default {
             console.error('Fallback PDF Generate error:', err);
             await sendSSE({ type: 'error', source: 'worker', message: err.message });
           } finally {
+            await writer.close();
+          }
+        })());
+
+        return new Response(readable, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            ...corsHeaders,
+          },
+        });
+
+      } catch (err) {
+        return new Response(JSON.stringify({
+          error: err.message,
+          stack: err.stack
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    /* ===== QUIZ GENERATE VIA ADK AGENT（出题/导题合并接口） ===== */
+    if (url.pathname === '/api/quiz/generate' && request.method === 'POST') {
+      try {
+        if (env.ADK_QUIZ_ENABLED !== 'true' || !env.ADK_QUIZ_RUNTIME_ID) {
+          return createResponse(JSON.stringify({ error: 'ADK quiz agent not configured' }), 503);
+        }
+
+        // 1. 解析 form-data（与 /pdf_generate 一致的入参）
+        const form = await request.formData();
+        const file = form.get('file');
+        const questionCount = parseInt(form.get('questionCount')) || 20;
+        const lang = form.get('lang') || 'zh';
+        const turnstileToken = form.get('turnstileToken');
+        const pageCount = parseInt(form.get('pageCount')) || 0;
+        const originalFileName = form.get('originalFileName') || 'document';
+        const customPrompt = form.get('customPrompt') || '';
+        const courseId = form.get('courseId');
+
+        // 如果请求指定了 courseId，校验课程归属
+        let validatedCourseId = null;
+        if (courseId) {
+          const user = await getUserFromRequest(request, env);
+          if (!user) {
+            return createResponse(JSON.stringify({ error: 'Unauthorized' }), 401);
+          }
+          const course = await env.DB.prepare(
+            'SELECT id FROM courses WHERE id = ? AND user_id = ?'
+          ).bind(courseId, user.id).first();
+          if (!course) {
+            return createResponse(JSON.stringify({ error: 'Course not found' }), 404);
+          }
+          validatedCourseId = courseId;
+        }
+
+        // 输入校验
+        if (questionCount > 200 || questionCount < 1) {
+          return createResponse(JSON.stringify({ error: 'Invalid question count (1-200)' }), 400);
+        }
+        if (customPrompt.length > 2000) {
+          return createResponse(JSON.stringify({ error: 'Custom prompt too long (max 2000 chars)' }), 400);
+        }
+        if (!['zh', 'zh-TW', 'en', 'ko'].includes(lang)) {
+          return createResponse(JSON.stringify({ error: 'Invalid language' }), 400);
+        }
+        if (!file) {
+          return createResponse(JSON.stringify({ error: 'No file received' }), 400);
+        }
+
+        // 文件类型：PDF 或纯文本（txt/md）
+        const lowerName = (file.name || '').toLowerCase();
+        let mimeType = file.type || '';
+        if (lowerName.endsWith('.pdf')) mimeType = 'application/pdf';
+        else if (lowerName.endsWith('.txt') || lowerName.endsWith('.md')) mimeType = 'text/plain';
+        if (!['application/pdf', 'text/plain'].includes(mimeType)) {
+          return createResponse(JSON.stringify({ error: 'Unsupported file type (pdf/txt/md only)' }), 400);
+        }
+
+        // 2. Turnstile 人机验证（小程序端凭共享密钥头放行）
+        const miniprogramKey = request.headers.get('X-Miniprogram-Key');
+        const trustedMiniprogram = env.MINIPROGRAM_KEY && miniprogramKey && miniprogramKey === env.MINIPROGRAM_KEY;
+        if (env.TURNSTILE_SECRET_KEY && !trustedMiniprogram) {
+          if (!turnstileToken) {
+            return createResponse(JSON.stringify({ error: 'Turnstile token required' }), 403);
+          }
+          const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+              secret: env.TURNSTILE_SECRET_KEY,
+              response: turnstileToken,
+            }),
+          });
+          const verifyData = await verifyRes.json();
+          if (!verifyData.success) {
+            return createResponse(JSON.stringify({ error: 'Turnstile verification failed' }), 403);
+          }
+        }
+
+        // Visitor credits check（仅预检，题目数大于 2 才扣费）
+        const visitorId = form.get('visitorId');
+        if (visitorId) {
+          const quota = await peekVisitorCredits(visitorId, request, env);
+          if (!quota.allowed) {
+            return createResponse(JSON.stringify({ error: quota.reason || 'Insufficient credits' }), 402);
+          }
+        }
+
+        // 增加统计计数
+        const currentCount = parseInt(await env.EXAM_STATS.get('total_count')) || 0;
+        await env.EXAM_STATS.put('total_count', (currentCount + 1).toString());
+
+        // 3. 上传到 GCS（Agent Runtime 服务账号需 bucket objectViewer）
+        const token = await getAccessToken(env);
+        const name = `${Date.now()}_${file.name}`;
+        const buffer = await file.arrayBuffer();
+        const fileUri = await uploadToGCS(buffer, name, token, env, mimeType);
+
+        // 4. 创建 SSE 流
+        const { readable, writable } = new TransformStream();
+        const writer = writable.getWriter();
+        const encoder = new TextEncoder();
+        const sendSSE = async (obj) => {
+          await writer.write(encoder.encode(`data: ${JSON.stringify(obj)}\n\n`));
+        };
+
+        // 5. 异步执行：agent 分类 + 分批出题/导题，事件流透传
+        ctx.waitUntil((async () => {
+          try {
+            const params = {
+              lang,
+              custom_prompt: customPrompt,
+              question_count: questionCount,
+              file_name: originalFileName,
+              page_count: pageCount,
+            };
+            const finalResult = await runQuizViaAgentRuntime(
+              env, token, fileUri, mimeType, params, visitorId, sendSSE
+            );
+            const allResults = finalResult?.data || [];
+            const generatedCount = finalResult?.generatedCount ?? allResults.length;
+
+            // 统一扣费阈值：只要题目数量大于 2 就扣费
+            if (generatedCount > 2 && visitorId) {
+              const deducted = await deductVisitorCredits(visitorId, request, env, 'pdf_generate');
+              if (!deducted) {
+                console.warn('[Quiz Generate] Deduction failed after generation, credits may have been consumed by concurrent requests');
+              }
+            }
+
+            await sendSSE({ type: 'done' });
+
+            // 如果关联了课程，保存生成的题目到课程（建批次，名称为文件名）
+            if (validatedCourseId && allResults.length > 0) {
+              try {
+                const batchResult = await env.DB.prepare(
+                  'INSERT INTO course_question_batches (course_id, name) VALUES (?, ?)'
+                ).bind(validatedCourseId, (originalFileName || 'document').slice(0, 200)).run();
+                await saveGeneratedQuestionsToCourse(env, validatedCourseId, allResults, null, batchResult.meta.last_row_id);
+                console.log(`[DEBUG] Saved ${allResults.length} questions to course ${validatedCourseId}`);
+              } catch (saveErr) {
+                console.error('[DEBUG] Failed to save generated questions to course:', saveErr);
+              }
+            }
+          } catch (err) {
+            console.error('Quiz Generate error:', err);
+            const isVertexErr = err.message?.startsWith('VERTEX_ERROR|');
+            const source = isVertexErr ? 'vertex' : 'worker';
+            const cleanMessage = isVertexErr ? err.message.slice('VERTEX_ERROR|'.length) : err.message;
+            await sendSSE({ type: 'error', source, message: cleanMessage });
+          } finally {
+            // 6. 清理 GCS 文件
+            try {
+              await deleteFromGCS(name, token, env);
+            } catch (cleanupErr) {
+              console.error('Cleanup error:', cleanupErr);
+            }
             await writer.close();
           }
         })());

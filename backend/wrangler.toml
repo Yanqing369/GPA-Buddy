@@ -30,6 +30,13 @@ ADK_TUTOR_ENABLED = "true"
 ADK_TUTOR_REGION = "us-central1"
 # ADK_TUTOR_RUNTIME_ID = "projects/gpa-490510/locations/us-west1/reasoningEngines/<id>"
 
+# ADK Agent 出题/导题合并接口（/api/quiz/generate，gpa-buddy-quizgen-adk 工作流）
+# 需 ADK_QUIZ_RUNTIME_ID 已配置才可用，否则该接口返回 503
+ADK_QUIZ_ENABLED = "true"
+ADK_QUIZ_REGION = "us-central1"
+# 部署 Agent Runtime 后用 wrangler secret put 设置：
+# ADK_QUIZ_RUNTIME_ID = "projects/gpa-490510/locations/us-central1/reasoningEngines/<id>"
+
 # R2 存储空间（课程资料原始文件）
 [[r2_buckets]]
 binding = "MATERIALS_BUCKET"
